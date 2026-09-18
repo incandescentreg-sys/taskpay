@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#0F1233">
+  <title>TaskPay — биржа заданий</title>
+  <link rel="stylesheet" href="css/style.css">
+<link rel="icon" href="Logo.jpg" type="image/jpeg">
+</head>
+<body>
+  <div id="app"></div>
+
+  <!-- SDK Telegram WebApp (офлайн-фолбэк ниже) -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script>
+    if (!window.Telegram || !window.Telegram.WebApp) {
+      window.Telegram = {
+        WebApp: {
+          ready: function () {},
+          expand: function () {},
+          initDataUnsafe: {},
+          HapticFeedback: { impactOccurred: function () {} },
+          BackButton: { show: function () {}, hide: function () {}, onClick: function () {} },
+          showConfirm: function (m, ok, no) { return Promise.resolve(window.confirm(m || '')); },
+          showAlert: function (m) { window.alert(m || ''); return Promise.resolve(); }
+        }
+      };
+    }
+  </script>
+  <script src="js/store.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/screens.js"></script>
+</body>
+</html>
