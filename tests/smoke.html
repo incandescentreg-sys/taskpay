@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>TaskPay smoke test</title>
+</head>
+<body>
+  <div id="app"></div>
+  <div id="result" style="white-space:pre-wrap;font-family:monospace;font-size:13px"></div>
+
+  <script>
+    window.Telegram = {
+      WebApp: {
+        ready(){}, expand(){}, initDataUnsafe:{},
+        setHeaderColor(){}, setBackgroundColor(){}, disableVerticalSwipes(){},
+        HapticFeedback:{ impactOccurred(){} },
+        BackButton:{ show(){}, hide(){}, onClick(){} },
+        showConfirm(m){ return Promise.resolve(true); },
+        showAlert(){} 
+      }
+    };
+  </script>
+  <script src="../js/store.js"></script>
+  <script src="../js/app.js"></script>
+  <script src="../js/screens.js"></script>
+
+  <script>
+    (function () {
+      var errors = [];
+      var log = [];
+      window.onerror = function (msg, src, line) {
+        errors.push(msg + ' @' + line);
+      };
+
+      document.addEventListener('DOMContentLoaded', function () {
+        try {
+          /* маршруты без аргументов */
+          ['home', 'tasks', 'create', 'subs', 'wallet', 'profile', 'admin'].forEach(function (r) {
+            window.TaskPay.navigate(r);
+            var html = document.getElementById('app').innerHTML;
+            if (!html || html.length < 60) throw new Error('пустой рендер: ' + r);
+            log.push('OK  ' + r + ' (' + html.length + ' симв.)');
+          });
+
+          /* детальная страница задания */
+          var t = Store.getTasks()[0];
+          window.TaskPay.navigate('task-detail', { id: t.id });
+          if (document.getElementById('app').innerHTML.indexOf('Взять задание') === -1) throw new Error('нет кнопки Взять задание');
+          log.push('OK  task-detail (' + t.id + ')');
+
+          /* экран взятого задания */
+          var a = {
+            id: Store.nextId('assignments'),
+            taskId: t.id, userId: 42, userName: 'Тест',
+            status: 'in_progress', reward: t.reward,
+            takenAt: Date.now(), proofType: null, proofData: null, rejectionReason: null
+          };
+          Store.getAssignments().push(a);
+          Store.save();
+          window.TaskPay.navigate('my-task-detail', { aid: a.id });
+          if (document.getElementById('app').innerHTML.indexOf('Отправить на проверку') === -1) throw new Error('нет формы отправки');
+          log.push('OK  my-task-detail (in_progress)');
+
+          /* подписка: сначала не хватает средств → покупка должна блокироваться */
+          var low = Store.getBalance();
+          var poorRes = Store.activateSubscription('month');
+          if (poorRes.ok) throw new Error('подписка прошла при нехватке средств!');
+          /* пополняем баланс и покупаем */
+          Store.changeBalance(3000, 'income', 'Тестовое пополнение');
+          var before = Store.getBalance();
+          var res = Store.activateSubscription('month');
+          if (!res.ok) throw new Error('активация подписки не удалась');
+          if (Store.getBalance() !== before - 2000) throw new Error('баланс не изменился после подписки');
+          if (!Store.hasActiveSubscription()) throw new Error('подписка не активна');
+          window.TaskPay.navigate('subs');
+          log.push('OK  подписка: списано 2000, активна до ' + new Date(Store.getSubscription().until).toISOString().slice(0, 10));
+
+          /* публикация задания через форму */
+          window.TaskPay.navigate('create');
+          document.getElementById('f-title').value = 'Тестовое задание';
+          document.getElementById('f-desc').value = 'Описание теста';
+          document.getElementById('f-cat').value = 'reviews';
+          document.getElementById('f-spots').value = '3';
+          document.getElementById('f-reward').value = '150';
+          document.getElementById('f-instruction').value = 'Инструкция';
+          document.getElementById('f-deadline').value = '5';
+          var proof = document.querySelector('[data-proof="screenshot"]');
+          proof.classList.add('active');
+          proof.click(); /* добавит в выбранные в bind-замыкании */
+          var created = Store.getTasks().length;
+          /* эмулируем клик по кнопке публикации */
+          var btn = document.querySelector('[data-action="publish-task"]');
+          btn.click();
+          if (Store.getTasks().length === created) {
+            throw new Error('задание не создалось');
+          }
+          var newTask = Store.getTasks()[0];
+          if (newTask.spotsLeft !== 3 || newTask.reward !== 150) throw new Error('неверные поля задания');
+          log.push('OK  publish: создано «' + newTask.title + '», бюджет ' + (3 * 150) + ' ₽');
+
+          /* баланс и транзакции */
+          window.TaskPay.navigate('wallet');
+          if (document.getElementById('app').innerHTML.indexOf('Доступно') === -1) throw new Error('кошелёк не рендерится');
+
+          log.push('OK  wallet');
+          log.push('ИТОГ: ' + log.length + ' проверок, ошибок JS: ' + errors.length);
+          if (errors.length) log = log.concat(['ОШИБКИ:', errors.join('\n')]);
+        } catch (e) {
+          log.push('FAIL: ' + e.message);
+        }
+        document.getElementById('result').textContent = log.join('\n');
+      });
+    })();
+  </script>
+</body>
+</html>
