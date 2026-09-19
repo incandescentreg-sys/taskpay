@@ -114,8 +114,7 @@
   function bottomNav(active) {
     const tabs = [
       ['home', '🏠', 'Главная'],
-      ['create', '➕', 'Разместить'],
-      ['subs', '📢', 'Продвижение']
+      ['create', '➕', 'Разместить']
     ];
     const tabHTML = t => {
       const [name, ico, label] = t;
@@ -128,7 +127,7 @@
         '<button class="tab-bourse' + (active === 'tasks' ? ' active' : '') + '" data-action="tab" data-tab="tasks" aria-label="Биржа">' +
           '<span class="tb-ico">⚡</span><span class="tb-label">Биржа</span>' +
         '</button>' +
-        tabHTML(tabs[1]) + tabHTML(tabs[2]) +
+        tabHTML(tabs[1]) +
       '</nav>' +
       fabAvatarHTML() +
     '</div>';

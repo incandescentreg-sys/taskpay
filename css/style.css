@@ -76,6 +76,54 @@ body {
 
 #app { max-width: 480px; margin: 0 auto; min-height: 100vh; position: relative; }
 
+/* ---------- Анимированные серые волны на фоне (как у Monster) ---------- */
+.bg-waves {
+  position: fixed; inset: 0; z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+.wave-row {
+  position: absolute; left: -50%; width: 200%;
+  display: flex;
+  animation: waveScroll linear infinite;
+}
+.wave-row svg {
+  width: 50%;
+  height: 100%;
+  flex: none;
+}
+.wave-1 {
+  top: 12%;
+  height: 170px;
+  opacity: .28;
+  animation-duration: 26s;
+  animation-direction: reverse;
+}
+.wave-2 {
+  top: 32%;
+  height: 220px;
+  opacity: .18;
+  animation-duration: 38s;
+}
+.wave-3 {
+  bottom: -8%;
+  height: 300px;
+  opacity: .22;
+  animation-duration: 46s;
+  animation-direction: reverse;
+}
+.wave-row svg path { fill: #8A94A6; }
+@media (prefers-color-scheme: light) {
+  .wave-row svg path { fill: #5A6B87; }
+  .wave-1 { opacity: .16; }
+  .wave-2 { opacity: .10; }
+  .wave-3 { opacity: .12; }
+}
+@keyframes waveScroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
 /* ---------- Топбар ---------- */
 .topbar {
   position: sticky; top: 0; z-index: 50;
