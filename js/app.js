@@ -1,5 +1,5 @@
 /* ============================================================
-   TaskPay — ядро приложения (init, Telegram WebApp, роутер)
+   Yumitask — ядро приложения (init, Telegram WebApp, роутер)
    Экраны определены в js/screens.js (регистрируются через TaskPay.register)
    ============================================================ */
 (function () {
@@ -9,15 +9,15 @@
   let tg = null;
   let currentRoute = null;
   let routeState = {};
-  let filters = { cat: 'all', sort: 'new' };
+  let filters = { cat: 'all', platform: 'all', sort: 'new' };
 
   try {
     if (window.Telegram && window.Telegram.WebApp) {
       tg = window.Telegram.WebApp;
       tg.ready();
       tg.expand();
-      if (tg.setHeaderColor) tg.setHeaderColor('#0F1233');
-      if (tg.setBackgroundColor) tg.setBackgroundColor('#0F1233');
+      if (tg.setHeaderColor) tg.setHeaderColor('#001020');
+      if (tg.setBackgroundColor) tg.setBackgroundColor('#001020');
       if (tg.disableVerticalSwipes) tg.disableVerticalSwipes();
     }
   } catch (e) { tg = null; }
@@ -114,25 +114,44 @@
   function bottomNav(active) {
     const tabs = [
       ['home', '🏠', 'Главная'],
-      ['tasks', '🔍', 'Задания'],
-      ['create', '➕', 'Разместить'],
       ['wallet', '💰', 'Баланс'],
-      ['profile', '👤', 'Профиль']
+      ['create', '➕', 'Разместить'],
+      ['subs', '📢', 'Продвижение']
     ];
-    return '<nav class="tabbar">' + tabs.map(t => {
+    const tabHTML = t => {
       const [name, ico, label] = t;
       return '<button class="tab' + (name === active ? ' active' : '') + '" data-action="tab" data-tab="' + name + '">' +
         '<span class="t-ico">' + ico + '</span><span>' + label + '</span></button>';
-    }).join('') + '</nav>';
+    };
+    return '<nav class="tabbar">' +
+      tabHTML(tabs[0]) + tabHTML(tabs[1]) +
+      '<button class="tab-bourse' + (active === 'tasks' ? ' active' : '') + '" data-action="tab" data-tab="tasks" aria-label="Биржа">' +
+        '<span class="tb-ico">⚡</span><span class="tb-label">Биржа</span>' +
+      '</button>' +
+      tabHTML(tabs[2]) + tabHTML(tabs[3]) +
+    '</nav>' + fabAvatarHTML();
+  }
+  function fabAvatarHTML() {
+    const u = Store.getUser();
+    const photo = u.photo || ((tgUser() || {}).photo_url) || '';
+    const initial = (u.name && u.name[0]) || 'Г';
+    return '<button class="fab-avatar" data-action="open-profile" aria-label="Профиль">' +
+      (photo
+        ? '<img src="' + esc(photo) + '" alt="аватар">'
+        : '<span class="fa-initial">' + esc(initial) + '</span>') +
+    '</button>';
   }
   function statCard(val, label, cls) {
     return '<div class="stat-card ' + (cls || '') + '"><div class="val">' + val + '</div><div class="label">' + esc(label) + '</div></div>';
   }
   function taskCardHTML(t) {
     const cat = Category.byId(t.category);
+    const pl = t.platform ? Platform.byId(t.platform) : null;
+    const rating = Store.getTaskEmployerRating(t);
     return '<div class="task-card" data-action="open-task" data-id="' + t.id + '">' +
       '<div class="tc-title">' + esc(t.title) + '</div>' +
       '<div class="tc-chips">' +
+        (pl ? '<span class="chip chip--blue">' + pl.icon + ' ' + esc(pl.name) + '</span>' : '') +
         '<span class="chip">🏷 ' + esc(cat.name) + '</span>' +
         '<span class="chip chip--green">💰 ' + fmtMoney(t.reward) + '</span>' +
         '<span class="chip chip--amber">👥 Осталось: ' + t.spotsLeft + '</span>' +
@@ -141,7 +160,15 @@
         '<span>⏱ около ' + t.durationMin + ' мин</span>' +
         '<span class="chip--blue" style="color:var(--blue);font-weight:700;">Выполнить →</span>' +
       '</div>' +
+      (t.employerName ? '<div class="tc-employer">' + esc(t.employerName) + ' ' + starsHTML(rating) + ' · ' + rating.count + ' оценок</div>' : '') +
     '</div>';
+  }
+
+  function starsHTML(rating) {
+    if (!rating || !rating.count) return '';
+    const sc = Math.max(0, Math.min(5, rating.score || 0));
+    const full = Math.round(sc);
+    return '<span class="stars">' + '★'.repeat(full) + '<span class="stars-off">' + '★'.repeat(5 - full) + '</span></span>';
   }
   function proofChips(ids) {
     return ids.map(id => {
@@ -164,8 +191,8 @@
 
   window.TaskPay = {
     app, tg, navigate, register, esc, toast, vibrate, tgUser, applyTgUser,
-    isAdmin, ADMINS, tgConfirm, tgPopup, topbar, bottomNav, statCard,
-    taskCardHTML, proofChips, statusHTML,
+    isAdmin, ADMINS, tgConfirm, tgPopup, topbar, bottomNav, fabAvatarHTML,
+    statCard, taskCardHTML, proofChips, statusHTML, starsHTML,
     currentRoute: () => currentRoute,
     routeState: () => routeState,
     filters: () => filters,
