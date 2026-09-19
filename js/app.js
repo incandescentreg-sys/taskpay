@@ -123,13 +123,16 @@
       return '<button class="tab' + (name === active ? ' active' : '') + '" data-action="tab" data-tab="' + name + '">' +
         '<span class="t-ico">' + ico + '</span><span>' + label + '</span></button>';
     };
-    return '<nav class="tabbar">' +
-      tabHTML(tabs[0]) + tabHTML(tabs[1]) +
-      '<button class="tab-bourse' + (active === 'tasks' ? ' active' : '') + '" data-action="tab" data-tab="tasks" aria-label="Биржа">' +
-        '<span class="tb-ico">⚡</span><span class="tb-label">Биржа</span>' +
-      '</button>' +
-      tabHTML(tabs[2]) + tabHTML(tabs[3]) +
-    '</nav>' + fabAvatarHTML();
+    return '<div class="nav-island">' +
+      '<nav class="tabbar">' +
+        tabHTML(tabs[0]) + tabHTML(tabs[1]) +
+        '<button class="tab-bourse' + (active === 'tasks' ? ' active' : '') + '" data-action="tab" data-tab="tasks" aria-label="Биржа">' +
+          '<span class="tb-ico">⚡</span><span class="tb-label">Биржа</span>' +
+        '</button>' +
+        tabHTML(tabs[2]) + tabHTML(tabs[3]) +
+      '</nav>' +
+      fabAvatarHTML() +
+    '</div>';
   }
   function fabAvatarHTML() {
     const u = Store.getUser();
