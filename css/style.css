@@ -76,48 +76,22 @@ body {
 
 #app { max-width: 480px; margin: 0 auto; min-height: 100vh; position: relative; }
 
-/* ---------- Анимированные серые волны на фоне (как у Monster) ---------- */
-.bg-waves {
-  position: fixed; inset: 0; z-index: -1;
-  overflow: hidden;
+/* ---------- Волны внутри плашек-карточек (как у Monster) ---------- */
+.wave-row {
+  position: absolute; left: -50%; bottom: -6px; width: 200%;
+  display: flex; height: 46%;
+  animation: waveScroll linear infinite;
   pointer-events: none;
 }
-.wave-row {
-  position: absolute; left: -50%; width: 200%;
-  display: flex;
-  animation: waveScroll linear infinite;
-}
 .wave-row svg {
-  width: 50%;
-  height: 100%;
-  flex: none;
+  width: 50%; height: 100%; flex: none;
 }
-.wave-1 {
-  top: 12%;
-  height: 170px;
-  opacity: .28;
-  animation-duration: 26s;
-  animation-direction: reverse;
-}
-.wave-2 {
-  top: 32%;
-  height: 220px;
-  opacity: .18;
-  animation-duration: 38s;
-}
-.wave-3 {
-  bottom: -8%;
-  height: 300px;
-  opacity: .22;
-  animation-duration: 46s;
-  animation-direction: reverse;
-}
-.wave-row svg path { fill: #8A94A6; }
+.wave-row svg path { fill: rgba(138, 148, 166, 0.55); }
+.wave-1 { animation-duration: 18s; }
+.wave-2 { animation-duration: 26s; animation-direction: reverse; bottom: -14px; height: 40%; opacity: .75; }
+.wave-3 { animation-duration: 34s; bottom: -22px; height: 34%; opacity: .6; }
 @media (prefers-color-scheme: light) {
-  .wave-row svg path { fill: #5A6B87; }
-  .wave-1 { opacity: .16; }
-  .wave-2 { opacity: .10; }
-  .wave-3 { opacity: .12; }
+  .wave-row svg path { fill: rgba(90, 107, 135, 0.5); }
 }
 @keyframes waveScroll {
   from { transform: translateX(0); }
@@ -147,6 +121,33 @@ body {
   flex: 1; font-size: 17px; font-weight: 700;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
+.tb-balance {
+  flex: none;
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 5px 9px;
+  font-size: 12px; font-weight: 700; line-height: 1;
+  color: var(--text);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  cursor: pointer;
+  transition: transform .12s ease, border-color .15s ease;
+}
+.tb-balance:active { transform: scale(0.95); }
+.home-balance {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 5px 9px;
+  font-size: 12px; font-weight: 700; line-height: 1;
+  color: var(--text);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: transform .12s ease, border-color .15s ease;
+}
+.home-balance:active { transform: scale(0.95); }
 
 /* ---------- Контент ---------- */
 .page { padding: 16px 16px calc(128px + var(--safe-bottom)); }
@@ -234,46 +235,64 @@ body {
 .bourse-btn .bb-ico { font-size: 26px; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.25)); }
 .bourse-btn .bb-sub { display: block; font-size: 12px; font-weight: 600; opacity: 0.85; letter-spacing: 0; margin-top: 2px; }
 
-/* ---------- Аватарка-профиль: отдельный островок справа от дока ---------- */
+/* ---------- Аватарка-профиль (правый верхний угол, рядом с балансом) ---------- */
 .fab-avatar {
-  position: relative; right: auto; bottom: auto;
-  width: 58px; height: 58px; border-radius: 50%;
-  border: 3px solid transparent;
+  position: relative;
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 2px solid transparent;
   background: linear-gradient(#001020, #001020) padding-box,
               linear-gradient(135deg, #00CFFF, #66D9FF, #0064FF) border-box;
-  box-shadow: 0 0 16px rgba(0, 191, 255, 0.55), 0 8px 24px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 10px rgba(0, 191, 255, 0.45), 0 4px 12px rgba(0, 0, 0, 0.35);
   cursor: pointer;
   display: grid; place-items: center;
   overflow: hidden;
   flex: none;
-  margin-top: -22px;
   transition: transform .12s ease, box-shadow .2s ease;
 }
 .fab-avatar:active { transform: scale(0.92); }
 .fab-avatar img {
-  width: calc(100% - 6px); height: calc(100% - 6px);
+  width: calc(100% - 4px); height: calc(100% - 4px);
   border-radius: 50%; object-fit: cover;
 }
 .fab-avatar .fa-initial {
-  font-size: 24px; font-weight: 800; color: #fff;
+  font-size: 13px; font-weight: 800; color: #fff;
   background: linear-gradient(135deg, #00CFFF, #0064FF);
-  width: calc(100% - 6px); height: calc(100% - 6px);
+  width: calc(100% - 4px); height: calc(100% - 4px);
   border-radius: 50%;
   display: grid; place-items: center;
 }
 
-/* ---------- Сетка меню ---------- */
-.grid-menu { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 26px; }
+/* ---------- Баннер (главный логотип) ---------- */
+.banner-logo {
+  width: 100%;
+  border-radius: 20px;
+  display: block;
+  box-shadow: 0 14px 40px rgba(0, 191, 255, 0.4);
+  object-fit: cover;
+}
+
+/* ---------- Правая часть шапки (баланс + аватарка) ---------- */
+.tb-right { display: flex; align-items: center; gap: 6px; flex: none; }
+.home-top-right {
+  display: flex; align-items: center; gap: 6px;
+  position: absolute; top: calc(10px + var(--safe-top)); right: 14px; z-index: 40;
+}
+
+/* ---------- Сетка меню (огромные плашки с волнами) ---------- */
+.grid-menu { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 26px; }
 .menu-card {
-  display: flex; flex-direction: column; align-items: flex-start; gap: 12px;
+  position: relative; overflow: hidden;
+  display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end; gap: 10px;
+  min-height: 150px;
   padding: 18px 16px;
-  background: var(--card);
+  background: linear-gradient(180deg, var(--card-solid), var(--card));
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: 22px;
   backdrop-filter: blur(10px);
   cursor: pointer;
   transition: transform .12s ease, border-color .2s ease;
 }
+.menu-card> :not(.wave-row) { position: relative; z-index: 1; }
 .menu-card:active { transform: scale(0.97); }
 .menu-card--wide { grid-column: 1 / -1; flex-direction: row; align-items: center; justify-content: space-between; }
 .menu-card .mc-ico {
@@ -285,7 +304,7 @@ body {
 .menu-card--violet .mc-ico { background: var(--blue-soft); }
 .menu-card--amber .mc-ico { background: var(--amber-soft); }
 .menu-card--red .mc-ico { background: var(--red-soft); }
-.mc-label { font-size: 14.5px; font-weight: 600; color: var(--text); }
+.mc-label { font-size: 15.5px; font-weight: 700; color: var(--text); }
 .mc-sub { font-size: 12.5px; color: var(--text-3); margin-top: 2px; }
 
 /* ---------- Статистика ---------- */

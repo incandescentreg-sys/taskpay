@@ -109,7 +109,16 @@
     opts = opts || {};
     const back = opts.back === false ? '' :
       '<button class="tb-back" data-action="back">‹</button>';
-    return '<header class="topbar">' + back + '<h1>' + esc(title) + '</h1></header>';
+    const bal = Store.getBalance();
+    const balHTML = opts.balance === false
+      ? ''
+      : '<button class="tb-balance" data-action="navigate" data-page="wallet" aria-label="Баланс">' +
+          '💰 ' + fmtMoney(bal) +
+        '</button>';
+    const ava = fabAvatarHTML();
+    return '<header class="topbar">' + back + '<h1>' + esc(title) + '</h1>' +
+      '<div class="tb-right">' + ava + balHTML + '</div>' +
+    '</header>';
   }
   function bottomNav(active) {
     const tabs = [
@@ -129,7 +138,6 @@
         '</button>' +
         tabHTML(tabs[1]) +
       '</nav>' +
-      fabAvatarHTML() +
     '</div>';
   }
   function fabAvatarHTML() {

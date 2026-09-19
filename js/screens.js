@@ -24,9 +24,12 @@
 
     return `
     <div class="page page--hero">
+      <div class="home-top-right">
+        <button class="home-balance" data-action="navigate" data-page="wallet" aria-label="Баланс">💰 ${fmtMoney(Store.getBalance())}</button>
+        ${TaskPay.fabAvatarHTML()}
+      </div>
       <div class="brand">
-        <img src="logo.jpg" alt="Yumitask" class="logo">
-        <h1>Yumitask</h1>
+        <img src="banner.jpg" alt="Yumitask" class="banner-logo">
         <div class="tagline">Выполняй задания — получай деньги<br>Размещай задания — получай результат</div>
       </div>
 
@@ -42,22 +45,26 @@
           <div class="mc-ico" style="background:var(--blue-soft)">💼</div>
           <div class="mc-label">Разместить задание</div>
           <div class="mc-sub">Найди исполнителей</div>
-        </div>
-        <div class="menu-card menu-card--green" data-action="navigate" data-page="wallet">
-          <div class="mc-ico" style="background:var(--green-soft)">💰</div>
-          <div class="mc-label">Мой баланс</div>
-          <div class="mc-sub">${fmtMoney(Store.getBalance())}</div>
+          <div class="wave-row wave-1"><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg></div>
+          <div class="wave-row wave-2"><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg></div>
+          <div class="wave-row wave-3"><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg></div>
         </div>
         <div class="menu-card menu-card--amber" data-action="navigate" data-page="subs">
           <div class="mc-ico" style="background:var(--amber-soft)">📢</div>
           <div class="mc-label">Продвижение</div>
           <div class="mc-sub">Тарифы работодателя</div>
+          <div class="wave-row wave-1"><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg></div>
+          <div class="wave-row wave-2"><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg></div>
+          <div class="wave-row wave-3"><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg></div>
         </div>
         ${isAdmin() ? `
         <div class="menu-card menu-card--amber" data-action="navigate" data-page="admin">
           <div class="mc-ico" style="background:var(--red-soft)">⚙️</div>
           <div class="mc-label">Админ-панель</div>
           <div class="mc-sub">Управление</div>
+          <div class="wave-row wave-1"><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg></div>
+          <div class="wave-row wave-2"><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg></div>
+          <div class="wave-row wave-3"><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg></div>
         </div>` : ''}
       </div>
 
@@ -368,7 +375,7 @@
     const bal = Store.getBalance();
     const txns = Store.data.transactions;
     return `
-    ${topbar('💰 Мой баланс')}
+    ${topbar('💰 Мой баланс', { balance: false })}
     <div class="page">
       <div class="balance-card">
         <div class="b-label">Доступно</div>
