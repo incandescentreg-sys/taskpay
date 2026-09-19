@@ -1,12 +1,12 @@
 /* ============================================================
-   TaskPay — все экраны приложения
+   Yumitask — все экраны приложения
    Каждый экран — функция, зарегистрированная через TaskPay.register
    ============================================================ */
 (function () {
   'use strict';
 
   const { navigate, register, topbar, bottomNav, statCard, taskCardHTML,
-    proofChips, statusHTML, esc, toast, vibrate, tgConfirm, tgPopup,
+    proofChips, statusHTML, starsHTML, esc, toast, vibrate, tgConfirm, tgPopup,
     isAdmin, filters: getFilters, setFilters: setFtrs } = TaskPay;
 
   const $ = id => document.getElementById(id);
@@ -25,18 +25,20 @@
     return `
     <div class="page page--hero">
       <div class="brand">
-        <div class="logo">TP</div>
-        <h1>TaskPay</h1>
+        <img src="logo.jpg" alt="Yumitask" class="logo">
+        <h1>Yumitask</h1>
         <div class="tagline">Выполняй задания — получай деньги<br>Размещай задания — получай результат</div>
       </div>
 
+      <div class="bourse-wrap">
+        <button class="bourse-btn" data-action="navigate" data-page="tasks">
+          <span class="bb-ico">⚡</span>
+          <span><span class="bb-label">Биржа заданий</span><span class="bb-sub">Открыть задания</span></span>
+        </button>
+      </div>
+
       <div class="grid-menu">
-        <div class="menu-card" data-action="navigate" data-page="tasks">
-          <div class="mc-ico">🔍</div>
-          <div class="mc-label">Найти задания</div>
-          <div class="mc-sub">Зарабатывай на простых действиях</div>
-        </div>
-        <div class="menu-card menu-card--violet" data-action="navigate" data-page="create">
+        <div class="menu-card" data-action="navigate" data-page="create">
           <div class="mc-ico" style="background:var(--blue-soft)">💼</div>
           <div class="mc-label">Разместить задание</div>
           <div class="mc-sub">Найди исполнителей</div>
@@ -51,11 +53,12 @@
           <div class="mc-label">Продвижение</div>
           <div class="mc-sub">Тарифы работодателя</div>
         </div>
-        <div class="menu-card menu-card--amber" data-action="navigate" data-page="profile">
-          <div class="mc-ico" style="background:var(--red-soft)">👤</div>
-          <div class="mc-label">Профиль</div>
-          <div class="mc-sub">Настройки и статистика</div>
-        </div>
+        ${isAdmin() ? `
+        <div class="menu-card menu-card--amber" data-action="navigate" data-page="admin">
+          <div class="mc-ico" style="background:var(--red-soft)">⚙️</div>
+          <div class="mc-label">Админ-панель</div>
+          <div class="mc-sub">Управление</div>
+        </div>` : ''}
       </div>
 
       <div class="section-title">Статистика платформы</div>
@@ -81,22 +84,27 @@
      TASKS — найти задания
   ================================================================ */
   register('tasks', () => {
-    let { cat, sort } = TaskPay.filters();
+    let { cat, platform, sort } = TaskPay.filters();
     let tasks = Store.getTasks().filter(t => t.status === 'active' && t.spotsLeft > 0);
 
     if (cat !== 'all') tasks = tasks.filter(t => t.category === cat);
+    if (platform !== 'all') tasks = tasks.filter(t => t.platform === platform);
     if (sort === 'pay') tasks.sort((a, b) => b.reward - a.reward);
     else if (sort === 'popular') tasks.sort((a, b) => b.spotsTotal - a.spotsTotal);
     else tasks.sort((a, b) => b.createdAt - a.createdAt);
 
     const catHTML = (id, name) =>
       '<span class="tag' + (cat === id ? ' active' : '') + '" data-action="filter-cat" data-cat="' + id + '">' + name + '</span>';
+    const platHTML = (id, name) =>
+      '<span class="tag' + (platform === id ? ' active' : '') + '" data-action="filter-platform" data-platform="' + id + '">' + name + '</span>';
     const sortHTML = (id, name) =>
       '<span class="tag' + (sort === id ? ' active' : '') + '" data-action="filter-sort" data-sort="' + id + '">' + name + '</span>';
 
     return `
     ${topbar('🔍 Найти задания', { back: false })}
     <div class="page">
+      <div class="section-title">Платформа</div>
+      <div class="tag-row">${platHTML('all', 'Все')}${PLATFORMS.map(p => platHTML(p.id, p.icon + ' ' + p.name)).join('')}</div>
       <div class="section-title">Категории</div>
       <div class="tag-row">${catHTML('all', 'Все')}${CATEGORIES.map(c => catHTML(c.id, c.icon + ' ' + c.name)).join('')}</div>
       <div class="section-title">Сортировка</div>
@@ -117,19 +125,22 @@
     const t = Store.getTask(s.id);
     if (!t) return '<div class="page"><div class="empty"><div class="e-ico">❌</div><div class="e-title">Задание не найдено</div></div></div>';
     const cat = Category.byId(t.category);
+    const pl = t.platform ? Platform.byId(t.platform) : null;
+    const rating = Store.getTaskEmployerRating(t);
     return `
     ${topbar(t.title)}
     <div class="page">
       <div class="card" style="margin-bottom:16px;">
         <div class="section-title" style="margin-top:0">${esc(t.title)}</div>
         <div class="tc-chips" style="margin-bottom:12px">
+          ${pl ? '<span class="chip chip--blue">' + pl.icon + ' ' + esc(pl.name) + '</span>' : ''}
           <span class="chip chip--accent">🏷 ${esc(cat.name)}</span>
           <span class="chip chip--green">💰 ${fmtMoney(t.reward)} за исполнителя</span>
           <span class="chip chip--amber">👥 Осталось: ${t.spotsLeft} мест</span>
           <span class="chip chip--blue">⏱ ~${t.durationMin} мин</span>
         </div>
         <p style="font-size:14px;line-height:1.55;color:var(--text-2);margin:10px 0 16px">${esc(t.description)}</p>
-        <div style="font-size:13px;color:var(--text-3);margin-bottom:6px">Работодатель: ${esc(t.employerName || '—')}</div>
+        <div style="font-size:13px;color:var(--text-3);margin-bottom:6px">Работодатель: ${esc(t.employerName || '—')} ${starsHTML(rating)} <b style="color:var(--accent-2)">${rating.score}</b> · ${rating.count} оценок</div>
         <div style="font-size:13px;color:var(--text-3)">Создано: ${timeAgo(t.createdAt)} · Срок: до ${t.deadlineDays} дн</div>
       </div>
 
@@ -188,6 +199,13 @@
             <div style="font-size:13px;color:var(--text-2)">Вознаграждение ${fmtMoney(a.reward)} зачислено на баланс</div></div>
           </div>
         </div>
+        ${!a.rated ? `
+        <div class="card" style="margin-top:12px">
+          <div style="font-weight:700;text-align:center;margin-bottom:6px">Оцените работодателя</div>
+          <div class="rate-stars">
+            ${[1,2,3,4,5].map(n => '<button class="star" data-action="rate-employer" data-star="' + n + '" data-aid="' + a.id + '">★</button>').join('')}
+          </div>
+        </div>` : ''}
       ` : a.status === 'rejected' ? `
         <div class="card" style="background:var(--red-soft);border-color:var(--red)">
           <div style="display:flex;align-items:center;gap:10px">
@@ -241,6 +259,11 @@
       <div class="field">
         <label>Категория <span class="req">*</span></label>
         <select id="f-cat">${CATEGORIES.map(c => '<option value="' + c.id + '">' + c.icon + ' ' + c.name + '</option>').join('')}</select>
+      </div>
+      <div class="field">
+        <label>Платформа <span class="req">*</span></label>
+        <select id="f-platform">${PLATFORMS.map(p => '<option value="' + p.id + '">' + p.icon + ' ' + p.name + '</option>').join('')}</select>
+        <div class="hint">Где исполнитель будет выполнять задание</div>
       </div>
       <div class="field">
         <label>Количество исполнителей <span class="req">*</span></label>
@@ -378,6 +401,8 @@
     const u = Store.getUser();
     const stats = Store.computeStats();
     const myAssignments = Store.getAssignments().filter(a => a.userId === u.id);
+    const workerR = Store.getUserRating('worker');
+    const employerR = Store.getUserRating('employer');
 
     return `
     ${topbar('👤 Профиль')}
@@ -387,6 +412,17 @@
         <div>
           <div style="font-size:18px;font-weight:700">${esc(u.name)}</div>
           <div style="font-size:13px;color:var(--text-2)">${u.role === 'employer' ? 'Работодатель' : u.role === 'both' ? 'Исполнитель / Работодатель' : 'Исполнитель'}${isAdmin() ? ' · ⚙️ Админ' : ''}</div>
+        </div>
+      </div>
+
+      <div class="stats" style="margin-bottom:14px">
+        <div class="stat-card blue">
+          <div class="val" style="font-size:20px">⭐ ${workerR.count ? workerR.score.toFixed(1) : '—'}</div>
+          <div class="label">Рейтинг исполнителя (${workerR.count} оценок)</div>
+        </div>
+        <div class="stat-card green">
+          <div class="val" style="font-size:20px">⭐ ${employerR.count ? employerR.score.toFixed(1) : '—'}</div>
+          <div class="label">Рейтинг работодателя (${employerR.count} оценок)</div>
         </div>
       </div>
 
@@ -472,6 +508,11 @@
         vibrate();
         break;
       }
+      case 'open-profile': {
+        navigate('profile');
+        vibrate();
+        break;
+      }
       case 'open-task': {
         navigate('task-detail', { id: el.dataset.id });
         vibrate();
@@ -486,6 +527,26 @@
         const f = TaskPay.filters();
         f.cat = el.dataset.cat;
         navigate('tasks');
+        break;
+      }
+      case 'filter-platform': {
+        const f = TaskPay.filters();
+        f.platform = el.dataset.platform;
+        navigate('tasks');
+        break;
+      }
+      case 'rate-employer': {
+        const aid = Number(el.dataset.aid);
+        const stars = Number(el.dataset.stars);
+        const a = Store.getAssignment(aid);
+        if (!a || a.rated) { toast('Уже оценено'); return; }
+        a.rated = true;
+        a.rating = stars;
+        Store.addRating('employer', stars);
+        Store.save();
+        toast('⭐ Спасибо! Оценка ' + stars + '/5');
+        vibrate();
+        navigate('my-task-detail', { aid: aid });
         break;
       }
       case 'filter-sort': {
@@ -569,6 +630,7 @@
         const title = $('f-title');
         const desc = $('f-desc');
         const cat = $('f-cat');
+        const platform = $('f-platform');
         const spots = $('f-spots');
         const reward = $('f-reward');
         const instruction = $('f-instruction');
@@ -606,6 +668,7 @@
           title: title.value.trim(),
           description: desc.value.trim(),
           category: cat.value,
+          platform: platform.value,
           spotsTotal: s,
           spotsLeft: s,
           reward: r,

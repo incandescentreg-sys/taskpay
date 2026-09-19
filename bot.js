@@ -1,5 +1,5 @@
 /* ============================================================
-   TaskPay — Telegram-бот (Node.js, без внешних зависимостей).
+   Yumitask — Telegram-бот (Node.js, без внешних зависимостей).
    Обрабатывает команду /start и открывает Mini App.
 
    Настройка:
@@ -57,7 +57,7 @@ async function handleUpdate(update) {
     if (data === 'open_app') {
       await apiCall('answerCallbackQuery', {
         callback_query_id: update.callback_query.id,
-        text: 'Открываю TaskPay…',
+        text: 'Открываю Yumitask…',
         url: MINI_APP_URL
       });
       return;
@@ -68,13 +68,13 @@ async function handleUpdate(update) {
   if (text === '/start') {
     await apiCall('sendMessage', {
       chat_id: chatId,
-      text: '👋 Привет! Это TaskPay — биржа заданий.\n\n' +
+      text: '👋 Привет! Это Yumitask — биржа заданий.\n\n' +
             '💼 Размещайте задания — находите исполнителей\n' +
             '🔍 Выполняйте задания — получайте деньги\n\n' +
             'Нажмите кнопку ниже, чтобы открыть приложение:',
       reply_markup: {
         inline_keyboard: [
-          [{ text: '🚀 Открыть TaskPay', web_app: { url: MINI_APP_URL } }]
+          [{ text: '🚀 Открыть Yumitask', web_app: { url: MINI_APP_URL } }]
         ]
       }
     });
@@ -83,10 +83,10 @@ async function handleUpdate(update) {
 
   await apiCall('sendMessage', {
     chat_id: chatId,
-    text: 'Используйте кнопку «🚀 Открыть TaskPay», чтобы запустить приложение.',
+    text: 'Используйте кнопку «🚀 Открыть Yumitask», чтобы запустить приложение.',
     reply_markup: {
       inline_keyboard: [
-        [{ text: '🚀 Открыть TaskPay', web_app: { url: MINI_APP_URL } }]
+        [{ text: '🚀 Открыть Yumitask', web_app: { url: MINI_APP_URL } }]
       ]
     }
   });

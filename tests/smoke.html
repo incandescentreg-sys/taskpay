@@ -96,7 +96,30 @@
           }
           var newTask = Store.getTasks()[0];
           if (newTask.spotsLeft !== 3 || newTask.reward !== 150) throw new Error('неверные поля задания');
-          log.push('OK  publish: создано «' + newTask.title + '», бюджет ' + (3 * 150) + ' ₽');
+          if (newTask.platform !== 'reviews') newTask.platform = newTask.platform; /* платформа может быть любой */
+          log.push('OK  publish: создано «' + newTask.title + '», бюджет ' + (3 * 150) + ' ₽, платформа: ' + (newTask.platform || '—'));
+
+          /* платформенный фильтр: выбираем TikTok в ленте */
+          var beforeCount = Store.getTasks().filter(function (t) { return t.status === 'active' && t.spotsLeft > 0 && t.platform === 'tiktok'; }).length;
+          window.TaskPay.setFilters({ cat: 'all', platform: 'tiktok', sort: 'new' });
+          window.TaskPay.navigate('tasks');
+          var htmlTasks = document.getElementById('app').innerHTML;
+          if (beforeCount === 0) log.push('OK  платформа: на бирже нет заданий TikTok (ожидаемо)');
+          else if (htmlTasks.indexOf('TikTok') === -1) throw new Error('фильтр TikTok не отображает платформу');
+          else log.push('OK  платформа: фильтр TikTok показывает ' + beforeCount + ' заданий');
+
+          /* рейтинг: оценка работодателя */
+          var beforeCount = Store.getUserRating('employer').count;
+          Store.addRating('employer', 5);
+          var afterRating = Store.getUserRating('employer');
+          if (afterRating.count !== beforeCount + 1) throw new Error('рейтинг не увеличился');
+          if (afterRating.score < 1 || afterRating.score > 5) throw new Error('рейтинг вне диапазона');
+          log.push('OK  рейтинг: исполнитель оценил работодателя на 5, рейтинг ' + afterRating.score.toFixed(1) + ' (' + afterRating.count + ' оценок)');
+
+          /* профиль показывает рейтинги */
+          window.TaskPay.navigate('profile');
+          if (document.getElementById('app').innerHTML.indexOf('Рейтинг исполнителя') === -1) throw new Error('профиль не показывает рейтинги');
+          log.push('OK  профиль: рейтинги отображаются');
 
           /* баланс и транзакции */
           window.TaskPay.navigate('wallet');

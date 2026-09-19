@@ -1,5 +1,5 @@
 /* ============================================================
-   TaskPay — минимальный статический сервер (Node.js, без зависимостей)
+   Yumitask — минимальный статический сервер (Node.js, без зависимостей)
    Запуск:  node server.js
    По умолчанию раздаёт папку проекта на http://localhost:8081
    ============================================================ */
@@ -47,5 +47,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log('TaskPay Mini App: http://localhost:' + PORT);
+  console.log('Yumitask Mini App: http://localhost:' + PORT);
 });

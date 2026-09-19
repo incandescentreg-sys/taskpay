@@ -1,5 +1,5 @@
 /* ============================================================
-   TaskPay — хранилище данных
+   Yumitask — хранилище данных
    Локальная модель (localStorage) для прототипа мини-приложения.
    В продакшене заменяется на API бэкенда.
    ============================================================ */
@@ -13,6 +13,15 @@ const CATEGORIES = [
   { id: 'views', name: 'Просмотры', icon: '👁' },
   { id: 'comments', name: 'Комментарии', icon: '💬' },
   { id: 'other', name: 'Другое', icon: '📦' }
+];
+
+const PLATFORMS = [
+  { id: 'tiktok', name: 'TikTok', icon: '🎵' },
+  { id: 'telegram', name: 'Telegram', icon: '✈️' },
+  { id: 'youtube', name: 'YouTube', icon: '▶️' },
+  { id: 'vk', name: 'VK', icon: '🟦' },
+  { id: 'instagram', name: 'Instagram', icon: '📸' },
+  { id: 'website', name: 'Сайт / другое', icon: '🌐' }
 ];
 
 const PROOF_TYPES = [
@@ -50,6 +59,8 @@ function seedData() {
       role: 'both',               // 'employer' | 'worker' | 'both'
       balance: 1250,
       subscription: null,         // { planId, until }
+      rating: { worker: { score: 0, count: 0 }, employer: { score: 0, count: 0 } },
+      completedTasks: 0,
       createdAt: now
     },
     tasks: [
@@ -64,8 +75,10 @@ function seedData() {
         durationMin: 5,
         instruction: '1. Откройте страницу ресторана по ссылке в задании.\n2. Ознакомьтесь с меню и атмосферой.\n3. Напишите честный отзыв (от 3 предложений) о посещении.\n4. Прикрепите скриншот опубликованного отзыва.',
         proof: ['screenshot', 'text'],
+        platform: 'website',
         employerId: -1,
         employerName: 'Ресторан «Уют»',
+        employerRating: { score: 4.7, count: 32 },
         createdAt: now - 2 * day,
         deadlineDays: 7,
         status: TASK_STATUS.ACTIVE
@@ -81,8 +94,10 @@ function seedData() {
         durationMin: 3,
         instruction: '1. Перейдите по ссылке на канал.\n2. Нажмите «Подписаться».\n3. Оставайтесь подписанным минимум 3 дня.\n4. Прикрепите скриншот подписки.',
         proof: ['screenshot'],
+        platform: 'telegram',
         employerId: -1,
         employerName: 'Startup News',
+        employerRating: { score: 4.5, count: 18 },
         createdAt: now - 5 * day,
         deadlineDays: 3,
         status: TASK_STATUS.ACTIVE
@@ -98,8 +113,10 @@ function seedData() {
         durationMin: 2,
         instruction: '1. Откройте запись по ссылке.\n2. Поставьте лайк.\n3. Сделайте репост к себе на страницу.\n4. Пришлите ссылку на репост.',
         proof: ['link', 'screenshot'],
+        platform: 'vk',
         employerId: -1,
         employerName: 'Brand Shop',
+        employerRating: { score: 4.2, count: 25 },
         createdAt: now - day,
         deadlineDays: 5,
         status: TASK_STATUS.ACTIVE
@@ -115,6 +132,7 @@ function seedData() {
         durationMin: 4,
         instruction: '1. Посмотрите видео до конца.\n2. Напишите развёрнутый комментарий (от 2 предложений).\n3. Прикрепите скриншот комментария.',
         proof: ['screenshot'],
+        platform: 'youtube',
         employerId: -1,
         employerName: 'VideoBlog',
         createdAt: now - 12 * 3600000,
@@ -132,6 +150,7 @@ function seedData() {
         durationMin: 3,
         instruction: '1. Перейдите на канал по ссылке.\n2. Нажмите «Подписаться» и включите колокольчик.\n3. Прикрепите скриншот подписки.',
         proof: ['screenshot'],
+        platform: 'youtube',
         employerId: -1,
         employerName: 'TechTube',
         createdAt: now - 3 * day,
@@ -149,6 +168,7 @@ function seedData() {
         durationMin: 8,
         instruction: '1. Установите приложение по ссылке.\n2. Изучите основные функции.\n3. Оставьте отзыв в сторе (от 150 символов).\n4. Прикрепите скриншот отзыва.',
         proof: ['screenshot', 'text'],
+        platform: 'website',
         employerId: -1,
         employerName: 'AppLab',
         createdAt: now - 7 * 3600000,
@@ -283,6 +303,28 @@ const Store = {
     return { ok: true, plan };
   },
 
+  /* ---------- Рейтинги ---------- */
+  getUserRating(kind) {
+    const r = this.data.user.rating || {};
+    return r[kind] || { score: 0, count: 0 };
+  },
+
+  addRating(kind, stars) {
+    const r = this.data.user.rating || {};
+    r[kind] = r[kind] || { score: 0, count: 0 };
+    const cur = r[kind];
+    const total = cur.score * cur.count + stars;
+    cur.count += 1;
+    cur.score = Math.round((total / cur.count) * 10) / 10;
+    this.save();
+    return cur;
+  },
+
+  getTaskEmployerRating(task) {
+    if (task.employerRating) return task.employerRating;
+    return { score: 5, count: 1 };
+  },
+
   /* ---------- Статистика ---------- */
   computeStats() {
     const tasks = this.data.tasks;
@@ -300,6 +342,13 @@ const Store = {
 /* ---------- Соцсеть-хелперы ---------- */
 const Category = {
   byId(id) { return CATEGORIES.find(c => c.id === id) || CATEGORIES[CATEGORIES.length - 1]; },
+  name(id) { return this.byId(id).name; },
+  icon(id) { return this.byId(id).icon; }
+};
+
+const Platform = {
+  list: PLATFORMS,
+  byId(id) { return PLATFORMS.find(p => p.id === id) || PLATFORMS[PLATFORMS.length - 1]; },
   name(id) { return this.byId(id).name; },
   icon(id) { return this.byId(id).icon; }
 };
