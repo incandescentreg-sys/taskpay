@@ -114,7 +114,6 @@
   function bottomNav(active) {
     const tabs = [
       ['home', '🏠', 'Главная'],
-      ['wallet', '💰', 'Баланс'],
       ['create', '➕', 'Разместить'],
       ['subs', '📢', 'Продвижение']
     ];
@@ -125,11 +124,11 @@
     };
     return '<div class="nav-island">' +
       '<nav class="tabbar">' +
-        tabHTML(tabs[0]) + tabHTML(tabs[1]) +
+        tabHTML(tabs[0]) +
         '<button class="tab-bourse' + (active === 'tasks' ? ' active' : '') + '" data-action="tab" data-tab="tasks" aria-label="Биржа">' +
           '<span class="tb-ico">⚡</span><span class="tb-label">Биржа</span>' +
         '</button>' +
-        tabHTML(tabs[2]) + tabHTML(tabs[3]) +
+        tabHTML(tabs[1]) + tabHTML(tabs[2]) +
       '</nav>' +
       fabAvatarHTML() +
     '</div>';

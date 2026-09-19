@@ -427,13 +427,13 @@
       </div>
 
       <div style="padding:0 16px">
-        <button class="btn btn--block btn--ghost btn--sm" data-action="edit-name" style="margin-bottom:14px">✏️ Редактировать имя</button>
+        <button class="btn btn--block btn--ghost btn--sm" data-action="edit-name" style="margin-bottom:12px">✏️ Редактировать имя</button>
+        <button class="btn btn--block btn--sm" data-action="navigate" data-page="wallet" style="margin-bottom:14px">💰 Мой баланс: ${fmtMoney(Store.getBalance())}</button>
       </div>
 
       <div class="stats" style="margin-bottom:18px">
         ${statCard(myAssignments.length, 'Взято заданий', 'blue')}
         ${statCard(myAssignments.filter(a => a.status === 'done').length, 'Выполнено', 'green')}
-        ${statCard(fmtMoney(Store.getBalance()), 'Баланс', 'amber')}
         ${statCard(myAssignments.filter(a => a.status === 'pending').length, 'На проверке', 'accent')}
       </div>
 
