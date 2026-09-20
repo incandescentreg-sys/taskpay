@@ -124,7 +124,11 @@ body {
   display: flex; align-items: center; gap: 7px;
 }
 .tb-title-icon { width: 18px; height: 18px; flex: none; color: var(--accent-2); }
-.icon { width: 1em; height: 1em; vertical-align: middle; flex: none; }
+.icon { width: 1em; height: 1em; vertical-align: middle; flex: none; pointer-events: none; }
+/* декоративные иконки не должны перехватывать тап — клик всегда идёт на кнопку */
+button .icon, .tab .icon, .tab-bourse .icon, .nav-chat .icon, .tc-do .icon,
+.menu-card .icon, .verify-opt .icon, .opt .icon, .tb-balance .icon, .home-balance .icon,
+.btn .icon, .link .icon, .section-title .icon { pointer-events: none; }
 .tb-balance {
   flex: none;
   display: inline-flex; align-items: center; gap: 5px;
@@ -266,6 +270,11 @@ body {
   border-radius: 50%;
   display: grid; place-items: center;
 }
+/* Аватарка на главном экране — крупнее */
+.home-top-right .fab-avatar {
+  width: 52px; height: 52px;
+}
+.home-top-right .fab-avatar .fa-initial { font-size: 21px; }
 
 /* ---------- Баннер (главный логотип) ---------- */
 .banner-logo {
@@ -287,7 +296,7 @@ body {
 .grid-menu { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 26px; }
 .menu-card {
   position: relative; overflow: hidden;
-  display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end; gap: 10px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
   min-height: 150px;
   padding: 18px 16px;
   background: linear-gradient(180deg, var(--card-solid), var(--card));
@@ -310,8 +319,8 @@ body {
 .menu-card--violet .mc-ico { background: var(--blue-soft); }
 .menu-card--amber .mc-ico { background: var(--amber-soft); }
 .menu-card--red .mc-ico { background: var(--red-soft); }
-.mc-label { font-size: 15.5px; font-weight: 700; color: var(--text); }
-.mc-sub { font-size: 12.5px; color: var(--text-3); margin-top: 2px; }
+.mc-label { font-size: 15px; font-weight: 700; color: var(--text); text-align: center; line-height: 1.3; min-height: 2.6em; display: flex; align-items: center; }
+.mc-sub { font-size: 12px; color: var(--text-3); margin-top: 2px; text-align: center; min-height: 2em; display: flex; align-items: center; }
 
 /* ---------- Статистика ---------- */
 .section-title {
@@ -776,7 +785,7 @@ background: linear-gradient(135deg, #00CFFF, #0064FF);
   cursor: pointer;
   transition: transform .12s ease, border-color .2s ease, box-shadow .2s ease;
 }
-.nav-chat .nc-ico { width: 26px; height: 26px; display: grid; place-items: center; color: var(--accent-2); }
+.nav-chat .nc-ico { width: 26px; height: 26px; display: grid; place-items: center; color: var(--accent-2); pointer-events: none; }
 .nav-chat .nc-ico .icon { width: 26px; height: 26px; }
 .nav-chat:active { transform: scale(0.92); }
 .nav-chat.active { border-color: var(--accent); box-shadow: 0 0 18px rgba(0, 191, 255, 0.5); }

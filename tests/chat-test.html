@@ -50,6 +50,14 @@
           if (!nc) throw new Error('нет кнопки Сообщения в навигации');
           if (nc.querySelector('.nc-badge') === null) throw new Error('нет badge');
           log.push('OK  nav: кнопка Сообщения с badge в доке');
+
+          /* клик по самой кнопке (симулируем тап) */
+          window.TaskPay.navigate('home');
+          var nc2 = document.querySelector('.nav-chat');
+          nc2.click();
+          var route2 = window.TaskPay.currentRoute();
+          if (route2 !== 'chats') throw new Error('кнопка чата не открыла чаты: ' + route2);
+          log.push('OK  nav: клик по кнопке открывает чаты');
         } catch (e) {
           log.push('FAIL: ' + e.message);
         }
