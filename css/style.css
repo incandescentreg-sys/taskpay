@@ -302,7 +302,6 @@ button .icon, .tab .icon, .tab-bourse .icon, .nav-chat .icon, .tc-do .icon,
   background: linear-gradient(180deg, var(--card-solid), var(--card));
   border: 1px solid var(--border);
   border-radius: 22px;
-  backdrop-filter: blur(10px);
   cursor: pointer;
   transition: transform .12s ease, border-color .2s ease;
 }

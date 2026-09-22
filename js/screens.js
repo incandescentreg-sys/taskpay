@@ -841,9 +841,37 @@
     }
   }
 
+  let _ptrDown = null;
+  let _lastPtrEl = null;
+  let _lastPtrTime = 0;
+
+  /* pointerdown — запоминаем точку касания/клика */
+  window.addEventListener('pointerdown', function (e) {
+    _ptrDown = { x: e.clientX, y: e.clientY };
+  }, { passive: true, capture: true });
+
+  /* pointerup — срабатывает сразу и для мыши, и для тача (без задержки 300ms) */
+  window.addEventListener('pointerup', function (e) {
+    const el = e.target.closest ? e.target.closest('[data-action]') : null;
+    if (!el) return;
+    /* если палец/курсор сдвинулся больше 12px — это прокрутка/свайп */
+    if (_ptrDown) {
+      const dx = e.clientX - _ptrDown.x;
+      const dy = e.clientY - _ptrDown.y;
+      _ptrDown = null;
+      if (Math.abs(dx) > 12 || Math.abs(dy) > 12) return;
+    }
+    _lastPtrEl = el;
+    _lastPtrTime = Date.now();
+    runAction(el);
+  }, { passive: true, capture: true });
+
+  /* click — страховка (на случай, если pointerup не сработал), с дедупликацией */
   window.addEventListener('click', function (e) {
     const el = e.target.closest ? e.target.closest('[data-action]') : null;
     if (!el) return;
+    if (el === _lastPtrEl && Date.now() - _lastPtrTime < 500) { _lastPtrEl = null; _lastPtrTime = 0; return; }
+    _lastPtrEl = null; _lastPtrTime = 0;
     runAction(el);
   });
 
