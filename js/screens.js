@@ -24,7 +24,7 @@
 
     return `
     <div class="page page--hero">
-      <div class="ver-tag">build 7</div>
+      <div class="ver-tag">build 8</div>
       <div class="home-top-right">
         <button class="home-balance" data-action="navigate" data-page="wallet" aria-label="Баланс">${TaskPay.icon('wallet')} ${fmtMoney(Store.getBalance())}</button>
         ${TaskPay.fabAvatarHTML()}

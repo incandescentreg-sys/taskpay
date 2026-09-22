@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Yumitask Supabase diagnostic</title>
+</head>
+<body>
+  <div id="result" style="white-space:pre-wrap;font-family:monospace;font-size:13px;padding:10px;background:#111;color:#0f0"></div>
+  <script src="../js/vendor/supabase.js"></script>
+  <script src="../js/store.js"></script>
+  <script src="../js/api.js"></script>
+  <script>
+    (function () {
+      var log = [];
+      function l(s) { log.push(s); document.getElementById('result').textContent = log.join('\n'); }
+
+      try {
+        l('1. window.supabase: ' + typeof window.supabase);
+        l('2. Api.isConfigured(): ' + Api.isConfigured());
+        l('3. Store.useApi(): ' + ((window.Store && Store.useApi()) ? 'true' : 'false'));
+
+        if (Api.isConfigured()) {
+          /* читаем число задач */
+          SB_RAW().then(function (n) { l('4. Задач в БД: ' + n); });
+        }
+      } catch (e) {
+        l('ОШИБКА: ' + e.message);
+      }
+
+      function SB_RAW() {
+        var URL = 'https://olwyzvyprcfypbpetgvf.supabase.co';
+        var KEY = 'sb_publishable_r1Ltg3tpWgem_D5Myyillg_59mbUGGr';
+        var c = window.supabase.createClient(URL, KEY);
+        return c.from('tasks').select('id').limit(100).then(function (r) {
+          if (r.error) return 'ERR ' + r.error.message;
+          return r.data.length;
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Yumitask full sync test</title>
+</head>
+<body>
+  <div id="app"></div>
+  <div id="result" style="white-space:pre-wrap;font-family:monospace;font-size:13px;padding:10px;background:#111;color:#0f0"></div>
+  <script>
+    /* Мокаем Telegram WebApp как в реальном Mini App */
+    window.Telegram = {
+      WebApp: {
+        ready(){}, expand(){}, initData: 'dummy-init-data',
+        initDataUnsafe: {
+          user: { id: 555000999, first_name: 'Тест', last_name: 'Синхронизация', username: 'test_sync' }
+        },
+        setHeaderColor(){}, setBackgroundColor(){}, disableVerticalSwipes(){},
+        HapticFeedback:{ impactOccurred(){} },
+        BackButton:{ show(){}, hide(){}, onClick(){} },
+        showConfirm(m){ return Promise.resolve(true); },
+        showAlert(){}
+      }
+    };
+  </script>
+  <script src="../js/vendor/supabase.js"></script>
+  <script src="../js/store.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/app.js"></script>
+  <script src="../js/screens.js"></script>
+  <script>
+    (function () {
+      var log = [];
+      var URL = 'https://olwyzvyprcfypbpetgvf.supabase.co';
+      var KEY = 'sb_publishable_r1Ltg3tpWgem_D5Myyillg_59mbUGGr';
+      function l(s) { log.push(s); document.getElementById('result').textContent = log.join('\n'); }
+      function freshClient() { return window.supabase.createClient(URL, KEY); }
+
+      window.addEventListener('load', function () {
+        setTimeout(function () {
+          try {
+            l('1. Api.isConfigured(): ' + Api.isConfigured());
+            l('2. Store.useApi(): ' + (Store.useApi() ? 'true' : 'false'));
+
+            Store.syncFromApi().then(function (ok) {
+              l('3. syncFromApi вернул: ' + ok);
+              l('4. balance пользователя в localStorage: ' + Store.getBalance());
+
+              /* проверяем, создался ли пользователь в БД */
+              setTimeout(function () {
+                freshClient().from('users').select('id,name').eq('id', 555000999).maybeSingle().then(function (r) {
+                  if (r.error) l('5. Запрос user из БД: ОШИБКА ' + r.error.message);
+                  else if (r.data) l('5. Пользователь в БД: ' + JSON.stringify(r.data));
+                  else l('5. Пользователь НЕ создался в БД');
+                });
+              }, 1500);
+            });
+          } catch (e) {
+            l('ОШИБКА: ' + e.message);
+          }
+        }, 800);
+      });
+    })();
+  </script>
+</body>
+</html>

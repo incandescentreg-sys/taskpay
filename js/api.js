@@ -29,7 +29,11 @@
 
   window.Api = {
     isConfigured() {
-      return configured && SUPABASE_URL.indexOf('ВАШ-ПРОЕКТ') === -1 &&
+      /* инициализируем клиент прямо здесь — иначе флаг configured
+         останется false до первого обращения к БД и app.js не включит
+         синхронизацию (всё работало в демо-режиме) */
+      const ok = configured || ensureClient();
+      return ok && SUPABASE_URL.indexOf('ВАШ-ПРОЕКТ') === -1 &&
              SUPABASE_ANON_KEY.indexOf('eyJ...') === -1 &&
              SUPABASE_ANON_KEY.indexOf('sb_publishable') === 0;
     },

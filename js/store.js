@@ -354,22 +354,14 @@ const Store = {
   async syncFromApi() {
     if (!this.useApi()) return false;
     try {
-      /* авторизация через edge-функцию (JWT) */
-      const authedUser = await Api.auth();
-      if (authedUser) {
-        this.data.user.id = Number(authedUser.id);
-        this.data.user.name = authedUser.name || this.data.user.name;
-        this.data.user.balance = authedUser.balance != null ? authedUser.balance : this.data.user.balance;
-        this.data.user.role = authedUser.role || this.data.user.role;
-      } else {
-        /* fallback: прямая запись через таблицу (если edge-функция не развёрнута) */
-        const user = await Api.ensureUser();
-        if (user) {
-          this.data.user.id = Number(user.id);
-          this.data.user.name = user.name || this.data.user.name;
-          this.data.user.balance = user.balance != null ? user.balance : this.data.user.balance;
-          this.data.user.role = user.role || this.data.user.role;
-        }
+      /* ЗАПУСК: напрямую через таблицу users (MVP-политики 'for all using true')
+         — edge-функция auth будет включена после стабилизации */
+      const user = await Api.ensureUser();
+      if (user) {
+        this.data.user.id = Number(user.id);
+        this.data.user.name = user.name || this.data.user.name;
+        this.data.user.balance = user.balance != null ? user.balance : this.data.user.balance;
+        this.data.user.role = user.role || this.data.user.role;
       }
       /* свежий баланс из БД */
       const bal = await Api.getBalance(this.data.user.id);
