@@ -169,6 +169,40 @@
       return error ? null : (data ? data.balance : 0);
     },
 
+    /* ---------- UID пользователей ---------- */
+    async getUserByUid(uid) {
+      if (!ensureClient()) return null;
+      const { data, error } = await SB.from('users')
+        .select('id, name, photo_url, uid')
+        .eq('uid', String(uid).trim().toUpperCase())
+        .maybeSingle();
+      return error ? null : data;
+    },
+
+    async getMyUid(userId) {
+      if (!ensureClient()) return null;
+      const { data, error } = await SB.from('users')
+        .select('uid').eq('id', userId).maybeSingle();
+      return error ? null : (data ? data.uid : null);
+    },
+
+    /* Создать/найти чат с пользователем (без задания) */
+    async findOrCreateChat(userA, userB) {
+      if (!ensureClient()) return null;
+      const a = Number(userA), b = Number(userB);
+      if (a === b) return null;
+      /* ищем существующий чат в обе стороны */
+      const { data: existing } = await SB.from('chats')
+        .select('*')
+        .or('and(user_a.eq.' + a + ',user_b.eq.' + b + '),and(user_a.eq.' + b + ',user_b.eq.' + a + ')')
+        .maybeSingle();
+      if (existing) return existing;
+      const { data, error } = await SB.from('chats')
+        .insert({ user_a: a, user_b: b })
+        .select().single();
+      return error ? null : data;
+    },
+
     async requestPayout(userId, amount) {
       return this._callRpc('request_payout', {
         p_user_id: Number(userId), p_amount: Number(amount)

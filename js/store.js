@@ -230,6 +230,11 @@ const Store = {
     this.save();
   },
 
+  setUid(uid) {
+    this.data.user.uid = uid;
+    this.save();
+  },
+
   setRole(role) {
     this.data.user.role = role;
     this.save();
@@ -362,10 +367,15 @@ const Store = {
         this.data.user.name = user.name || this.data.user.name;
         this.data.user.balance = user.balance != null ? user.balance : this.data.user.balance;
         this.data.user.role = user.role || this.data.user.role;
+        if (user.uid) this.data.user.uid = user.uid;
       }
       /* свежий баланс из БД */
       const bal = await Api.getBalance(this.data.user.id);
       if (bal != null) this.data.user.balance = bal;
+
+      /* UID пользователя */
+      const myUid = await Api.getMyUid(this.data.user.id);
+      if (myUid) this.data.user.uid = myUid;
 
       const tasks = await Api.getTasks();
       if (tasks && tasks.length) {

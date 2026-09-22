@@ -485,6 +485,7 @@
     const myAssignments = Store.getAssignments().filter(a => a.userId === u.id);
     const workerR = Store.getUserRating('worker');
     const employerR = Store.getUserRating('employer');
+    const useApi = Store.useApi();
 
     return `
     ${topbar('Профиль', { icon: 'user' })}
@@ -494,8 +495,19 @@
         <div>
           <div style="font-size:18px;font-weight:700">${esc(u.name)}</div>
           <div style="font-size:13px;color:var(--text-2)">${u.role === 'employer' ? 'Работодатель' : u.role === 'both' ? 'Исполнитель / Работодатель' : 'Исполнитель'}${isAdmin() ? ' · ' + TaskPay.icon('shield') + ' Админ' : ''}</div>
+          ${useApi && u.uid ? '<div class="uid-chip">ID: <b>' + esc(u.uid) + '</b> <span class="uid-copy" data-action="copy-uid">${TaskPay.icon('copy')}</span></div>' : ''}
         </div>
       </div>
+
+      ${useApi ? `
+      <div class="card" style="margin-bottom:14px">
+        <div style="font-weight:700;margin-bottom:8px">${TaskPay.icon('search')} Найти пользователя</div>
+        <div class="uid-search">
+          <input id="uid-input" placeholder="Введите ID (например ABC123)" maxlength="8" style="flex:1">
+          <button class="btn btn--sm btn--block" data-action="find-uid" style="flex:none;width:auto;padding:10px 16px">Найти</button>
+        </div>
+        <div id="uid-result"></div>
+      </div>` : ''}
 
       <div class="stats" style="margin-bottom:14px">
         <div class="stat-card blue">
@@ -721,6 +733,63 @@
       case 'open-profile': {
         navigate('profile');
         vibrate();
+        break;
+      }
+      case 'copy-uid': {
+        const u = Store.getUser();
+        if (u.uid && navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(u.uid)
+            .then(() => toast('UID скопирован: ' + u.uid))
+            .catch(() => toast('UID: ' + u.uid));
+        } else {
+          toast('UID: ' + (u.uid || 'не найден'));
+        }
+        vibrate();
+        break;
+      }
+      case 'find-uid': {
+        const input = $('uid-input');
+        const uid = input ? input.value.trim().toUpperCase() : '';
+        const box = $('uid-result');
+        if (!uid) { toast('Введите UID'); return; }
+        if (!box) return;
+        try {
+          Api.getUserByUid(uid).then(function (found) {
+            if (!found) {
+              box.innerHTML = '<div class="uid-search-result" style="margin-top:10px;font-size:13px;color:var(--red)">Пользователь не найден</div>';
+              return;
+            }
+            const me = Store.getUser();
+            if (String(found.id) === String(me.id)) {
+              box.innerHTML = '<div class="uid-search-result" style="margin-top:10px;font-size:13px;color:var(--text-2)">Это вы 🙂</div>';
+              return;
+            }
+            box.innerHTML = '<div class="uid-search-result" style="margin-top:10px;display:flex;align-items:center;gap:10px">' +
+              '<div class="chat-av" style="width:36px;height:36px;font-size:14px">' + esc((found.name || '?')[0]) + '</div>' +
+              '<div style="flex:1;min-width:0"><b>' + esc(found.name || 'Пользователь') + '</b>' +
+              '<div style="font-size:12px;color:var(--text-3)">ID: ' + esc(found.uid) + '</div></div>' +
+              '<button class="btn btn--sm" data-action="write-user" data-id="' + found.id + '">' + TaskPay.icon('message') + ' Написать</button>' +
+            '</div>';
+          });
+        } catch (e) {
+          toast('Ошибка поиска', true);
+        }
+        vibrate();
+        break;
+      }
+      case 'write-user': {
+        const otherId = Number(el.dataset.id);
+        const me = Store.getUser();
+        if (Store.useApi() && window.Api) {
+          Api.findOrCreateChat(Number(me.id), otherId).then(function (chat) {
+            if (!chat) { toast('Ошибка создания чата', true); return; }
+            toast('Чат создан!');
+            vibrate();
+            navigate('chat-detail', { id: chat.id });
+          });
+        } else {
+          toast('Доступно с подключённой базой', true);
+        }
         break;
       }
       case 'open-task': {
