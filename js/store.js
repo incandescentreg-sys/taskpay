@@ -340,6 +340,79 @@ const Store = {
       earned: this.data.earningsTotal,
       employers: this.data.employersCount
     };
+  },
+
+  /* ============================================================
+     СИНХРОНИЗАЦИЯ С SUPABASE
+     Если ключи api.js не настроены — эти методы просто возвращают
+     текущие данные (демо-режим, localStorage).
+  ============================================================ */
+  useApi() {
+    return !!(window.Api && window.Api.isConfigured());
+  },
+
+  async syncFromApi() {
+    if (!this.useApi()) return false;
+    try {
+      const user = await Api.ensureUser();
+      if (user) {
+        this.data.user.id = Number(user.id);
+        this.data.user.name = user.name || this.data.user.name;
+        this.data.user.balance = user.balance != null ? user.balance : this.data.user.balance;
+        this.data.user.role = user.role || this.data.user.role;
+      }
+      const tasks = await Api.getTasks();
+      if (tasks && tasks.length) {
+        this.data.tasks = tasks.map(t => ({
+          id: Number(t.id),
+          title: t.title,
+          description: t.description || '',
+          category: t.category || 'other',
+          platform: t.platform || 'website',
+          reward: t.reward || 0,
+          spotsTotal: t.spots_total || 1,
+          spotsLeft: t.spots_left || 0,
+          durationMin: t.duration_min || 5,
+          instruction: t.instruction || '',
+          proof: t.proof || ['screenshot'],
+          employerId: Number(t.employer_id),
+          employerName: t.employer_name || '',
+          deadlineDays: t.deadline_days || 7,
+          createdAt: new Date(t.created_at || Date.now()).getTime(),
+          status: TASK_STATUS.ACTIVE
+        }));
+      }
+      this.save();
+      return true;
+    } catch (e) {
+      console.error('syncFromApi error', e);
+      return false;
+    }
+  },
+
+  async publishToApi(task) {
+    if (!this.useApi()) return null;
+    try {
+      return await Api.publishTask({
+        title: task.title,
+        description: task.description,
+        category: task.category,
+        platform: task.platform,
+        reward: task.reward,
+        spots_total: task.spotsTotal,
+        spots_left: task.spotsLeft,
+        duration_min: task.durationMin || 10,
+        instruction: task.instruction,
+        proof: task.proof,
+        employer_id: task.employerId,
+        employer_name: task.employerName,
+        deadline_days: task.deadlineDays || 7,
+        status: 'active'
+      });
+    } catch (e) {
+      console.error('publishToApi error', e);
+      return null;
+    }
   }
 };
 

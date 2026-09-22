@@ -501,61 +501,125 @@
   }, () => {});
 
   /* ================================================================
-     CHATS — список диалогов (демо)
+     CHATS — список диалогов
   ================================================================ */
   register('chats', () => {
-    const dialogs = [
-      { id: 1, name: 'Ресторан «Уют»', task: 'Напишите отзыв о нашем ресторане', last: 'Приняли ваш отзыв, спасибо!', time: '10:42', unread: 2, avatar: 'Р' },
-      { id: 2, name: 'Startup News', task: 'Подпишитесь на Telegram-канал', last: 'Скриншот подписки готов', time: 'вчера', unread: 0, avatar: 'S' }
+    const useApi = Store.useApi() && window.Api;
+    const u = Store.getUser();
+
+    const demoDialogs = [
+      { id: 1, name: 'Ресторан «Уют»', task: 'Напишите отзыв о нашем ресторане', last: 'Приняли ваш отзыв, спасибо!', time: '10:42', avatar: 'Р' },
+      { id: 2, name: 'Startup News', task: 'Подпишитесь на Telegram-канал', last: 'Скриншот подписки готов', time: 'вчера', avatar: 'S' }
     ];
+
+    /* реальные диалоги через Supabase */
+    if (useApi) {
+      Api.getChats(Number(u.id)).then(function (chats) {
+        const view = document.getElementById('chats-list');
+        if (!view) return;
+        if (!chats || !chats.length) {
+          view.innerHTML = '<div class="empty"><div class="e-ico">' + TaskPay.icon('inbox') + '</div><div class="e-title">Нет диалогов</div><div class="e-sub">Напишите исполнителю из карточки задания — здесь появится чат</div></div>';
+          return;
+        }
+        view.innerHTML = chats.map(function (c) {
+          const ms = c.messages && c.messages.length ? c.messages[c.messages.length - 1] : null;
+          const otherId = String(c.user_a) === String(u.id) ? c.user_b : c.user_a;
+          const last = ms ? ms.text : 'Откройте чат';
+          return '<div class="chat-item" data-action="open-chat" data-chat="' + c.id + '">' +
+            '<div class="chat-av">' + esc(String(otherId).slice(-2)) + '</div>' +
+            '<div class="chat-body">' +
+              '<div class="chat-top"><span class="chat-name">Диалог #' + c.id + '</span>' +
+              '<span class="chat-time">' + (ms ? timeAgo(new Date(ms.created_at).getTime()) : '') + '</span></div>' +
+              '<div class="chat-task">Задание #' + (c.task_id || '—') + '</div>' +
+              '<div class="chat-last">' + esc(last) + '</div>' +
+            '</div></div>';
+        }).join('') || '<div class="empty"><div class="e-title">Нет диалогов</div></div>';
+      });
+    }
+
     return `
     ${topbar('Сообщения', { icon: 'message' })}
     <div class="page">
-      ${dialogs.map(d => `
-      <div class="chat-item" data-action="open-chat" data-chat="${d.id}">
-        <div class="chat-av">${d.avatar}</div>
-        <div class="chat-body">
-          <div class="chat-top">
-            <span class="chat-name">${esc(d.name)}</span>
-            <span class="chat-time">${d.time}</span>
-          </div>
-          <div class="chat-task">${esc(d.task)}</div>
-          <div class="chat-last">${esc(d.last)} ${d.unread ? '<span class="chat-badge">' + d.unread + '</span>' : ''}</div>
-        </div>
-      </div>`).join('')}
-      <div class="note">Демо-данные. В полной версии здесь будет бэкенд чатов.</div>
+      <div id="chats-list">
+        ${useApi
+          ? '<div class="empty"><div class="e-ico">⏳</div><div class="e-title">Загрузка...</div></div>'
+          : demoDialogs.map(d => `
+          <div class="chat-item" data-action="open-chat" data-chat="${d.id}">
+            <div class="chat-av">${d.avatar}</div>
+            <div class="chat-body">
+              <div class="chat-top">
+                <span class="chat-name">${esc(d.name)}</span>
+                <span class="chat-time">${d.time}</span>
+              </div>
+              <div class="chat-task">${esc(d.task)}</div>
+              <div class="chat-last">${esc(d.last)}</div>
+            </div>
+          </div>`).join('')}
+      </div>
+      ${useApi ? '' : '<div class="note">Демо-данные. Подключите Supabase для реального чата.</div>'}
     </div>
     ${bottomNav('home')}`;
   }, () => {});
 
   /* ================================================================
-     CHAT DETAIL — переписка (демо)
+     CHAT DETAIL — переписка (реальная через Supabase / демо)
   ================================================================ */
   register('chat-detail', (s) => {
-    const dialogs = [
-      { id: 1, name: 'Ресторан «Уют»', task: 'Напишите отзыв о нашем ресторане' },
-      { id: 2, name: 'Startup News', task: 'Подпишитесь на Telegram-канал' }
-    ];
-    const d = dialogs.find(x => x.id === Number(s.id)) || dialogs[0];
-    const messages = [
+    const useApi = Store.useApi() && window.Api;
+    const chatId = Number(s.id);
+    const me = Store.getUser();
+
+    /* реальная переписка */
+    if (useApi) {
+      Api.getMessages(chatId).then(function (rows) {
+        const box = document.getElementById('chat-msgs');
+        if (!box) return;
+        box.innerHTML = (rows && rows.length ? rows : []).map(function (m) {
+          const mine = String(m.from_user) === String(me.id);
+          return '<div class="msg ' + (mine ? 'msg--me' : 'msg--them') + '">' +
+            '<div class="msg-text">' + esc(m.text) + '</div>' +
+            '<div class="msg-time">' + (mine ? '✓✓ ' : '') + timeAgo(new Date(m.created_at).getTime()) + '</div>' +
+          '</div>';
+        }).join('') || '<div class="msg-system">Сообщений пока нет</div>';
+        box.scrollTop = box.scrollHeight;
+      });
+      /* realtime: новые сообщения подставляются сразу */
+      window._chatSub && window._chatSub.unsubscribe();
+      window._chatSub = Api.subscribeChats(function (msg) {
+        const box = document.getElementById('chat-msgs');
+        if (!box || String(msg.chat_id) !== String(chatId)) return;
+        const mine = String(msg.from_user) === String(me.id);
+        const div = document.createElement('div');
+        div.className = 'msg ' + (mine ? 'msg--me' : 'msg--them');
+        div.innerHTML = '<div class="msg-text">' + esc(msg.text) + '</div>' +
+          '<div class="msg-time">' + (mine ? '✓✓ ' : '') + timeAgo(Date.now()) + '</div>';
+        box.appendChild(div);
+        box.scrollTop = box.scrollHeight;
+      });
+    }
+
+    const demo = [
       { me: false, text: 'Здравствуйте! Выполнил ваше задание, отправил отзыв' },
       { me: true,  text: 'Отлично, спасибо! Проверяем' },
       { me: false, text: 'Приняли ваш отзыв, спасибо! Награда уже на балансе' }
     ];
+
     return `
-    ${topbar(d.name, { icon: 'message' })}
+    ${topbar('Чат #' + chatId, { icon: 'message' })}
     <div class="chat-wrap">
-      <div class="chat-messages">
-        ${messages.map(m => `
-        <div class="msg ${m.me ? 'msg--me' : 'msg--them'}">
-          <div class="msg-text">${esc(m.text)}</div>
-          <div class="msg-time">${m.me ? '✓✓ ' : ''}10:4${m.me ? '1' : '0'}</div>
-        </div>`).join('')}
-        <div class="msg-system">Чат доступен после подключения бэкенда</div>
+      <div class="chat-messages" id="chat-msgs">
+        ${useApi
+          ? '<div class="msg-system">Загрузка...</div>'
+          : demo.map(m => `
+            <div class="msg ${m.me ? 'msg--me' : 'msg--them'}">
+              <div class="msg-text">${esc(m.text)}</div>
+              <div class="msg-time">${m.me ? '✓✓ ' : ''}10:4${m.me ? '1' : '0'}</div>
+            </div>`).join('')}
+        ${useApi ? '' : '<div class="msg-system">Демо-чат</div>'}
       </div>
       <div class="chat-input">
-        <input type="text" placeholder="Напишите сообщение..." disabled>
-        <button class="chat-send" disabled>${TaskPay.icon('send')}</button>
+        <input type="text" id="chat-input" placeholder="Напишите сообщение..." ${useApi ? '' : 'disabled'}>
+        <button class="chat-send" data-action="send-chat" data-chat="${chatId}" ${useApi ? '' : 'disabled'}>${TaskPay.icon('send')}</button>
       </div>
     </div>`;
   }, () => {});
@@ -639,6 +703,17 @@
         vibrate();
         break;
       }
+      case 'send-chat': {
+        const chatId = Number(el.dataset.chat);
+        const input = $('chat-input');
+        const text = input ? input.value.trim() : '';
+        if (!text || !Store.useApi() || !window.Api) { toast('Введите сообщение'); return; }
+        Api.sendMessage(chatId, Number(Store.getUser().id), text).then(function (msg) {
+          if (msg && input) input.value = '';
+        }).catch(function () { toast('Не удалось отправить', true); });
+        vibrate();
+        break;
+      }
       case 'filter-cat': {
         const f = TaskPay.filters();
         f.cat = el.dataset.cat;
@@ -694,6 +769,10 @@
         Store.save();
         toast('Задание взято! Подробности в профиле → Мои задания');
         vibrate();
+        if (Store.useApi() && window.Api) {
+          Api.startChat(taskId, Number(t.employerId), Number(u.id)).catch(function(){});
+          Api.sendMessageToTask && Api.sendMessageToTask(taskId, Number(u.id), 'Здравствуйте! Хочу выполнить ваше задание «' + t.title + '»').catch(function(){});
+        }
         navigate('my-task-detail', { aid: a.id });
         break;
       }
@@ -778,6 +857,34 @@
           employerName: Store.getUser().name,
           deadlineDays: parseInt(deadline.value) || 7
         };
+
+        /* если бэкенд настроен — публикуем в Supabase (задание увидят все) */
+        if (Store.useApi() && window.Api) {
+          Api.publishTask({
+            title: task.title,
+            description: task.description,
+            category: task.category,
+            platform: task.platform,
+            reward: task.reward,
+            spots_total: task.spotsTotal,
+            spots_left: task.spotsTotal,
+            duration_min: task.durationMin,
+            instruction: task.instruction,
+            proof: task.proof,
+            employer_id: task.employerId,
+            employer_name: task.employerName,
+            deadline_days: task.deadlineDays,
+            status: 'active'
+          }).then(function () {
+            toast('Задание опубликовано! Бюджет ' + fmtMoney(totalBudget));
+            vibrate();
+            Store.syncFromApi().then(() => navigate('tasks'));
+          }).catch(function () {
+            toast('Ошибка публикации', true);
+          });
+          return;
+        }
+
         Store.addTask(task);
         Store.data.employersCount += 1;
         Store.save();

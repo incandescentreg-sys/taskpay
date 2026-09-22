@@ -286,6 +286,14 @@
     Store.init();
     applyTgUser();
     if (window.TaskPayScreens) window.TaskPayScreens.init();
-    navigate('home');
+
+    /* синхронизация с Supabase: подтягиваем пользователя и актуальные задания */
+    if (Store.useApi()) {
+      Store.syncFromApi().then(ok => {
+        navigate('home');
+      });
+    } else {
+      navigate('home');
+    }
   });
 })();
