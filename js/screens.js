@@ -865,8 +865,8 @@
             toast('Задание взято!');
             vibrate();
             Api.startChat(taskId, Number(t.employerId), Number(u.id)).catch(function(){});
-            /* перезагружаем данные и открываем профиль → «Мои задания» берутся из БД */
-            Store.syncFromApi().then(() => navigate('profile'));
+            /* синхронизируем отклики из БД → сразу открываем форму подтверждения */
+            Store.syncFromApi().then(() => navigate('my-task-detail', { aid: resp.id }));
           }).catch(function () {
             toast('Ошибка взятия задания', true);
           });

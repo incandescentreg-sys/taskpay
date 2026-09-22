@@ -103,11 +103,20 @@
       return error ? null : data;
     },
 
-    /* ---------- Взятие задания: отклик в БД ---------- */
+    /* ---------- Взятие задания: отклик в БД (идемпотентно) ---------- */
     async takeTask(taskId, user) {
       if (!ensureClient()) return null;
-      const { data: task } = await SB.from('tasks').select('*').eq('id', taskId).single();
-      if (!task) return null;
+      const { data: task, error: e1 } = await SB.from('tasks').select('*').eq('id', taskId).single();
+      if (e1 || !task) return null;
+
+      /* если уже брал это задание — возвращаем существующий отклик */
+      const { data: exist } = await SB.from('assignments')
+        .select('*')
+        .eq('task_id', Number(taskId))
+        .eq('user_id', Number(user.id))
+        .maybeSingle();
+      if (exist) return exist;
+
       const { data, error } = await SB.from('assignments').insert({
         task_id: Number(taskId),
         user_id: Number(user.id),
