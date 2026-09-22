@@ -288,13 +288,21 @@
     applyTgUser();
     if (window.TaskPayScreens) window.TaskPayScreens.init();
 
-    /* синхронизация с Supabase: подтягиваем пользователя и актуальные задания */
-    if (Store.useApi()) {
-      Store.syncFromApi().then(ok => {
+    /* ВСЕГДА рендерим интерфейс сразу (иначе при зависшей сети — пустой экран) */
+    navigate('home');
+
+    /* синхронизацию запускаем в фоне — она просто обновит данные, не блокируя UI */
+    const syncStarted = Date.now();
+    Promise.race([
+      Store.useApi() ? Store.syncFromApi() : Promise.resolve(false),
+      new Promise(res => setTimeout(() => res(false), 6000)) // таймаут 6с
+    ]).then(ok => {
+      /* после синхронизации перерисовываем, чтобы показать данные из БД */
+      if (ok) {
         navigate('home');
-      });
-    } else {
-      navigate('home');
-    }
+      }
+    }).catch(() => {
+      /* сеть упала — остаёмся на демо-данных, интерфейс уже показан */
+    });
   });
 })();

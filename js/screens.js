@@ -495,7 +495,7 @@
         <div>
           <div style="font-size:18px;font-weight:700">${esc(u.name)}</div>
           <div style="font-size:13px;color:var(--text-2)">${u.role === 'employer' ? 'Работодатель' : u.role === 'both' ? 'Исполнитель / Работодатель' : 'Исполнитель'}${isAdmin() ? ' · ' + TaskPay.icon('shield') + ' Админ' : ''}</div>
-          ${useApi && u.uid ? '<div class="uid-chip">ID: <b>' + esc(u.uid) + '</b> <span class="uid-copy" data-action="copy-uid">${TaskPay.icon('copy')}</span></div>' : ''}
+          ${useApi && u.uid ? '<div class="uid-chip">ID: <b>' + esc(u.uid) + '</b> <span class="uid-copy" data-action="copy-uid">' + TaskPay.icon('copy') + '</span></div>' : ''}
         </div>
       </div>
 

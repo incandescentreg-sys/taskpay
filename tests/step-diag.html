@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>step diag</title>
+</head>
+<body>
+  <div id="app"></div>
+  <div id="result" style="white-space:pre-wrap;font-family:monospace;font-size:13px;padding:10px;background:#111;color:#ff6"></div>
+  <script>
+    window.__log = [];
+    window.addEventListener('error', function (e) {
+      window.__log.push('ERR on script: ' + (e.filename || 'inline') + ':' + (e.lineno||0) + ' ' + (e.message||''));
+    });
+  </script>
+  <script>if (!window.Telegram) window.Telegram={WebApp:{ready(){},expand(){},initDataUnsafe:{},setHeaderColor(){},setBackgroundColor(){},HapticFeedback:{impactOccurred(){}},BackButton:{show(){},hide(){},onClick(){}},showConfirm(){return Promise.resolve(true)},showAlert(){}}}};</script>
+  <script src="../js/vendor/supabase.js" onload="window.__log.push('OK supabase.js')" onerror="window.__log.push('FAIL load supabase.js')"></script>
+  <script src="../js/store.js" onload="window.__log.push('OK store.js')" onerror="window.__log.push('FAIL load store.js')"></script>
+  <script src="../js/api.js" onload="window.__log.push('OK api.js')" onerror="window.__log.push('FAIL load api.js')"></script>
+  <script src="../js/app.js" onload="window.__log.push('OK app.js')" onerror="window.__log.push('FAIL load app.js')"></script>
+  <script src="../js/screens.js" onload="window.__log.push('OK screens.js')" onerror="window.__log.push('FAIL load screens.js')"></script>
+  <script>
+    setTimeout(function () {
+      document.getElementById('result').textContent = window.__log.join('\n') + '\n\n#app len: ' + document.getElementById('app').innerHTML.length;
+    }, 1500);
+  </script>
+</body>
+</html>
