@@ -165,11 +165,67 @@
       return error ? null : data;
     },
 
-    /* ---------- Подтверждение/отклонение выполнения (edge-функция) ---------- */
+    /* ---------- Подтверждение выполнения (с fallback без edge-функции) ---------- */
     async confirmAssignment(assignmentId, employerId) {
-      return this._callEdge('complete-assignment', {
+      /* 1. пробуем edge-функцию */
+      const edgeRes = await this._callEdge('complete-assignment', {
         assignment_id: Number(assignmentId), user_id: Number(employerId)
-      });
+      }).catch(() => null);
+      if (edgeRes && edgeRes.ok) return edgeRes;
+
+      /* 2. fallback: выполняем подтверждение напрямую через БД (RPC change_balance) */
+      if (!ensureClient()) return { ok: false, error: 'Нет соединения' };
+      try {
+        const a0 = await SB.from('assignments').select('*').eq('id', Number(assignmentId)).single();
+        const a = a0 ? a0 : { data: null, error: { message: 'нет ответа' } };
+        if (a.error || !a.data) return { ok: false, error: 'Отклик не найден' };
+        const assign = a.data;
+
+        const t0 = await SB.from('tasks').select('*').eq('id', assign.task_id).single();
+        const tsk = t0 ? t0 : { data: null, error: { message: 'нет ответа' } };
+        if (tsk.error || !tsk.data) return { ok: false, error: 'Задание не найдено' };
+        const task = tsk.data;
+        if (String(task.employer_id) !== String(employerId)) {
+          return { ok: false, error: 'Только работодатель может подтвердить' };
+        }
+        if (assign.status !== 'pending') {
+          return { ok: false, error: 'Отклик не на проверке (исполнитель ещё не отправил)' };
+        }
+
+        const reward = assign.reward || task.reward || 0;
+
+        /* списываем у работодателя */
+        const dec = await SB.rpc('change_balance', {
+          p_user_id: Number(task.employer_id), p_delta: -reward,
+          p_type: 'expense', p_title: 'Оплата задания «' + task.title + '»'
+        });
+        if (dec.error) {
+          return { ok: false, error: 'Не хватает средств на балансе: ' + dec.error.message };
+        }
+
+        /* начисляем исполнителю */
+        const inc = await SB.rpc('change_balance', {
+          p_user_id: Number(assign.user_id), p_delta: reward,
+          p_type: 'income', p_title: 'Выполнение задания «' + task.title + '»'
+        });
+        if (inc.error) {
+          /* откат */
+          await SB.rpc('change_balance', {
+            p_user_id: Number(task.employer_id), p_delta: reward,
+            p_type: 'income', p_title: 'Возврат по заданию «' + task.title + '»'
+          });
+          return { ok: false, error: 'Ошибка начисления: ' + inc.error.message };
+        }
+
+        /* статус → done */
+        const upd = await SB.from('assignments')
+          .update({ status: 'done' }).eq('id', Number(assignmentId));
+        if (upd.error) return { ok: false, error: upd.error.message };
+
+        return { ok: true, reward, worker_id: assign.user_id };
+      } catch (e) {
+        return { ok: false, error: e.message || 'Ошибка подтверждения' };
+      }
     },
 
     async rejectAssignment(assignmentId, employerId) {
