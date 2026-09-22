@@ -230,7 +230,7 @@
           '<span class="tc-info-item">' + icon('users') + ' <b>' + t.spotsLeft + '</b> мест</span>' +
           '<span class="tc-info-item">' + icon('clock') + ' ~' + t.durationMin + ' мин</span>' +
         '</div>' +
-        '<button class="tc-do" data-action="take-task" data-id="' + t.id + '">' +
+        '<button class="tc-do" data-action="open-task" data-id="' + t.id + '">' +
           '<span>Выполнить</span>' + icon('arrow') +
         '</button>' +
       '</div>' +
