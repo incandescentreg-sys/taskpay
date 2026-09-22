@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>SDK check</title>
+</head>
+<body>
+  <div id="result" style="white-space:pre-wrap;font-family:monospace;font-size:13px;padding:10px;background:#111;color:#0f0"></div>
+  <script src="../js/vendor/supabase.js"></script>
+  <script>
+    (function () {
+      var log = [];
+      var URL = 'https://olwyzvyprcfypbpetgvf.supabase.co';
+      var KEY = 'sb_publishable_r1Ltg3tpWgem_D5Myyillg_59mbUGGr';
+
+      try {
+        log.push('window.supabase: ' + typeof window.supabase);
+        if (!window.supabase) throw new Error('SDK не загрузился');
+        log.push('createClient type: ' + typeof window.supabase.createClient);
+
+        var client = window.supabase.createClient(URL, KEY);
+        log.push('client создан: ' + !!client);
+        log.push('auth exists: ' + !!(client.auth));
+
+        window.SB = client; /* доступ для следующей проверки */
+      } catch (e) {
+        log.push('ОШИБКА: ' + e.message);
+      }
+      document.getElementById('result').textContent = log.join('\n') + '\n\n(window.SB определён, если нет ошибок)';
+    })();
+  </script>
+</body>
+</html>
