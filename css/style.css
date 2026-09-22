@@ -621,7 +621,22 @@ button .icon, .tab .icon, .tab-bourse .icon, .nav-chat .icon, .tc-do .icon,
 }
 .uid-search input:focus { border-color: var(--accent-2); }
 .uid-search-result { margin-top: 10px; }
-.uid-search-result .btn { padding: 9px 14px; font-size: 13px; white-space: nowrap; }
+.uid-write-btn {
+  flex: none;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 13px;
+  border: none;
+  border-radius: 999px;
+  font-size: 13px; font-weight: 600; font-family: inherit;
+  color: #fff;
+  background: linear-gradient(135deg, #00CFFF, #0064FF);
+  box-shadow: 0 4px 14px rgba(0, 191, 255, 0.35);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform .12s ease, opacity .15s ease;
+}
+.uid-write-btn .icon { width: 15px; height: 15px; }
+.uid-write-btn:active { transform: scale(0.95); opacity: .9; }
 .chat-body { flex: 1; min-width: 0; }
 .chat-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .chat-name { font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

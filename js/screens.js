@@ -709,6 +709,20 @@
      Тап/свайп браузер отличает сам; задержка 300мс убрана через
      touch-action: manipulation в CSS. Никаких кастомных touch-костылей.
   ================================================================ */
+  function handleWriteUser(otherId) {
+    const me = Store.getUser();
+    if (Store.useApi() && window.Api) {
+      Api.findOrCreateChat(Number(me.id), Number(otherId)).then(function (chat) {
+        if (!chat) { toast('Ошибка создания чата', true); return; }
+        toast('Чат создан!');
+        vibrate();
+        navigate('chat-detail', { id: chat.id });
+      });
+    } else {
+      toast('Доступно с подключённой базой', true);
+    }
+  }
+
   function runAction(el) {
     if (!el || !el.dataset) return;
     const action = el.dataset.action;
@@ -764,32 +778,20 @@
               box.innerHTML = '<div class="uid-search-result" style="margin-top:10px;font-size:13px;color:var(--text-2)">Это вы 🙂</div>';
               return;
             }
-            box.innerHTML = '<div class="uid-search-result" style="margin-top:10px;display:flex;align-items:center;gap:10px">' +
+            box.innerHTML = '<div class="uid-search-result" style="display:flex;align-items:center;gap:10px">' +
               '<div class="chat-av" style="width:36px;height:36px;font-size:14px">' + esc((found.name || '?')[0]) + '</div>' +
               '<div style="flex:1;min-width:0"><b>' + esc(found.name || 'Пользователь') + '</b>' +
               '<div style="font-size:12px;color:var(--text-3)">ID: ' + esc(found.uid) + '</div></div>' +
-              '<button class="btn btn--sm" data-action="write-user" data-id="' + found.id + '">' + TaskPay.icon('message') + ' Написать</button>' +
+              '<button class="uid-write-btn" data-id="' + found.id + '">' + TaskPay.icon('message') + ' Написать</button>' +
             '</div>';
+            /* вешаем обработчик напрямую — bindActions уже не перезапустится */
+            const wb = box.querySelector('.uid-write-btn');
+            if (wb) { wb.onclick = function () { handleWriteUser(Number(this.dataset.id)); }; }
           });
         } catch (e) {
           toast('Ошибка поиска', true);
         }
         vibrate();
-        break;
-      }
-      case 'write-user': {
-        const otherId = Number(el.dataset.id);
-        const me = Store.getUser();
-        if (Store.useApi() && window.Api) {
-          Api.findOrCreateChat(Number(me.id), otherId).then(function (chat) {
-            if (!chat) { toast('Ошибка создания чата', true); return; }
-            toast('Чат создан!');
-            vibrate();
-            navigate('chat-detail', { id: chat.id });
-          });
-        } else {
-          toast('Доступно с подключённой базой', true);
-        }
         break;
       }
       case 'open-task': {
