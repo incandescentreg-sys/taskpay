@@ -105,22 +105,14 @@
     }
   }
 
-/* Прямая привязка кликов — самый надёжный способ для всех платформ */
+/* bindActions: только очистка прямых обработчиков.
+   Клики обрабатывает ЕДИНСТВЕННЫЙ глобальный делегат в screens.js —
+   иначе один тап вызывает действие дважды (прямой onclick + делегат). */
   function bindActions() {
     app.querySelectorAll('[data-action]').forEach(el => {
       el.onclick = null;
       el.ontouchend = null;
-      /* ВАЖНО: навешиваем onclick напрямую — не через делегирование */
-      el.onclick = function () {
-        const action = this.dataset.action;
-        if (!action) return;
-        const now = Date.now();
-        if (this._lastClick && now - this._lastClick < 400) return;
-        this._lastClick = now;
-        if (window.TaskPayScreens && window.TaskPayScreens.runAction) {
-          window.TaskPayScreens.runAction(this);
-        }
-      };
+      el.ontouchstart = null;
     });
   }
 

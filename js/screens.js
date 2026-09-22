@@ -865,7 +865,10 @@
             toast('Задание взято!');
             vibrate();
             Api.startChat(taskId, Number(t.employerId), Number(u.id)).catch(function(){});
-            Store.syncFromApi().then(() => navigate('my-task-detail', { aid: resp.id }));
+            /* перезагружаем данные и открываем профиль → «Мои задания» берутся из БД */
+            Store.syncFromApi().then(() => navigate('profile'));
+          }).catch(function () {
+            toast('Ошибка взятия задания', true);
           });
           return;
         }
@@ -1117,12 +1120,19 @@
     runAction: runAction
   };
 
-  /* Глобальный click-делегат — страховка для динамических элементов,
-     которые вставляются после bindActions (результат поиска UID, чаты, отклики...) */
+/* Глобальный click-делегат — единственный обработчик кликов.
+   Работает и для динамических элементов (чаты, результат поиска UID, отклики).
+   Дебаунс 400мс по тому же элементу — защита от двойного тапа (две кнопки
+   «выполнить» срабатывали бы дважды и создавали дубль отклика). */
+  let _lastClickEl = null;
+  let _lastClickTime = 0;
   document.addEventListener('click', function (e) {
     const el = e.target.closest ? e.target.closest('[data-action]') : null;
-    if (el && el.dataset && el.dataset.action) {
-      runAction(el);
-    }
+    if (!el || !el.dataset || !el.dataset.action) return;
+    const now = Date.now();
+    if (el === _lastClickEl && now - _lastClickTime < 400) return;
+    _lastClickEl = el;
+    _lastClickTime = now;
+    runAction(el);
   });
 })();
