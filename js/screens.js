@@ -165,9 +165,44 @@
       </div>
 
       <button class="btn btn--block" style="margin-top:20px" data-action="take-task" data-id="${t.id}">${TaskPay.icon('download')} Взять задание</button>
+
+      ${Store.useApi() && Number(t.employerId) === Number(Store.getUser().id) ? `
+      <div class="section-title" style="margin-top:26px">${TaskPay.icon('inbox')} Отклики исполнителей</div>
+      <div id="emp-assignments"><div class="empty small" style="padding:20px">Загрузка...</div></div>
+      ` : ''}
     </div>
     ${bottomNav('tasks')}`;
-  }, () => {});
+  }, () => {
+    /* если мы работодатель — подгружаем отклики */
+    const tEl = q('[data-action="take-task"]');
+    const taskId = tEl ? Number(tEl.dataset.id) : null;
+    if (taskId && Store.useApi() && window.Api) {
+      const me = Number(Store.getUser().id);
+      Api.getAssignmentsForTask(taskId, me).then(function (rows) {
+        const box = q('#emp-assignments');
+        if (!box || !rows) return;
+        if (!rows.length) {
+          box.innerHTML = '<div class="empty small" style="padding:20px">Пока нет откликов</div>';
+          return;
+        }
+        box.innerHTML = rows.map(function (r) {
+          const isPending = r.status === 'pending';
+          const isDone = r.status === 'done';
+          return '<div class="card" style="padding:14px">' +
+            '<div style="display:flex;justify-content:space-between;align-items:center">' +
+              '<div><b>' + esc(r.user_name || ('Исполнитель #' + r.user_id)) + '</b>' +
+              '<div style="font-size:12px;color:var(--text-3)">' + (isPending ? '🟡 На проверке' : isDone ? '🟢 Выполнено' : '🟦 В работе') + '</div></div>' +
+            '</div>' +
+            (r.comment ? '<div style="font-size:13px;color:var(--text-2);margin-top:8px">' + esc(r.comment) + '</div>' : '') +
+            (isPending ? '<div style="display:flex;gap:8px;margin-top:12px">' +
+              '<button class="btn btn--green btn--sm" data-action="confirm-assignment" data-aid="' + r.id + '">Подтвердить</button>' +
+              '<button class="btn btn--red btn--sm" data-action="reject-assignment" data-aid="' + r.id + '">Отклонить</button>' +
+            '</div>' : '') +
+          '</div>';
+        }).join('');
+      });
+    }
+  });
 
   /* ================================================================
      TAKE TASK (после взятия) — с формой отправки
@@ -752,6 +787,18 @@
         if (!t) return;
         if (t.spotsLeft <= 0) { toast('Места закончились!', true); return; }
         const u = Store.getUser();
+
+        if (Store.useApi() && window.Api) {
+          Api.takeTask(taskId, u).then(function (resp) {
+            if (!resp) { toast('Не удалось взять задание', true); return; }
+            toast('Задание взято!');
+            vibrate();
+            Api.startChat(taskId, Number(t.employerId), Number(u.id)).catch(function(){});
+            Store.syncFromApi().then(() => navigate('my-task-detail', { aid: resp.id }));
+          });
+          return;
+        }
+
         const a = {
           id: Store.nextId('assignments'),
           taskId: taskId,
@@ -912,7 +959,51 @@
       case 'pay-out': {
         const bal = Store.getBalance();
         if (bal < 10) { toast('Минимум 10 ₽ для вывода', true); return; }
+        if (Store.useApi() && window.Api) {
+          tgConfirm('Вывод', 'Создать заявку на вывод ' + fmtMoney(bal) + '? (выплата вручную)').then(ok => {
+            if (!ok) return;
+            Api.requestPayout(Number(Store.getUser().id), bal).then(function (res) {
+              if (res === 'OK') {
+                toast('Заявка на вывод создана!');
+                Store.syncFromApi().then(() => navigate('wallet'));
+              } else {
+                toast('Ошибка вывода: ' + (res && res.error ? res.error : res), true);
+              }
+            });
+          });
+          return;
+        }
         tgPopup('Вывод средств', 'В полной версии здесь будет интеграция с платёжной системой (ЮMoney, СБП и др.). Сейчас баланс: ' + fmtMoney(bal));
+        break;
+      }
+      case 'confirm-assignment': {
+        if (!Store.useApi() || !window.Api) return;
+        const aid = Number(el.dataset.aid);
+        tgConfirm('Подтвердить', 'Подтвердить выполнение и выплатить награду исполнителю?').then(ok => {
+          if (!ok) return;
+          Api.confirmAssignment(aid, Number(Store.getUser().id)).then(function (res) {
+            if (res && res.ok) {
+              toast('Выполнение подтверждено, награда начислена!');
+              vibrate();
+              Store.syncFromApi().then(() => navigate('home'));
+            } else {
+              toast((res && res.error) || 'Ошибка подтверждения', true);
+            }
+          });
+        });
+        break;
+      }
+      case 'reject-assignment': {
+        if (!Store.useApi() || !window.Api) return;
+        const aid = Number(el.dataset.aid);
+        Api.rejectAssignment(aid, Number(Store.getUser().id)).then(function (res) {
+          if (res) {
+            toast('Выполнение отклонено');
+            Store.syncFromApi().then(() => navigate('home'));
+          } else {
+            toast('Ошибка отклонения', true);
+          }
+        });
         break;
       }
       case 'edit-name': {

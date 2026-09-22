@@ -17,7 +17,7 @@
 1. В Supabase → **Settings** (шестерёнка внизу слева) → **API**.
 2. Скопируйте:
    - **Project URL** (например `https://abcdefgh.supabase.co`)
-   - **anon / public** key (`eyJ...`)
+   - **anon / public** key (`eyJ...` или `sb_publishable_...`)
 
 ## 4. Вставьте ключи в проект
 
@@ -25,36 +25,93 @@
 
 ```js
 var SUPABASE_URL = 'https://ВАШ-ПРОЕКТ.supabase.co';   // ваш Project URL
-var SUPABASE_ANON_KEY = 'eyJ...ваш_anon_ключ';         // ваш anon key
+var SUPABASE_ANON_KEY = 'eyJ...ваш_anon_ключ';         // ваш anon key (или sb_publishable_...)
 ```
 
 ## 5. Включите Realtime (для чата и живых заданий)
 
-1. Supabase → **Database** → **Replication** (или в некоторых версиях **Realtime**).
-2. В блоке **Supabase Replication** найдите таблицы `messages` и `tasks` → включите переключатель (**Enable Replication**) для обеих.
-3. В подразделе **Sources**: `messages` → включите **INSERT**; `tasks` → включите **INSERT**.
+1. Supabase → **Database** → **Replication** (или **Realtime**).
+2. В блоке **Supabase Replication** включите переключатель для `messages` и `tasks`.
+3. В подразделе **Sources**: `messages` → **INSERT**; `tasks` → **INSERT**.
 
-Без этого шага чат не будет «живым» (сообщения не будут приходить мгновенно).
+Альтернатива (если раздел пуст) — выполнить в SQL Editor:
 
-## 6. Аутентификация (важно!)
+```sql
+alter publication supabase_realtime add table public.messages;
+alter publication supabase_realtime add table public.tasks;
+```
 
-Приложение работает в Telegram Mini App, и наш клиент использует **подход «любой клиент пишет от своего Telegram id»** через RLS-политики (см. `supabase/schema.sql` — политики сравнивают `auth.uid()`).
+## 6. MVP-политики доступа
 
-Для полноценной безопасности в продакшене нужно настроить **авторизацию через Telegram initData** одним из способов:
+Выполните в SQL Editor файл **`supabase/policies-mvp.sql`** — он заменяет строгие RLS-политики на рабочие для прототипа (анонимный клиент может читать/писать).
 
-- **Вариант A (простой, для старта):** в `supabase/schema.sql` замените политики, где фигурирует `auth.uid()`, на проверку через заголовок (например, кастомный `x-telegram-id`) — либо временно ослабьте политики (`for all using (true)`) для теста, а перед запуском ужесточите.
-- **Вариант B (правильный):** сделайте edge function `/auth/telegram`, которая проверяет подпись `initData` секретом бота и выдаёт JWT. Это уже выход «в прод».
+> Это ослабленные правила для теста. Перед публичным запуском верните строгие политики и включите авторизацию (п. 8).
 
-> **Важно для MVP:** в текущей версии клиент вставляет пользователя с `id = telegram_id` напрямую. Политики `insert with check (auth.uid()::text = id::text)` разрешают это, **только если `auth.uid()` совпадает**. Для теста можно временно отключить RLS на таблице `users` (Table Editor → ⚙ → RLS off) — но перед запуском обязательно вернуть и настроить авторизацию (Вариант B).
+## 7. Функции баланса и вывод средств
 
-## 7. Проверка
+Выполните в SQL Editor файл **`supabase/functions.sql`** — создаёт:
+- `change_balance()` — атомарное изменение баланса + транзакция;
+- `request_payout()` — создание заявки на вывод;
+- таблицу `payouts`.
 
-После подключения ключей и деплоя в боте должно появиться:
-- лента заданий, общая для всех пользователей (из таблицы `tasks`),
-- чат между работодателем и исполнителем (гудит в реальном времени),
-- build-номер вверху экрана (виден всегда).
+## 8. Edge-функции (авторизация и подтверждение заданий) — РЕКОМЕНДУЕТСЯ
+
+Нужны для безопасного входа (проверка подписи Telegram initData) и честных выплат (только работодатель подтверждает, деньги начисляются автоматически).
+
+### Установите Supabase CLI (один раз)
+
+```
+npm install -g supabase
+supabase login
+```
+
+### Локальная папка функций
+
+В корне проекта уже лежат:
+- `supabase/functions/auth/index.ts` — вход по initData → выдаёт JWT
+- `supabase/functions/complete-assignment/index.ts` — подтверждение выполнения + начисление
+
+### Локальный запуск (для разработки)
+
+```
+supabase start
+supabase functions serve --env-file ./supabase/.env.local
+```
+
+### Деплой функций
+
+```
+supabase functions deploy auth
+supabase functions deploy complete-assignment
+```
+
+### Секреты (обязательно перед деплоем функций)
+
+```
+supabase secrets set BOT_TOKEN=<токен бота от @BotFather>
+supabase secrets set JWT_SECRET=<случайная длинная строка>
+```
+
+`JWT_SECRET` можно сгенерировать: `openssl rand -hex 32`.
+
+> `SUPABASE_URL` и `SUPABASE_SERVICE_ROLE_KEY` подставляются автоматически — их задавать не нужно.
+
+### Что делают функции
+
+- **`auth`**: проверяет подпись `initData` секретом бота, создаёт/обновляет пользователя в таблице `users`, возвращает JWT.
+- **`complete-assignment`**: проверяет, что вызывает работодатель задания, подтверждает отклик `pending → done`, списывает награду с работодателя и зачисляет исполнителю через `change_balance`.
+
+## 9. Обновление версии приложения
+
+После изменения `index.html`/`js` не забывайте поднимать версию ассетов (`?v=N`) и пушить в **ветку `main`** (production на Vercel собирается из неё):
+
+```
+git push origin master
+git push origin master:main --force
+```
 
 ## Как это работает в приложении
 
 - Если в `js/api.js` подставлены ключи — приложение работает через **Supabase API** (синхронизация).
-- Если ключи не подставлены — приложение работает как раньше, на **localStorage** (демо-режим). Это удобно для теста без бэкенда.
+- Если ключи не подставлены — приложение работает как раньше, на **localStorage** (демо-режим).
+- С включёнными edge-функциями: вход по initData, честный баланс в БД, подтверждение заданий с автопереводом средств, заявки на вывод.
