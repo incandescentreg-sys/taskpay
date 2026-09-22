@@ -398,6 +398,25 @@ const Store = {
           status: TASK_STATUS.ACTIVE
         }));
       }
+
+      /* мои отклики из БД — чтобы «Мои задания» и страница подтверждения работали */
+      const myAssignments = await Api.getMyAssignments(Number(this.data.user.id));
+      if (myAssignments) {
+        this.data.assignments = myAssignments.map(a => ({
+          id: Number(a.id),
+          taskId: Number(a.task_id),
+          userId: Number(a.user_id),
+          userName: a.user_name || '',
+          status: a.status || 'in_progress',
+          reward: a.reward || 0,
+          takenAt: new Date(a.created_at || Date.now()).getTime(),
+          proofType: a.proof_type || null,
+          proofData: a.comment || null,
+          rejectionReason: a.rejection_reason || null,
+          rated: !!a.rated
+        }));
+      }
+
       this.save();
       return true;
     } catch (e) {
