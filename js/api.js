@@ -8,8 +8,8 @@
 (function () {
   'use strict';
 
-  var SUPABASE_URL = 'https://ВАШ-ПРОЕКТ.supabase.co';   // замените
-  var SUPABASE_ANON_KEY = 'eyJ...ваш_anon_ключ';         // замените
+  var SUPABASE_URL = 'https://olwyzvyprcfypbpetgvf.supabase.co';
+  var SUPABASE_ANON_KEY = 'sb_publishable_r1Ltg3tpWgem_D5Myyillg_59mbUGGr';
 
   var SB = null;
   var configured = false;
@@ -30,7 +30,8 @@
   window.Api = {
     isConfigured() {
       return configured && SUPABASE_URL.indexOf('ВАШ-ПРОЕКТ') === -1 &&
-             SUPABASE_ANON_KEY.indexOf('eyJ...') === -1;
+             SUPABASE_ANON_KEY.indexOf('eyJ...') === -1 &&
+             SUPABASE_ANON_KEY.indexOf('sb_publishable') === 0;
     },
 
     /* ---------- Авторизация по initData (непосредственно через таблицу users) ---------- */
