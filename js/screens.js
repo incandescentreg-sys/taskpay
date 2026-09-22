@@ -1116,4 +1116,13 @@
     init: function () {},
     runAction: runAction
   };
+
+  /* Глобальный click-делегат — страховка для динамических элементов,
+     которые вставляются после bindActions (результат поиска UID, чаты, отклики...) */
+  document.addEventListener('click', function (e) {
+    const el = e.target.closest ? e.target.closest('[data-action]') : null;
+    if (el && el.dataset && el.dataset.action) {
+      runAction(el);
+    }
+  });
 })();
