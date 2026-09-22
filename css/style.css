@@ -55,7 +55,7 @@
   }
 }
 
-* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 
 html, body {
   height: 100%;
@@ -399,6 +399,9 @@ button .icon, .tab .icon, .tab-bourse .icon, .nav-chat .icon, .tc-do .icon,
   padding: 4px 10px;
 }
 .tc-meta-item .icon { width: 13px; height: 13px; color: var(--accent-2); }
+.pl-ico { width: 20px; height: 20px; object-fit: contain; flex: none; border-radius: 999px; }
+.tag-ico { width: 20px; height: 20px; object-fit: contain; vertical-align: -4px; border-radius: 999px; margin-right: 3px; }
+.chip-ico { width: 18px; height: 18px; object-fit: contain; vertical-align: -3px; border-radius: 999px; }
 .tc-pay { display: flex; align-items: baseline; gap: 7px; margin-bottom: 14px; position: relative; }
 .tc-pay-amount { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; background: linear-gradient(90deg, #fff, #66D9FF); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
 .tc-pay-label { font-size: 12px; color: var(--text-3); }
