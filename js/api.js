@@ -34,7 +34,33 @@
              SUPABASE_ANON_KEY.indexOf('sb_publishable') === 0;
     },
 
-    /* ---------- Авторизация по initData (непосредственно через таблицу users) ---------- */
+    /* ---------- Авторизация: verификация initData на edge-функции auth ---------- */
+    async auth() {
+      if (!ensureClient()) return null;
+      const tg = window.Telegram && window.Telegram.WebApp;
+      const initData = tg && tg.initData;
+      if (!initData) return null;
+      try {
+        const res = await fetch(SUPABASE_URL.replace(/\/$/, '') + '/functions/v1/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ initData })
+        });
+        if (!res.ok) return null;
+        const data = await res.json();
+        if (data.token) {
+          /* сохраняем наш JWT как access_token для будущих запросов */
+          SB.auth.setSession({ access_token: data.token, refresh_token: '' });
+          localStorage.setItem('yumitask_token', data.token);
+        }
+        return data.user || null;
+      } catch (e) {
+        console.error('auth error', e);
+        return null;
+      }
+    },
+
+    /* ---------- Авторизация fallback: напрямую таблица users (если edge нет) ---------- */
     async ensureUser() {
       if (!ensureClient()) return null;
       const tg = window.Telegram && window.Telegram.WebApp;
@@ -71,6 +97,100 @@
       if (!ensureClient()) return null;
       const { data, error } = await SB.from('tasks').insert(task).select().single();
       return error ? null : data;
+    },
+
+    /* ---------- Взятие задания: отклик в БД ---------- */
+    async takeTask(taskId, user) {
+      if (!ensureClient()) return null;
+      const { data: task } = await SB.from('tasks').select('*').eq('id', taskId).single();
+      if (!task) return null;
+      const { data, error } = await SB.from('assignments').insert({
+        task_id: Number(taskId),
+        user_id: Number(user.id),
+        user_name: user.name || 'Гость',
+        status: 'in_progress',
+        reward: task.reward || 0
+      }).select().single();
+      if (error) return null;
+      /* уменьшаем число свободных мест */
+      await SB.from('tasks')
+        .update({ spots_left: Math.max(0, (task.spots_left || 1) - 1) })
+        .eq('id', taskId);
+      return data;
+    },
+
+    async getAssignmentsForTask(taskId, employerId) {
+      if (!ensureClient()) return null;
+      const { data, error } = await SB.from('assignments')
+        .select('*').eq('task_id', taskId);
+      return error ? null : data;
+    },
+
+    async getMyAssignments(userId) {
+      if (!ensureClient()) return null;
+      const { data, error } = await SB.from('assignments')
+        .select('*').eq('user_id', userId)
+        .order('created_at', { ascending: false });
+      return error ? null : data;
+    },
+
+    async updateAssignment(id, patch) {
+      if (!ensureClient()) return null;
+      const { data, error } = await SB.from('assignments')
+        .update(patch).eq('id', id).select().single();
+      return error ? null : data;
+    },
+
+    /* ---------- Подтверждение/отклонение выполнения (edge-функция) ---------- */
+    async confirmAssignment(assignmentId, employerId) {
+      return this._callEdge('complete-assignment', {
+        assignment_id: Number(assignmentId), user_id: Number(employerId)
+      });
+    },
+
+    async rejectAssignment(assignmentId, employerId) {
+      if (!ensureClient()) return null;
+      const { data, error } = await SB.from('assignments')
+        .update({ status: 'rejected', rejection_reason: 'Отклонено работодателем' })
+        .eq('id', assignmentId)
+        .select().single();
+      return error ? null : data;
+    },
+
+    /* ---------- Баланс и вывод ---------- */
+    async getBalance(userId) {
+      if (!ensureClient()) return null;
+      const { data, error } = await SB.from('users')
+        .select('balance').eq('id', userId).maybeSingle();
+      return error ? null : (data ? data.balance : 0);
+    },
+
+    async requestPayout(userId, amount) {
+      return this._callRpc('request_payout', {
+        p_user_id: Number(userId), p_amount: Number(amount)
+      });
+    },
+
+    /* ---------- Внутренние хелперы ---------- */
+    async _callEdge(fn, body) {
+      if (!ensureClient()) return null;
+      try {
+        const res = await fetch(SUPABASE_URL.replace(/\/$/, '') + '/functions/v1/' + fn, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body || {})
+        });
+        return await res.json();
+      } catch (e) {
+        console.error(fn + ' error', e);
+        return null;
+      }
+    },
+
+    async _callRpc(fn, params) {
+      if (!ensureClient()) return null;
+      const { data, error } = await SB.rpc(fn, params);
+      return error ? { error: error.message } : data;
     },
 
     /* ---------- Чат: список диалогов ---------- */
