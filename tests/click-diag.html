@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head><meta charset="UTF-8"><title>Yumitask real-click diagnostic</title></head>
+<body>
+  <div id="app"></div>
+  <div id="result" style="white-space:pre-wrap;font-family:monospace;font-size:13px;padding:8px;color:green;background:#111"></div>
+  <script>
+    window.Telegram = {
+      WebApp: {
+        ready(){}, expand(){}, initDataUnsafe:{},
+        setHeaderColor(){}, setBackgroundColor(){}, disableVerticalSwipes(){},
+        HapticFeedback:{ impactOccurred(){} },
+        BackButton:{ show(){}, hide(){}, onClick(){} },
+        showConfirm(m){ return Promise.resolve(true); },
+        showAlert(){}
+      }
+    };
+  </script>
+  <script src="../js/store.js"></script>
+  <script src="../js/app.js"></script>
+  <script src="../js/screens.js"></script>
+  <script>
+    (function () {
+      var log = [];
+      var errors = [];
+
+      /* перехватываем все клики — выводим что произошло */
+      document.addEventListener('click', function (e) {
+        var t = e.target;
+        var el = t.closest ? t.closest('[data-action]') : null;
+        var action = el ? (el.dataset.action || '—') : '—';
+        var page = el ? (el.dataset.page || el.dataset.tab || '—') : '—';
+        var tag = t.tagName;
+        var cls = t.className && t.className.substring ? t.className.substring(0, 40) : '';
+        log.push('click → ' + tag + ' "' + cls + '" → action=' + action + ' page=' + page);
+        if (log.length > 30) log.shift();
+        document.getElementById('result').textContent = log.join('\n') + '\n\nОшибок JS: ' + errors.length;
+      });
+
+      window.onerror = function (msg) { errors.push(msg); };
+
+      document.addEventListener('DOMContentLoaded', function () {
+        window.TaskPay.navigate('home');
+        log.push('=== Навигация: home');
+        log.push('Кликайте по любым кнопкам — результат ниже');
+        document.getElementById('result').textContent = log.join('\n');
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -41,31 +41,31 @@
       </div>
 
       <div class="grid-menu">
-        <div class="menu-card" data-action="navigate" data-page="create">
+        <button type="button" class="menu-card" data-action="navigate" data-page="create">
           <div class="mc-ico" style="background:var(--blue-soft)">${TaskPay.icon('briefcase')}</div>
           <div class="mc-label">Разместить задание</div>
           <div class="mc-sub">Найди исполнителей</div>
           <div class="wave-row wave-1"><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg></div>
           <div class="wave-row wave-2"><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg></div>
           <div class="wave-row wave-3"><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg></div>
-        </div>
-        <div class="menu-card menu-card--amber" data-action="navigate" data-page="subs">
+        </button>
+        <button type="button" class="menu-card menu-card--amber" data-action="navigate" data-page="subs">
           <div class="mc-ico" style="background:var(--amber-soft)">${TaskPay.icon('megaphone')}</div>
           <div class="mc-label">Продвижение</div>
           <div class="mc-sub">Тарифы работодателя</div>
           <div class="wave-row wave-1"><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg></div>
           <div class="wave-row wave-2"><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg></div>
           <div class="wave-row wave-3"><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg></div>
-        </div>
+        </button>
         ${isAdmin() ? `
-        <div class="menu-card menu-card--amber" data-action="navigate" data-page="admin">
+        <button type="button" class="menu-card menu-card--amber" data-action="navigate" data-page="admin">
           <div class="mc-ico" style="background:var(--red-soft)">${TaskPay.icon('shield')}</div>
           <div class="mc-label">Админ-панель</div>
           <div class="mc-sub">Управление</div>
           <div class="wave-row wave-1"><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg></div>
           <div class="wave-row wave-2"><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg></div>
           <div class="wave-row wave-3"><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg></div>
-        </div>` : ''}
+        </button>` : ''}
       </div>
 
       <div class="section-title">Статистика платформы</div>
@@ -101,11 +101,11 @@
     else tasks.sort((a, b) => b.createdAt - a.createdAt);
 
     const catHTML = (id, name) =>
-      '<span class="tag' + (cat === id ? ' active' : '') + '" data-action="filter-cat" data-cat="' + id + '">' + name + '</span>';
+      '<button type="button" class="tag' + (cat === id ? ' active' : '') + '" data-action="filter-cat" data-cat="' + id + '">' + name + '</button>';
     const platHTML = (id, name) =>
-      '<span class="tag' + (platform === id ? ' active' : '') + '" data-action="filter-platform" data-platform="' + id + '">' + name + '</span>';
+      '<button type="button" class="tag' + (platform === id ? ' active' : '') + '" data-action="filter-platform" data-platform="' + id + '">' + name + '</button>';
     const sortHTML = (id, name) =>
-      '<span class="tag' + (sort === id ? ' active' : '') + '" data-action="filter-sort" data-sort="' + id + '">' + name + '</span>';
+      '<button type="button" class="tag' + (sort === id ? ' active' : '') + '" data-action="filter-sort" data-sort="' + id + '">' + name + '</button>';
 
     return `
     ${topbar('Найти задания', { back: false, icon: 'search' })}

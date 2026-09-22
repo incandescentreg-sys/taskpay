@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Yumitask real click simulation</title>
+</head>
+<body>
+  <div id="app"></div>
+  <div id="result" style="white-space:pre-wrap;font-family:monospace;font-size:13px;padding:8px;color:#0f0;background:#111"></div>
+  <script>
+    window.Telegram = {
+      WebApp: {
+        ready(){}, expand(){}, initDataUnsafe:{},
+        setHeaderColor(){}, setBackgroundColor(){}, disableVerticalSwipes(){},
+        HapticFeedback:{ impactOccurred(){} },
+        BackButton:{ show(){}, hide(){}, onClick(){} },
+        showConfirm(m){ return Promise.resolve(true); },
+        showAlert(){}
+      }
+    };
+  </script>
+  <script src="../js/store.js"></script>
+  <script src="../js/app.js"></script>
+  <script src="../js/screens.js"></script>
+  <script>
+    (function () {
+      var log = [];
+      var errors = [];
+
+      /* логируем каждый клик */
+      window.addEventListener('click', function (e) {
+        var t = e.target;
+        var el = t.closest ? t.closest('[data-action]') : null;
+        var action = el ? (el.dataset.action || '—') : '—';
+        var page = el ? (el.dataset.page || el.dataset.tab || '—') : '—';
+        log.push('target=' + (t.tagName||'?') + '.' + ((t.className||'').slice(0,30).replace(/\s/g,'.')) +
+                 ' → action=' + action + ' page=' + page);
+      });
+
+      function realMouseClick(el) {
+        if (!el) return;
+        var rect = el.getBoundingClientRect();
+        var cx = rect.left + rect.width / 2;
+        var cy = rect.top + rect.height / 2;
+        el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, clientX: cx, clientY: cy }));
+      }
+
+      window.onerror = function (msg) { errors.push(msg); };
+
+      document.addEventListener('DOMContentLoaded', function () {
+        try {
+          window.TaskPay.navigate('home');
+          var checks = [
+            ['.menu-card[data-page="create"]', 'create', 'Плашка Разместить'],
+            ['.menu-card[data-page="subs"]', 'subs', 'Плашка Продвижение'],
+            ['.tab-bourse', 'tasks', 'Док Биржа'],
+            ['.tab[data-tab="create"]', 'create', 'Док Разместить'],
+            ['.home-balance', 'wallet', 'Баланс на главной'],
+            ['.fab-avatar', 'profile', 'Аватарка']
+          ];
+          checks.forEach(function (c) {
+            var q = document.querySelector(c[0]);
+            if (!q) { log.push('FAIL: ' + c[0] + ' не найден'); return; }
+            realMouseClick(q);
+            var route = window.TaskPay.currentRoute();
+            if (route === c[1]) log.push('OK  ' + c[2] + ' → ' + route);
+            else log.push('FAIL ' + c[2] + ': ожидалось ' + c[1] + ', получено ' + route);
+          });
+
+          /* клик по тегу категории на бирже */
+          window.TaskPay.navigate('tasks');
+          var tag = document.querySelector('[data-action="filter-cat"][data-cat="reviews"]');
+          if (tag) {
+            realMouseClick(tag);
+            var f = TaskPay.filters();
+            if (f.cat === 'reviews') log.push('OK  Категория Отзывы → filter');
+            else log.push('FAIL Категория Отзывы: cat=' + f.cat);
+          }
+          var pt = document.querySelector('[data-action="filter-platform"][data-platform="telegram"]');
+          if (pt) {
+            realMouseClick(pt);
+            var f2 = TaskPay.filters();
+            if (f2.platform === 'telegram') log.push('OK  Платформа Telegram → filter');
+            else log.push('FAIL Платформа Telegram: platform=' + f2.platform);
+          }
+        } catch (e) {
+          log.push('FAIL: ' + e.message);
+        }
+        log.push('Ошибок JS: ' + errors.length);
+        document.getElementById('result').textContent = log.join('\n');
+      });
+    })();
+  </script>
+</body>
+</html>
