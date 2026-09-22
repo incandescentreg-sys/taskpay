@@ -105,39 +105,18 @@
     }
   }
 
-/* Прямая привязка к кликам/тапам — каждый элемент с data-action получает свои обработчики */
-  let _touchPos = null;
+/* Прямая привязка кликов — самый надёжный способ для всех платформ */
   function bindActions() {
     app.querySelectorAll('[data-action]').forEach(el => {
       el.onclick = null;
       el.ontouchend = null;
-      el.ontouchstart = null;
-
-      /* защита от свайпа при прокрутке */
-      el.ontouchstart = function (e) {
-        const t = e.touches && e.touches[0];
-        _touchPos = t ? { x: t.clientX, y: t.clientY } : null;
-      };
-
-      /* тап -> вызываем runAction напрямую (надёжно в WebView Telegram) */
-      el.ontouchend = function (e) {
-        if (_touchPos) {
-          const t = e.changedTouches && e.changedTouches[0];
-          const dx = t ? t.clientX - _touchPos.x : 0;
-          const dy = t ? t.clientY - _touchPos.y : 0;
-          _touchPos = null;
-          if (Math.abs(dx) > 8 || Math.abs(dy) > 8) return;
-        }
-        e.preventDefault();
-        this._lastTap = Date.now();
-        if (window.TaskPayScreens && window.TaskPayScreens.runAction) {
-          window.TaskPayScreens.runAction(this);
-        }
-      };
-
-      /* мышь/десктоп — сначала tab, клик-страховка в screens.js пропустит дубль */
-      el.onclick = function (e) {
-        this._lastTap = Date.now();
+      /* ВАЖНО: навешиваем onclick напрямую — не через делегирование */
+      el.onclick = function () {
+        const action = this.dataset.action;
+        if (!action) return;
+        const now = Date.now();
+        if (this._lastClick && now - this._lastClick < 400) return;
+        this._lastClick = now;
         if (window.TaskPayScreens && window.TaskPayScreens.runAction) {
           window.TaskPayScreens.runAction(this);
         }

@@ -24,6 +24,7 @@
 
     return `
     <div class="page page--hero">
+      <div class="ver-tag">build 6</div>
       <div class="home-top-right">
         <button class="home-balance" data-action="navigate" data-page="wallet" aria-label="Баланс">${TaskPay.icon('wallet')} ${fmtMoney(Store.getBalance())}</button>
         ${TaskPay.fabAvatarHTML()}
@@ -840,16 +841,6 @@
       }
     }
   }
-
-  /* нативный click — работает для мыши и как страховка после тача */
-  window.addEventListener('click', function (e) {
-    const el = e.target.closest ? e.target.closest('[data-action]') : null;
-    if (!el) return;
-    /* если тач уже обработал этот элемент — пропускаем дубль */
-    const now = Date.now();
-    if (el._lastTap && now - el._lastTap < 400) { el._lastTap = 0; return; }
-    runAction(el);
-  });
 
   /* ---------- Экспорт ---------- */
   window.TaskPayScreens = {
