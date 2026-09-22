@@ -541,11 +541,52 @@
             '<div style="font-weight:800;color:var(--text-2)">→</div></div>';
         }).join('')}
 
+      ${useApi ? `
+      <div class="section-title">${TaskPay.icon('briefcase')} Мои задания как работодателя</div>
+      <div id="emp-tasks-list"><div class="empty small" style="padding:20px">Загрузка...</div></div>
+      ` : ''}
+
       ${isAdmin() ? '<button class="btn btn--block btn--ghost btn--sm" data-action="admin-panel" style="margin-top:16px">' + TaskPay.icon('settings') + ' Админ-панель</button>' : ''}
       <button class="btn btn--block btn--red btn--sm" data-action="reset-data" style="margin-top:12px">${TaskPay.icon('refresh')} Сбросить демо-данные</button>
     </div>
     ${bottomNav('profile')}`;
-  }, () => {});
+  }, () => {
+    /* подгружаем задания работодателя с откликами */
+    if (Store.useApi() && window.Api) {
+      const me = Number(Store.getUser().id);
+      Api.getMyEmployedTasks(me).then(function (rows) {
+        const box = q('#emp-tasks-list');
+        if (!box) return;
+        if (!rows || !rows.length) {
+          box.innerHTML = '<div class="empty small" style="padding:20px">Вы пока не размещали заданий</div>';
+          return;
+        }
+        box.innerHTML = rows.map(function (t) {
+          const pending = (t.assignments || []).filter(a => a.status === 'pending');
+          const done = (t.assignments || []).filter(a => a.status === 'done');
+          return '<div class="card" style="padding:14px;margin-bottom:10px">' +
+            '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">' +
+              '<div style="flex:1;min-width:0"><b>' + esc(t.title) + '</b>' +
+              '<div style="font-size:12px;color:var(--text-3);margin-top:3px">' +
+                'Откликов: ' + (t.assignments ? t.assignments.length : 0) +
+                ' · На проверке: <b style="color:var(--amber)">' + pending.length + '</b>' +
+                ' · Выполнено: <span style="color:var(--green)">' + done.length + '</span></div></div>' +
+              '<button class="uid-write-btn" data-action="view-employer-task" data-id="' + t.id + '">Открыть</button>' +
+            '</div>' +
+            (pending.length ? pending.map(function (a) {
+              return '<div style="display:flex;align-items:center;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">' +
+                '<div style="flex:1;font-size:13px">' + esc(a.user_name || ('Исполнитель #' + a.user_id)) +
+                (a.comment ? '<div style="color:var(--text-3);font-size:12px">' + esc(a.comment) + '</div>' : '') + '</div>' +
+                '<span style="font-size:11px;color:var(--amber)">🟡 На проверке</span>' +
+                '<button class="btn btn--green btn--sm" data-action="confirm-assignment" data-aid="' + a.id + '" style="width:auto;padding:8px 12px;font-size:12px">Ок</button>' +
+                '<button class="btn btn--red btn--sm" data-action="reject-assignment" data-aid="' + a.id + '" style="width:auto;padding:8px 12px;font-size:12px">X</button>' +
+              '</div>';
+            }).join('') : '') +
+          '</div>';
+        }).join('');
+      });
+    }
+  });
 
   /* ================================================================
      CHATS — список диалогов
@@ -804,6 +845,11 @@
         vibrate();
         break;
       }
+      case 'view-employer-task': {
+        navigate('task-detail', { id: el.dataset.id });
+        vibrate();
+        break;
+      }
       case 'open-chat': {
         navigate('chat-detail', { id: el.dataset.chat });
         vibrate();
@@ -917,7 +963,20 @@
         a.status = 'pending';
         a.proofType = activeProof ? activeProof.dataset.proof : 'text';
         a.proofData = text || comment || 'отправлено';
+        a.proofComment = comment || '';
         Store.save();
+
+        /* в Supabase-режиме пишем статус в БД — иначе работодатель не увидит */
+        if (Store.useApi() && window.Api) {
+          Api.updateAssignment(aid, {
+            status: 'pending',
+            proof_type: a.proofType,
+            comment: comment || text || ''
+          }).then(function (upd) {
+            if (!upd) { toast('Не удалось отправить в базу', true); }
+          }).catch(function () { toast('Ошибка отправки', true); });
+        }
+
         toast('Отправлено на проверку!');
         vibrate('medium');
         navigate('my-task-detail', { aid: aid });

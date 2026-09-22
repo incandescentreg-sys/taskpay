@@ -139,6 +139,17 @@
       return error ? null : data;
     },
 
+    /* Мои задания как работодателя, с откликами */
+    async getMyEmployedTasks(userId) {
+      if (!ensureClient()) return null;
+      const { data, error } = await SB.from('tasks')
+        .select('*, assignments: assignments(*)')
+        .eq('employer_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(50);
+      return error ? null : data;
+    },
+
     async getMyAssignments(userId) {
       if (!ensureClient()) return null;
       const { data, error } = await SB.from('assignments')
