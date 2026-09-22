@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Yumitask click test</title>
+</head>
+<body>
+  <div id="app"></div>
+  <div id="result" style="white-space:pre-wrap;font-family:monospace;font-size:13px"></div>
+  <script>
+    window.Telegram = {
+      WebApp: {
+        ready(){}, expand(){}, initDataUnsafe:{},
+        setHeaderColor(){}, setBackgroundColor(){}, disableVerticalSwipes(){},
+        HapticFeedback:{ impactOccurred(){} },
+        BackButton:{ show(){}, hide(){}, onClick(){} },
+        showConfirm(m){ return Promise.resolve(true); },
+        showAlert(){}
+      }
+    };
+  </script>
+  <script src="../js/store.js"></script>
+  <script src="../js/app.js"></script>
+  <script src="../js/screens.js"></script>
+  <script>
+    (function () {
+      var log = [];
+      var errors = [];
+      window.onerror = function (msg, src, line) { errors.push(msg + ' @' + line); };
+
+      document.addEventListener('DOMContentLoaded', function () {
+        var app = document.getElementById('app');
+        window.TaskPay.navigate('home');
+        var checks = [
+          ['balance → wallet', '.home-balance', 'wallet'],
+          ['avatar → profile', '.fab-avatar', 'profile'],
+          ['bourse (home) → tasks', '.bourse-btn', 'tasks'],
+          ['menu-card create → create', '.menu-card[data-page="create"]', 'create'],
+          ['menu-card subs → subs', '.menu-card[data-page="subs"]', 'subs'],
+          ['dock tab home', '.tab[data-tab="home"]', 'home'],
+          ['dock bourse → tasks', '.tab-bourse', 'tasks'],
+          ['dock tab create', '.tab[data-tab="create"]', 'create']
+        ];
+        checks.forEach(function (c) {
+          try {
+            window.TaskPay.navigate('home');
+            var el = document.querySelector(c[1]);
+            if (!el) { log.push('FAIL ' + c[0] + ': элемент не найден'); return; }
+            el.click();
+            var route = window.TaskPay.currentRoute();
+            if (route === c[2]) log.push('OK  ' + c[0] + ' → ' + route);
+            else log.push('FAIL ' + c[0] + ': ожидалось ' + c[2] + ', получено ' + route);
+          } catch (e) {
+            log.push('FAIL ' + c[0] + ': исключение ' + e.message);
+          }
+        });
+        log.push('Ошибок JS: ' + errors.length);
+        document.getElementById('result').textContent = log.join('\n');
+      });
+    })();
+  </script>
+</body>
+</html>

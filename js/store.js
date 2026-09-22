@@ -16,12 +16,16 @@ const CATEGORIES = [
 ];
 
 const PLATFORMS = [
-  { id: 'tiktok', name: 'TikTok', icon: '🎵' },
-  { id: 'telegram', name: 'Telegram', icon: '✈️' },
-  { id: 'youtube', name: 'YouTube', icon: '▶️' },
-  { id: 'vk', name: 'VK', icon: '🟦' },
-  { id: 'instagram', name: 'Instagram', icon: '📸' },
-  { id: 'website', name: 'Сайт / другое', icon: '🌐' }
+  { id: 'tiktok', name: 'TikTok', icon: '🎵', img: 'icons_svg/tiktok.svg' },
+  { id: 'telegram', name: 'Telegram', icon: '✈️', img: 'icons_svg/telegram.svg' },
+  { id: 'youtube', name: 'YouTube', icon: '▶️', img: 'icons_svg/icon_05.svg' },
+  { id: 'vk', name: 'VK', icon: '🟦', img: 'icons_svg/vk.svg' },
+  { id: 'instagram', name: 'Instagram', icon: '📸', img: 'icons_svg/icon_14.svg' },
+  { id: 'avito', name: 'Авито', icon: '🛒', img: 'icons_svg/avito.svg' },
+  { id: '2gis', name: '2GIS', icon: '🗺', img: 'icons_svg/2gis.svg' },
+  { id: 'yandex_maps', name: 'Яндекс Карты', icon: '📍', img: 'icons_svg/Яндекс карты.svg' },
+  { id: 'google_maps', name: 'Google Карты', icon: '🌍', img: 'icons_svg/google maps.svg' },
+  { id: 'website', name: 'Сайт / другое', icon: '🌐', img: 'icons_svg/icon_08.svg' }
 ];
 
 const PROOF_TYPES = [
@@ -350,7 +354,12 @@ const Platform = {
   list: PLATFORMS,
   byId(id) { return PLATFORMS.find(p => p.id === id) || PLATFORMS[PLATFORMS.length - 1]; },
   name(id) { return this.byId(id).name; },
-  icon(id) { return this.byId(id).icon; }
+  icon(id) { return this.byId(id).icon; },
+  imgTag(id, cls) {
+    const p = this.byId(id);
+    if (!p.img) return p.icon || '';
+    return '<img src="' + p.img + '" alt="' + p.name + '" class="pl-icon ' + (cls || '') + '">';
+  }
 };
 
 const Proof = {

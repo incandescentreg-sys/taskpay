@@ -24,40 +24,47 @@
 
     return `
     <div class="page page--hero">
+      <div class="home-top-right">
+        <button class="home-balance" data-action="navigate" data-page="wallet" aria-label="Баланс">${TaskPay.icon('wallet')} ${fmtMoney(Store.getBalance())}</button>
+        ${TaskPay.fabAvatarHTML()}
+      </div>
       <div class="brand">
-        <img src="logo.jpg" alt="Yumitask" class="logo">
-        <h1>Yumitask</h1>
+        <img src="banner.jpg" alt="Yumitask" class="banner-logo">
         <div class="tagline">Выполняй задания — получай деньги<br>Размещай задания — получай результат</div>
       </div>
 
       <div class="bourse-wrap">
         <button class="bourse-btn" data-action="navigate" data-page="tasks">
-          <span class="bb-ico">⚡</span>
+          <span class="bb-ico">${TaskPay.icon('bolt')}</span>
           <span><span class="bb-label">Биржа заданий</span><span class="bb-sub">Открыть задания</span></span>
         </button>
       </div>
 
       <div class="grid-menu">
         <div class="menu-card" data-action="navigate" data-page="create">
-          <div class="mc-ico" style="background:var(--blue-soft)">💼</div>
+          <div class="mc-ico" style="background:var(--blue-soft)">${TaskPay.icon('briefcase')}</div>
           <div class="mc-label">Разместить задание</div>
           <div class="mc-sub">Найди исполнителей</div>
-        </div>
-        <div class="menu-card menu-card--green" data-action="navigate" data-page="wallet">
-          <div class="mc-ico" style="background:var(--green-soft)">💰</div>
-          <div class="mc-label">Мой баланс</div>
-          <div class="mc-sub">${fmtMoney(Store.getBalance())}</div>
+          <div class="wave-row wave-1"><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg></div>
+          <div class="wave-row wave-2"><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg></div>
+          <div class="wave-row wave-3"><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg></div>
         </div>
         <div class="menu-card menu-card--amber" data-action="navigate" data-page="subs">
-          <div class="mc-ico" style="background:var(--amber-soft)">📢</div>
+          <div class="mc-ico" style="background:var(--amber-soft)">${TaskPay.icon('megaphone')}</div>
           <div class="mc-label">Продвижение</div>
           <div class="mc-sub">Тарифы работодателя</div>
+          <div class="wave-row wave-1"><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg></div>
+          <div class="wave-row wave-2"><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg></div>
+          <div class="wave-row wave-3"><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg></div>
         </div>
         ${isAdmin() ? `
         <div class="menu-card menu-card--amber" data-action="navigate" data-page="admin">
-          <div class="mc-ico" style="background:var(--red-soft)">⚙️</div>
+          <div class="mc-ico" style="background:var(--red-soft)">${TaskPay.icon('shield')}</div>
           <div class="mc-label">Админ-панель</div>
           <div class="mc-sub">Управление</div>
+          <div class="wave-row wave-1"><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg></div>
+          <div class="wave-row wave-2"><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg></div>
+          <div class="wave-row wave-3"><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C180,44 360,44 540,120 C720,196 900,196 1080,120 C1240,64 1360,86 1440,120 L1440,320 L0,320 Z"/></svg></div>
         </div>` : ''}
       </div>
 
@@ -101,18 +108,19 @@
       '<span class="tag' + (sort === id ? ' active' : '') + '" data-action="filter-sort" data-sort="' + id + '">' + name + '</span>';
 
     return `
-    ${topbar('🔍 Найти задания', { back: false })}
+    ${topbar('Найти задания', { back: false, icon: 'search' })}
     <div class="page">
       <div class="section-title">Платформа</div>
-      <div class="tag-row">${platHTML('all', 'Все')}${PLATFORMS.map(p => platHTML(p.id, p.icon + ' ' + p.name)).join('')}</div>
+      <div class="tag-row">${platHTML('all', 'Все')}${PLATFORMS.map(p => platHTML(p.id, Platform.imgTag(p.id, 'tag-ico') + ' ' + p.name)).join('')}</div>
       <div class="section-title">Категории</div>
       <div class="tag-row">${catHTML('all', 'Все')}${CATEGORIES.map(c => catHTML(c.id, c.icon + ' ' + c.name)).join('')}</div>
       <div class="section-title">Сортировка</div>
       <div class="tag-row">${['new','pay','popular'].map(s => {
-        const names = { new: '⭐ Новые', pay: '💰 По оплате', popular: '🔥 Популярные' };
-        return sortHTML(s, names[s]);
+        const names = { new: 'Новые', pay: 'По оплате', popular: 'Популярные' };
+        const icSort = { new: 'star', pay: 'cash', popular: 'bolt' };
+        return sortHTML(s, '<span class="sort-ico">' + TaskPay.icon(icSort[s]) + '</span>' + names[s]);
       }).join('')}</div>
-      ${tasks.length === 0 ? '<div class="empty"><div class="e-ico">📭</div><div class="e-title">Нет доступных заданий</div><div class="e-sub">Скоро появятся новые задачи</div></div>' :
+      ${tasks.length === 0 ? '<div class="empty"><div class="e-ico">' + TaskPay.icon('inbox') + '</div><div class="e-title">Нет доступных заданий</div><div class="e-sub">Скоро появятся новые задачи</div></div>' :
         tasks.map(t => taskCardHTML(t)).join('')}
     </div>
     ${bottomNav('tasks')}`;
@@ -123,7 +131,7 @@
   ================================================================ */
   register('task-detail', (s) => {
     const t = Store.getTask(s.id);
-    if (!t) return '<div class="page"><div class="empty"><div class="e-ico">❌</div><div class="e-title">Задание не найдено</div></div></div>';
+    if (!t) return '<div class="page"><div class="empty"><div class="e-ico">' + TaskPay.icon('alert') + '</div><div class="e-title">Задание не найдено</div></div></div>';
     const cat = Category.byId(t.category);
     const pl = t.platform ? Platform.byId(t.platform) : null;
     const rating = Store.getTaskEmployerRating(t);
@@ -133,29 +141,29 @@
       <div class="card" style="margin-bottom:16px;">
         <div class="section-title" style="margin-top:0">${esc(t.title)}</div>
         <div class="tc-chips" style="margin-bottom:12px">
-          ${pl ? '<span class="chip chip--blue">' + pl.icon + ' ' + esc(pl.name) + '</span>' : ''}
-          <span class="chip chip--accent">🏷 ${esc(cat.name)}</span>
-          <span class="chip chip--green">💰 ${fmtMoney(t.reward)} за исполнителя</span>
-          <span class="chip chip--amber">👥 Осталось: ${t.spotsLeft} мест</span>
-          <span class="chip chip--blue">⏱ ~${t.durationMin} мин</span>
+          ${pl ? '<span class="chip chip--blue">' + Platform.imgTag(pl.id, 'chip-ico') + ' ' + esc(pl.name) + '</span>' : ''}
+          <span class="chip chip--accent">${TaskPay.icon('tag')} ${esc(cat.name)}</span>
+          <span class="chip chip--green">${TaskPay.icon('cash')} ${fmtMoney(t.reward)} за исполнителя</span>
+          <span class="chip chip--amber">${TaskPay.icon('users')} Осталось: ${t.spotsLeft} мест</span>
+          <span class="chip chip--blue">${TaskPay.icon('clock')} ~${t.durationMin} мин</span>
         </div>
         <p style="font-size:14px;line-height:1.55;color:var(--text-2);margin:10px 0 16px">${esc(t.description)}</p>
         <div style="font-size:13px;color:var(--text-3);margin-bottom:6px">Работодатель: ${esc(t.employerName || '—')} ${starsHTML(rating)} <b style="color:var(--accent-2)">${rating.score}</b> · ${rating.count} оценок</div>
         <div style="font-size:13px;color:var(--text-3)">Создано: ${timeAgo(t.createdAt)} · Срок: до ${t.deadlineDays} дн</div>
       </div>
 
-      <div class="section-title">📋 Инструкция</div>
+      <div class="section-title">${TaskPay.icon('clipboard')} Инструкция</div>
       <div class="card">
         <p style="font-size:14px;line-height:1.6;white-space:pre-wrap;color:var(--text-2)">${esc(t.instruction)}</p>
       </div>
 
-      <div class="section-title">📎 Подтверждение выполнения</div>
+      <div class="section-title">${TaskPay.icon('paperclip')} Подтверждение выполнения</div>
       <div class="card">
         <div class="tc-chips">${proofChips(t.proof)}</div>
         <div style="font-size:13px;color:var(--text-3);margin-top:8px">Вы должны предоставить указанные доказательства.</div>
       </div>
 
-      <button class="btn btn--block" style="margin-top:20px" data-action="take-task" data-id="${t.id}">📥 Взять задание</button>
+      <button class="btn btn--block" style="margin-top:20px" data-action="take-task" data-id="${t.id}">${TaskPay.icon('download')} Взять задание</button>
     </div>
     ${bottomNav('tasks')}`;
   }, () => {});
@@ -169,12 +177,11 @@
     const t = Store.getTask(a.taskId);
     const cat = t ? Category.byId(t.category) : null;
 
+    const proofIcon = id => ({ screenshot: 'camera', link: 'link', text: 'message', multiple: 'layers', other: 'paperclip' }[id] || 'paperclip');
     const proofOptsHTML = t && t.proof ? t.proof.map(p => {
-      const icon = { screenshot: '📸', link: '🔗', text: '💬', multiple: '🗂', other: '📎' }[p] || '📎';
-      const name = Proof.byId(p).name;
       return '<label class="verify-opt" data-action="select-proof" data-proof="' + p + '">' +
-        '<span class="vo-ico">' + icon + '</span>' +
-        '<span class="vo-label">' + name + '</span>' +
+        '<span class="vo-ico">' + TaskPay.icon(proofIcon(p)) + '</span>' +
+        '<span class="vo-label">' + Proof.byId(p).name + '</span>' +
       '</label>';
     }).join('') : '';
     const multiHelp = a.proofType === 'text' || a.proofType === 'multiple' || a.proofType === 'other' ?
@@ -186,7 +193,7 @@
       ${a.status === 'pending' ? `
         <div class="card" style="background:var(--amber-soft);border-color:var(--amber)">
           <div style="display:flex;align-items:center;gap:10px">
-            <span style="font-size:24px">🟡</span>
+            <span style="font-size:24px">${TaskPay.icon('clock', 'ico-pending')}</span>
             <div><div style="font-weight:700">На проверке</div>
             <div style="font-size:13px;color:var(--text-2)">Работодатель проверяет ваше выполнение</div></div>
           </div>
@@ -194,7 +201,7 @@
       ` : a.status === 'done' ? `
         <div class="card" style="background:var(--green-soft);border-color:var(--green)">
           <div style="display:flex;align-items:center;gap:10px">
-            <span style="font-size:24px">🟢</span>
+            <span style="font-size:24px">${TaskPay.icon('shield', 'ico-done')}</span>
             <div><div style="font-weight:700">Выполнено!</div>
             <div style="font-size:13px;color:var(--text-2)">Вознаграждение ${fmtMoney(a.reward)} зачислено на баланс</div></div>
           </div>
@@ -209,7 +216,7 @@
       ` : a.status === 'rejected' ? `
         <div class="card" style="background:var(--red-soft);border-color:var(--red)">
           <div style="display:flex;align-items:center;gap:10px">
-            <span style="font-size:24px">🔴</span>
+            <span style="font-size:24px">${TaskPay.icon('alert', 'ico-rejected')}</span>
             <div><div style="font-weight:700">Отклонено</div>
             <div style="font-size:13px;color:var(--text-2)">${a.rejectionReason || 'Работодатель отклонил выполнение'}</div></div>
           </div>
@@ -218,12 +225,12 @@
 
       ${t ? `
       <div class="card">
-        <div style="font-size:13px;color:var(--text-2);margin-bottom:8px">📋 Инструкция</div>
+        <div style="font-size:13px;color:var(--text-2);margin-bottom:8px">${TaskPay.icon('clipboard')} Инструкция</div>
         <p style="font-size:14px;line-height:1.6;white-space:pre-wrap;color:var(--text);">${esc(t.instruction)}</p>
       </div>` : ''}
 
       ${a.status === 'in_progress' ? `
-        <div class="section-title">📎 Подтверждение выполнения</div>
+        <div class="section-title">${TaskPay.icon('paperclip')} Подтверждение выполнения</div>
         <div class="card">
           <div class="opt-row">${proofOptsHTML}</div>
           ${multiHelp}
@@ -231,7 +238,7 @@
             <label>Комментарий (необязательно)</label>
             <textarea id="proof-comment" rows="2" placeholder="Дополнительные пояснения..."></textarea>
           </div>
-          <button class="btn btn--block btn--green" data-action="submit-proof" data-aid="${a.id}" style="margin-top:8px">📤 Отправить на проверку</button>
+          <button class="btn btn--block btn--green" data-action="submit-proof" data-aid="${a.id}" style="margin-top:8px">${TaskPay.icon('send')} Отправить на проверку</button>
         </div>
       ` : ''}
 
@@ -246,55 +253,94 @@
   ================================================================ */
   register('create', () => {
     return `
-    ${topbar('💼 Разместить задание')}
+    ${topbar('Разместить задание', { icon: 'briefcase' })}
     <div class="page">
-      <div class="field">
-        <label>Название задания <span class="req">*</span></label>
-        <input id="f-title" maxlength="100" placeholder="Например: Напишите отзыв о нашем ресторане">
+      <div class="create-intro">
+        <div class="ci-title">Создайте задание</div>
+        <div class="ci-sub">Заполните шаги — и исполнители увидят вашу задачу</div>
       </div>
-      <div class="field">
-        <label>Описание <span class="req">*</span></label>
-        <textarea id="f-desc" rows="2" placeholder="Посетите страницу ресторана, ознакомьтесь с информацией и выполните указанное действие."></textarea>
+
+      <div class="form-step" style="animation-delay:.05s">
+        <div class="fs-head">
+          <span class="fs-num">1</span>
+          <span class="fs-title">О чём задание</span>
+        </div>
+        <div class="field">
+          <label>Название задания <span class="req">*</span></label>
+          <input id="f-title" maxlength="100" placeholder="Например: Напишите отзыв о нашем ресторане">
+        </div>
+        <div class="field">
+          <label>Описание <span class="req">*</span></label>
+          <textarea id="f-desc" rows="2" placeholder="Посетите страницу ресторана, ознакомьтесь с информацией и выполните указанное действие."></textarea>
+        </div>
       </div>
-      <div class="field">
-        <label>Категория <span class="req">*</span></label>
-        <select id="f-cat">${CATEGORIES.map(c => '<option value="' + c.id + '">' + c.icon + ' ' + c.name + '</option>').join('')}</select>
+
+      <div class="form-step" style="animation-delay:.15s">
+        <div class="fs-head">
+          <span class="fs-num">2</span>
+          <span class="fs-title">Категория и платформа</span>
+        </div>
+        <div class="field">
+          <label>Категория <span class="req">*</span></label>
+          <select id="f-cat">${CATEGORIES.map(c => '<option value="' + c.id + '">' + c.icon + ' ' + c.name + '</option>').join('')}</select>
+        </div>
+        <div class="field">
+          <label>Платформа <span class="req">*</span></label>
+          <select id="f-platform">${PLATFORMS.map(p => '<option value="' + p.id + '">' + p.icon + ' ' + p.name + '</option>').join('')}</select>
+          <div class="hint">Где исполнитель будет выполнять задание</div>
+        </div>
       </div>
-      <div class="field">
-        <label>Платформа <span class="req">*</span></label>
-        <select id="f-platform">${PLATFORMS.map(p => '<option value="' + p.id + '">' + p.icon + ' ' + p.name + '</option>').join('')}</select>
-        <div class="hint">Где исполнитель будет выполнять задание</div>
+
+      <div class="form-step" style="animation-delay:.25s">
+        <div class="fs-head">
+          <span class="fs-num">3</span>
+          <span class="fs-title">Вознаграждение</span>
+        </div>
+        <div class="field">
+          <label>Количество исполнителей <span class="req">*</span></label>
+          <input id="f-spots" type="number" min="1" max="10000" value="100">
+        </div>
+        <div class="field">
+          <label>Оплата за одного исполнителя (₽) <span class="req">*</span></label>
+          <input id="f-reward" type="number" min="1" max="100000" value="100">
+          <div class="placeholder-example">Например: <b>100 ₽</b> за человека</div>
+        </div>
+        <div class="budget-line" id="budget-line">
+          <span>Общий бюджет</span>
+          <span class="sum" id="budget-sum">10 000 ₽</span>
+        </div>
       </div>
-      <div class="field">
-        <label>Количество исполнителей <span class="req">*</span></label>
-        <input id="f-spots" type="number" min="1" max="10000" value="100">
+
+      <div class="form-step" style="animation-delay:.35s">
+        <div class="fs-head">
+          <span class="fs-num">4</span>
+          <span class="fs-title">Инструкция исполнителю</span>
+        </div>
+        <div class="field">
+          <textarea id="f-instruction" rows="5" placeholder="Подробно опишите, что нужно сделать и как подтвердить выполнение."></textarea>
+        </div>
       </div>
-      <div class="field">
-        <label>Оплата за одного исполнителя (₽) <span class="req">*</span></label>
-        <input id="f-reward" type="number" min="1" max="100000" value="100">
-        <div class="placeholder-example">Например: <b>100 ₽</b> за человека</div>
+
+      <div class="form-step" style="animation-delay:.45s">
+        <div class="fs-head">
+          <span class="fs-num">5</span>
+          <span class="fs-title">Подтверждение и срок</span>
+        </div>
+        <div class="field">
+          <label>Что должен предоставить исполнитель <span class="req">*</span></label>
+          <div class="opt-row" id="proof-opts">${PROOF_TYPES.map(p => {
+            const pi = { screenshot: 'camera', link: 'link', text: 'message', multiple: 'layers', other: 'paperclip' }[p.id] || 'paperclip';
+            return '<span class="opt" data-proof="' + p.id + '">' + TaskPay.icon(pi) + ' ' + p.name + '</span>';
+          }).join('')}</div>
+          <div class="hint">Выберите один или несколько вариантов</div>
+        </div>
+        <div class="field">
+          <label>Срок выполнения (дней)</label>
+          <input id="f-deadline" type="number" min="1" max="365" value="7">
+        </div>
       </div>
-      <div class="budget-line" id="budget-line">
-        <span>Общий бюджет</span>
-        <span class="sum" id="budget-sum">10 000 ₽</span>
-      </div>
-      <div class="field">
-        <label>Инструкция для исполнителя <span class="req">*</span></label>
-        <textarea id="f-instruction" rows="5" placeholder="Подробно опишите, что нужно сделать и как подтвердить выполнение."></textarea>
-      </div>
-      <div class="field">
-        <label>Подтверждение выполнения <span class="req">*</span></label>
-        <div class="opt-row" id="proof-opts">${PROOF_TYPES.map(p => {
-          const icon = { screenshot: '📸', link: '🔗', text: '💬', multiple: '🗂', other: '📎' }[p.id] || '📎';
-          return '<span class="opt" data-proof="' + p.id + '">' + icon + ' ' + p.name + '</span>';
-        }).join('')}</div>
-        <div class="hint">Выберите один или несколько вариантов</div>
-      </div>
-      <div class="field">
-        <label>Срок выполнения (дней)</label>
-        <input id="f-deadline" type="number" min="1" max="365" value="7">
-      </div>
-      <button class="btn btn--block" data-action="publish-task" style="margin-top:8px">📢 Опубликовать задание</button>
+
+      <button class="btn btn--block btn--publish" data-action="publish-task" style="margin-top:8px">${TaskPay.icon('megaphone')} Опубликовать задание</button>
       <div class="note">После публикации задание появится в ленте исполнителей</div>
     </div>`;
   }, () => {
@@ -331,16 +377,16 @@
     const sub = Store.getSubscription();
 
     return `
-    ${topbar('📢 Продвижение')}
+    ${topbar('Продвижение', { icon: 'megaphone' })}
     <div class="page">
       <div class="cta-banner" style="margin-bottom:22px">
-        <div class="cb-title">🚀 Хотите привлечь клиентов, подписчиков или получить отзывы?</div>
+        <div class="cb-title">${TaskPay.icon('rocket')} Хотите привлечь клиентов, подписчиков или получить отзывы?</div>
         <div class="cb-text">Разместите своё задание и получите реальных исполнителей.</div>
       </div>
 
       ${hasSub ? `
       <div class="card" style="background:var(--green-soft);border-color:var(--green);text-align:center;margin-bottom:18px">
-        <div style="font-size:22px">✅</div>
+        <div style="font-size:22px">${TaskPay.icon('shield')}</div>
         <div style="font-weight:700;margin:8px 0 4px">Подписка активна</div>
         <div style="font-size:13px;color:var(--text-2)">Действует до ${fmtDate(sub.until)}</div>
       </div>` : ''}
@@ -348,7 +394,7 @@
       <div class="subs-grid">
         ${SUBSCRIPTIONS.map(p => `
         <div class="sub-card${p.hot ? ' sub-card--hot' : ''}">
-          ${p.hot ? '<div class="sub-badge">🔥 Популярное</div>' : ''}
+          ${p.hot ? '<div class="sub-badge">' + TaskPay.icon('bolt') + ' Популярное</div>' : ''}
           <div class="sc-name">${p.name}</div>
           <div class="sc-price">${p.price.toLocaleString('ru-RU')} <small>₽</small></div>
           <div class="sc-desc">${p.desc}</div>
@@ -368,22 +414,22 @@
     const bal = Store.getBalance();
     const txns = Store.data.transactions;
     return `
-    ${topbar('💰 Мой баланс')}
+    ${topbar('Мой баланс', { balance: false, icon: 'wallet' })}
     <div class="page">
       <div class="balance-card">
         <div class="b-label">Доступно</div>
         <div class="b-value">${bal.toLocaleString('ru-RU')} <small>₽</small></div>
         <div class="wallet-actions">
-          <button class="btn btn--green btn--sm btn--block" data-action="pay-out">💳 Вывести</button>
-          <button class="btn btn--ghost btn--sm btn--block" data-action="navigate" data-page="subs">📢 Потратить</button>
+          <button class="btn btn--green btn--sm btn--block" data-action="pay-out">${TaskPay.icon('card')} Вывести</button>
+          <button class="btn btn--ghost btn--sm btn--block" data-action="navigate" data-page="subs">${TaskPay.icon('megaphone')} Потратить</button>
         </div>
       </div>
 
-      <div class="section-title">История операций <span class="link" data-action="refresh-wallet">⟳</span></div>
-      ${txns.length === 0 ? '<div class="empty"><div class="e-ico">📭</div><div class="e-title">Нет операций</div></div>' :
+      <div class="section-title">История операций <span class="link" data-action="refresh-wallet">${TaskPay.icon('refresh')}</span></div>
+      ${txns.length === 0 ? '<div class="empty"><div class="e-ico">' + TaskPay.icon('inbox') + '</div><div class="e-title">Нет операций</div></div>' :
         txns.map(t => `
         <div class="op">
-          <div class="op-ico">${t.type === 'income' ? '📥' : '📤'}</div>
+          <div class="op-ico">${t.type === 'income' ? TaskPay.icon('download') : TaskPay.icon('send')}</div>
           <div class="op-body">
             <div class="op-title">${esc(t.title)}</div>
             <div class="op-date">${timeAgo(t.date)}</div>
@@ -405,30 +451,30 @@
     const employerR = Store.getUserRating('employer');
 
     return `
-    ${topbar('👤 Профиль')}
+    ${topbar('Профиль', { icon: 'user' })}
     <div class="page">
       <div class="profile-head">
         <div class="avatar">${(u.name && u.name[0]) || 'Г'}</div>
         <div>
           <div style="font-size:18px;font-weight:700">${esc(u.name)}</div>
-          <div style="font-size:13px;color:var(--text-2)">${u.role === 'employer' ? 'Работодатель' : u.role === 'both' ? 'Исполнитель / Работодатель' : 'Исполнитель'}${isAdmin() ? ' · ⚙️ Админ' : ''}</div>
+          <div style="font-size:13px;color:var(--text-2)">${u.role === 'employer' ? 'Работодатель' : u.role === 'both' ? 'Исполнитель / Работодатель' : 'Исполнитель'}${isAdmin() ? ' · ' + TaskPay.icon('shield') + ' Админ' : ''}</div>
         </div>
       </div>
 
       <div class="stats" style="margin-bottom:14px">
         <div class="stat-card blue">
-          <div class="val" style="font-size:20px">⭐ ${workerR.count ? workerR.score.toFixed(1) : '—'}</div>
+          <div class="val" style="font-size:20px">${TaskPay.icon('star')} ${workerR.count ? workerR.score.toFixed(1) : '—'}</div>
           <div class="label">Рейтинг исполнителя (${workerR.count} оценок)</div>
         </div>
         <div class="stat-card green">
-          <div class="val" style="font-size:20px">⭐ ${employerR.count ? employerR.score.toFixed(1) : '—'}</div>
+          <div class="val" style="font-size:20px">${TaskPay.icon('star')} ${employerR.count ? employerR.score.toFixed(1) : '—'}</div>
           <div class="label">Рейтинг работодателя (${employerR.count} оценок)</div>
         </div>
       </div>
 
       <div style="padding:0 16px">
-        <button class="btn btn--block btn--ghost btn--sm" data-action="edit-name" style="margin-bottom:12px">✏️ Редактировать имя</button>
-        <button class="btn btn--block btn--sm" data-action="navigate" data-page="wallet" style="margin-bottom:14px">💰 Мой баланс: ${fmtMoney(Store.getBalance())}</button>
+        <button class="btn btn--block btn--ghost btn--sm" data-action="edit-name" style="margin-bottom:12px">${TaskPay.icon('edit')} Редактировать имя</button>
+        <button class="btn btn--block btn--sm" data-action="navigate" data-page="wallet" style="margin-bottom:14px">${TaskPay.icon('wallet')} Мой баланс: ${fmtMoney(Store.getBalance())}</button>
       </div>
 
       <div class="stats" style="margin-bottom:18px">
@@ -438,7 +484,7 @@
       </div>
 
       <div class="section-title">Мои задания</div>
-      ${myAssignments.length === 0 ? '<div class="empty"><div class="e-ico">📭</div><div class="e-title">У вас нет взятых заданий</div></div>' :
+      ${myAssignments.length === 0 ? '<div class="empty"><div class="e-ico">' + TaskPay.icon('inbox') + '</div><div class="e-title">У вас нет взятых заданий</div></div>' :
         myAssignments.map(a => {
           const t = Store.getTask(a.taskId);
           return '<div class="my-task" data-action="open-my-task" data-aid="' + a.id + '">' +
@@ -447,10 +493,70 @@
             '<div style="font-weight:800;color:var(--text-2)">→</div></div>';
         }).join('')}
 
-      ${isAdmin() ? '<button class="btn btn--block btn--ghost btn--sm" data-action="admin-panel" style="margin-top:16px">⚙️ Админ-панель</button>' : ''}
-      <button class="btn btn--block btn--red btn--sm" data-action="reset-data" style="margin-top:12px">🔄 Сбросить демо-данные</button>
+      ${isAdmin() ? '<button class="btn btn--block btn--ghost btn--sm" data-action="admin-panel" style="margin-top:16px">' + TaskPay.icon('settings') + ' Админ-панель</button>' : ''}
+      <button class="btn btn--block btn--red btn--sm" data-action="reset-data" style="margin-top:12px">${TaskPay.icon('refresh')} Сбросить демо-данные</button>
     </div>
     ${bottomNav('profile')}`;
+  }, () => {});
+
+  /* ================================================================
+     CHATS — список диалогов (демо)
+  ================================================================ */
+  register('chats', () => {
+    const dialogs = [
+      { id: 1, name: 'Ресторан «Уют»', task: 'Напишите отзыв о нашем ресторане', last: 'Приняли ваш отзыв, спасибо!', time: '10:42', unread: 2, avatar: 'Р' },
+      { id: 2, name: 'Startup News', task: 'Подпишитесь на Telegram-канал', last: 'Скриншот подписки готов', time: 'вчера', unread: 0, avatar: 'S' }
+    ];
+    return `
+    ${topbar('Сообщения', { icon: 'message' })}
+    <div class="page">
+      ${dialogs.map(d => `
+      <div class="chat-item" data-action="open-chat" data-chat="${d.id}">
+        <div class="chat-av">${d.avatar}</div>
+        <div class="chat-body">
+          <div class="chat-top">
+            <span class="chat-name">${esc(d.name)}</span>
+            <span class="chat-time">${d.time}</span>
+          </div>
+          <div class="chat-task">${esc(d.task)}</div>
+          <div class="chat-last">${esc(d.last)} ${d.unread ? '<span class="chat-badge">' + d.unread + '</span>' : ''}</div>
+        </div>
+      </div>`).join('')}
+      <div class="note">Демо-данные. В полной версии здесь будет бэкенд чатов.</div>
+    </div>
+    ${bottomNav('home')}`;
+  }, () => {});
+
+  /* ================================================================
+     CHAT DETAIL — переписка (демо)
+  ================================================================ */
+  register('chat-detail', (s) => {
+    const dialogs = [
+      { id: 1, name: 'Ресторан «Уют»', task: 'Напишите отзыв о нашем ресторане' },
+      { id: 2, name: 'Startup News', task: 'Подпишитесь на Telegram-канал' }
+    ];
+    const d = dialogs.find(x => x.id === Number(s.id)) || dialogs[0];
+    const messages = [
+      { me: false, text: 'Здравствуйте! Выполнил ваше задание, отправил отзыв' },
+      { me: true,  text: 'Отлично, спасибо! Проверяем' },
+      { me: false, text: 'Приняли ваш отзыв, спасибо! Награда уже на балансе' }
+    ];
+    return `
+    ${topbar(d.name, { icon: 'message' })}
+    <div class="chat-wrap">
+      <div class="chat-messages">
+        ${messages.map(m => `
+        <div class="msg ${m.me ? 'msg--me' : 'msg--them'}">
+          <div class="msg-text">${esc(m.text)}</div>
+          <div class="msg-time">${m.me ? '✓✓ ' : ''}10:4${m.me ? '1' : '0'}</div>
+        </div>`).join('')}
+        <div class="msg-system">Чат доступен после подключения бэкенда</div>
+      </div>
+      <div class="chat-input">
+        <input type="text" placeholder="Напишите сообщение..." disabled>
+        <button class="chat-send" disabled>${TaskPay.icon('send')}</button>
+      </div>
+    </div>`;
   }, () => {});
 
   /* ================================================================
@@ -459,7 +565,7 @@
   register('admin', () => {
     const stats = Store.computeStats();
     return `
-    ${topbar('⚙️ Админ-панель')}
+    ${topbar('Админ-панель', { icon: 'settings' })}
     <div class="page">
       <div class="section-title">Управление платформой</div>
       <div class="card" style="text-align:center;margin-bottom:16px">
@@ -479,24 +585,28 @@
         <input type="number" class="admin-price" data-plan="${p.id}" value="${p.price}" style="width:80px;padding:8px;background:var(--card-solid);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;text-align:center">
         <small style="color:var(--text-3)">₽</small>
       </div>`).join('')}
-      <button class="btn btn--block btn--sm" data-action="save-prices" style="margin-bottom:18px">💾 Сохранить цены</button>
+      <button class="btn btn--block btn--sm" data-action="save-prices" style="margin-bottom:18px">${TaskPay.icon('save')} Сохранить цены</button>
 
-      <button class="btn btn--block btn--ghost btn--sm" data-action="navigate" data-page="subs">📢 Просмотр тарифов</button>
-      <button class="btn btn--block btn--red btn--sm" data-action="reset-data" style="margin-top:12px">🔄 Сбросить демо-данные</button>
+      <button class="btn btn--block btn--ghost btn--sm" data-action="navigate" data-page="subs">${TaskPay.icon('megaphone')} Просмотр тарифов</button>
+      <button class="btn btn--block btn--red btn--sm" data-action="reset-data" style="margin-top:12px">${TaskPay.icon('refresh')} Сбросить демо-данные</button>
     </div>`;
   }, () => {});
 
   /* ================================================================
-     ГЛОБАЛЬНАЯ ПРИВЯЗКА СОБЫТИЙ
+     ГЛОБАЛЬНАЯ ПРИВЯЗКА СОБЫТИЙ (нативный click)
+     Тап/свайп браузер отличает сам; задержка 300мс убрана через
+     touch-action: manipulation в CSS. Никаких кастомных touch-костылей.
   ================================================================ */
-  window.addEventListener('click', function (e) {
-    let el = e.target.closest('[data-action]');
-    if (!el) return;
+  function runAction(el) {
+    if (!el || !el.dataset) return;
     const action = el.dataset.action;
     if (!action) return;
-
     switch (action) {
-      case 'back':
+      case 'back': {
+        navigate('home');
+        vibrate();
+        break;
+      }
       case 'tab': {
         const page = el.dataset.tab || 'home';
         navigate(page);
@@ -523,6 +633,11 @@
         vibrate();
         break;
       }
+      case 'open-chat': {
+        navigate('chat-detail', { id: el.dataset.chat });
+        vibrate();
+        break;
+      }
       case 'filter-cat': {
         const f = TaskPay.filters();
         f.cat = el.dataset.cat;
@@ -535,6 +650,12 @@
         navigate('tasks');
         break;
       }
+      case 'filter-sort': {
+        const f = TaskPay.filters();
+        f.sort = el.dataset.sort;
+        navigate('tasks');
+        break;
+      }
       case 'rate-employer': {
         const aid = Number(el.dataset.aid);
         const stars = Number(el.dataset.stars);
@@ -544,15 +665,9 @@
         a.rating = stars;
         Store.addRating('employer', stars);
         Store.save();
-        toast('⭐ Спасибо! Оценка ' + stars + '/5');
+        toast('Спасибо! Оценка ' + stars + '/5');
         vibrate();
         navigate('my-task-detail', { aid: aid });
-        break;
-      }
-      case 'filter-sort': {
-        const f = TaskPay.filters();
-        f.sort = el.dataset.sort;
-        navigate('tasks');
         break;
       }
       case 'take-task': {
@@ -576,7 +691,7 @@
         Store.getAssignments().push(a);
         t.spotsLeft = Math.max(0, t.spotsLeft - 1);
         Store.save();
-        toast('Задание взято! Подробности в Профиле → Мои задания');
+        toast('Задание взято! Подробности в профиле → Мои задания');
         vibrate();
         navigate('my-task-detail', { aid: a.id });
         break;
@@ -587,11 +702,6 @@
           parent.querySelectorAll('[data-proof]').forEach(x => x.classList.remove('active'));
           el.classList.add('active');
         }
-        const aid = el.dataset.aid;
-        if (aid) {
-          const a = Store.getAssignment(Number(aid));
-          if (a) a.proofType = el.dataset.proof;
-        }
         break;
       }
       case 'submit-proof': {
@@ -600,16 +710,14 @@
         if (!a) return;
         const text = $('proof-text') ? $('proof-text').value : '';
         const comment = $('proof-comment') ? $('proof-comment').value : '';
-        const activeProof = el.closest('.card').querySelector('[data-proof].active');
-        if (!activeProof && !text) {
-          toast('Выберите тип подтверждения', true);
-          return;
-        }
+        const card = el.closest('.card');
+        const activeProof = card ? card.querySelector('[data-proof].active') : null;
+        if (!activeProof && !text) { toast('Выберите тип подтверждения', true); return; }
         a.status = 'pending';
         a.proofType = activeProof ? activeProof.dataset.proof : 'text';
         a.proofData = text || comment || 'отправлено';
         Store.save();
-        toast('📤 Отправлено на проверку!');
+        toast('Отправлено на проверку!');
         vibrate('medium');
         navigate('my-task-detail', { aid: aid });
         break;
@@ -635,26 +743,17 @@
         const reward = $('f-reward');
         const instruction = $('f-instruction');
         const deadline = $('f-deadline');
-
-        if (!title.value.trim() || !desc.value.trim() || !instruction.value.trim()) {
+        if (!title || !title.value.trim() || !desc.value.trim() || !instruction.value.trim()) {
           toast('Заполните все обязательные поля', true);
           vibrate('heavy');
           return;
         }
         const s = parseInt(spots.value) || 0;
         const r = parseInt(reward.value) || 0;
-        if (s < 1 || r < 1) {
-          toast('Некорректное количество или оплата', true);
-          return;
-        }
-
+        if (s < 1 || r < 1) { toast('Некорректное количество или оплата', true); return; }
         const selectedProofs = [];
-        document.querySelectorAll('[data-proof].active').forEach(el => selectedProofs.push(el.dataset.proof));
-        if (selectedProofs.length === 0) {
-          toast('Выберите тип подтверждения', true);
-          return;
-        }
-
+        document.querySelectorAll('[data-proof].active').forEach(el2 => selectedProofs.push(el2.dataset.proof));
+        if (selectedProofs.length === 0) { toast('Выберите тип подтверждения', true); return; }
         const hasSub = Store.hasActiveSubscription();
         const userTasks = Store.getTasks().filter(t => t.employerId === Store.getUser().id && t.status === 'active');
         if (!hasSub && userTasks.length >= 1) {
@@ -662,7 +761,6 @@
           navigate('subs');
           return;
         }
-
         const totalBudget = s * r;
         const task = {
           title: title.value.trim(),
@@ -679,11 +777,10 @@
           employerName: Store.getUser().name,
           deadlineDays: parseInt(deadline.value) || 7
         };
-
-        const published = Store.addTask(task);
+        Store.addTask(task);
         Store.data.employersCount += 1;
         Store.save();
-        toast('✅ Задание опубликовано! Бюджет ' + fmtMoney(totalBudget));
+        toast('Задание опубликовано! Бюджет ' + fmtMoney(totalBudget));
         vibrate();
         navigate('tasks');
         break;
@@ -693,16 +790,12 @@
         const plan = SUBSCRIPTIONS.find(p => p.id === planId);
         if (!plan) return;
         const bal = Store.getBalance();
-        if (bal < plan.price) {
-          toast('Недостаточно средств на балансе', true);
-          navigate('wallet');
-          return;
-        }
+        if (bal < plan.price) { toast('Недостаточно средств на балансе', true); navigate('wallet'); return; }
         tgConfirm('Подписка', 'Оплатить ' + fmtMoney(plan.price) + ' за тариф «' + plan.name + '»?').then(ok => {
           if (!ok) return;
           const res = Store.activateSubscription(planId);
           if (!res.ok) { toast(res.error, true); return; }
-          toast('✅ Подписка «' + plan.name + '» активирована!');
+          toast('Подписка «' + plan.name + '» активирована!');
           vibrate();
           navigate('subs');
         });
@@ -724,12 +817,11 @@
         break;
       }
       case 'save-prices': {
-        const inputs = document.querySelectorAll('.admin-price');
-        inputs.forEach(inp => {
+        document.querySelectorAll('.admin-price').forEach(inp => {
           const plan = SUBSCRIPTIONS.find(p => p.id === inp.dataset.plan);
           if (plan) plan.price = parseInt(inp.value) || plan.price;
         });
-        toast('✅ Цены сохранены!');
+        toast('Цены сохранены!');
         vibrate();
         break;
       }
@@ -738,7 +830,7 @@
           if (!ok) return;
           Store.reset();
           navigate('home');
-          toast('🔄 Данные сброшены');
+          toast('Данные сброшены');
         });
         break;
       }
@@ -747,6 +839,12 @@
         break;
       }
     }
+  }
+
+  window.addEventListener('click', function (e) {
+    const el = e.target.closest ? e.target.closest('[data-action]') : null;
+    if (!el) return;
+    runAction(el);
   });
 
   /* ---------- Экспорт ---------- */

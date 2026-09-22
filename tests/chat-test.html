@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>chat click test</title>
+</head>
+<body>
+  <div id="app"></div>
+  <div id="result" style="white-space:pre-wrap;font-family:monospace;font-size:13px"></div>
+  <script>
+    window.Telegram = {
+      WebApp: {
+        ready(){}, expand(){}, initDataUnsafe:{},
+        setHeaderColor(){}, setBackgroundColor(){}, disableVerticalSwipes(){},
+        HapticFeedback:{ impactOccurred(){} },
+        BackButton:{ show(){}, hide(){}, onClick(){} },
+        showConfirm(m){ return Promise.resolve(true); },
+        showAlert(){}
+      }
+    };
+  </script>
+  <script src="../js/store.js"></script>
+  <script src="../js/app.js"></script>
+  <script src="../js/screens.js"></script>
+  <script>
+    (function () {
+      var log = [];
+      var errors = [];
+      window.onerror = function (msg, src, line) { errors.push(msg + ' @' + line); };
+      document.addEventListener('DOMContentLoaded', function () {
+        var app = document.getElementById('app');
+        try {
+          window.TaskPay.navigate('chats');
+          var html = app.innerHTML;
+          if (html.indexOf('Ресторан «Уют»') === -1) throw new Error('нет диалога Ресторан');
+          if (html.indexOf('Сообщения') === -1) throw new Error('нет заголовка');
+          log.push('OK  chats: список диалогов рендерится');
+
+          var chat = document.querySelector('.chat-item');
+          if (!chat) throw new Error('нет .chat-item');
+          chat.click();
+          var route = window.TaskPay.currentRoute();
+          if (route !== 'chat-detail') throw new Error('не перешли в chat-detail, получили ' + route);
+          var html2 = app.innerHTML;
+          if (html2.indexOf('msg--me') === -1 || html2.indexOf('Отлично') === -1) throw new Error('нет сообщений');
+          log.push('OK  chat-detail: переписка рендерится');
+
+          window.TaskPay.navigate('home');
+          var nc = document.querySelector('.nav-chat');
+          if (!nc) throw new Error('нет кнопки Сообщения в навигации');
+          if (nc.querySelector('.nc-badge') === null) throw new Error('нет badge');
+          log.push('OK  nav: кнопка Сообщения с badge в доке');
+
+          /* клик по самой кнопке (симулируем тап) */
+          window.TaskPay.navigate('home');
+          var nc2 = document.querySelector('.nav-chat');
+          nc2.click();
+          var route2 = window.TaskPay.currentRoute();
+          if (route2 !== 'chats') throw new Error('кнопка чата не открыла чаты: ' + route2);
+          log.push('OK  nav: клик по кнопке открывает чаты');
+        } catch (e) {
+          log.push('FAIL: ' + e.message);
+        }
+        log.push('Ошибок JS: ' + errors.length);
+        document.getElementById('result').textContent = log.join('\n');
+      });
+    })();
+  </script>
+</body>
+</html>

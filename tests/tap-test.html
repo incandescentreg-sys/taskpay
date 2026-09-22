@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>tap simulation test</title>
+</head>
+<body>
+  <div id="app"></div>
+  <div id="result" style="white-space:pre-wrap;font-family:monospace;font-size:13px"></div>
+  <script>
+    window.Telegram = {
+      WebApp: {
+        ready(){}, expand(){}, initDataUnsafe:{},
+        setHeaderColor(){}, setBackgroundColor(){}, disableVerticalSwipes(){},
+        HapticFeedback:{ impactOccurred(){} },
+        BackButton:{ show(){}, hide(){}, onClick(){} },
+        showConfirm(m){ return Promise.resolve(true); },
+        showAlert(){}
+      }
+    };
+  </script>
+  <script src="../js/store.js"></script>
+  <script src="../js/app.js"></script>
+  <script src="../js/screens.js"></script>
+  <script>
+    (function () {
+      var log = [];
+      var errors = [];
+      window.onerror = function (msg, src, line) { errors.push(msg + ' @' + line); };
+
+      function realTap(el) {
+        var t0 = new Event('touchstart', { bubbles: true, cancelable: true });
+        var t1 = new Event('touchend', { bubbles: true, cancelable: true });
+        el.dispatchEvent(t0);
+        el.dispatchEvent(t1);
+        /* некоторые webview шлют ещё и click */
+        try { el.click(); } catch (e) {}
+      }
+
+      function expectTap(sel, targetRoute, label) {
+        window.TaskPay.navigate('home');
+        var el = document.querySelector(sel);
+        if (!el) throw new Error(label + ': элемент не найден (' + sel + ')');
+        realTap(el);
+        var route = window.TaskPay.currentRoute();
+        if (route !== targetRoute) throw new Error(label + ': ожидалось ' + targetRoute + ', получено ' + route);
+        log.push('OK  ' + label + ' → ' + route);
+      }
+
+      document.addEventListener('DOMContentLoaded', function () {
+        try {
+          expectTap('.menu-card[data-page="create"]', 'create', 'Плашка «Разместить задание»');
+          expectTap('.menu-card[data-page="subs"]', 'subs', 'Плашка «Продвижение»');
+          expectTap('.nav-chat', 'chats', 'Кнопка «Сообщения» в доке');
+          expectTap('.tab-bourse', 'tasks', 'Кнопка «Биржа» в доке');
+
+          /* категории внутри биржи */
+          window.TaskPay.navigate('tasks');
+          var tag = document.querySelector('[data-action="filter-cat"][data-cat="reviews"]');
+          if (!tag) throw new Error('нет категории Отзывы');
+          realTap(tag);
+          var f = TaskPay.filters();
+          if (f.cat !== 'reviews') throw new Error('фильтр категории не применился: ' + f.cat);
+          log.push('OK  категория «Отзывы» → фильтр reviews');
+
+          /* платформа */
+          window.TaskPay.navigate('tasks');
+          var pt = document.querySelector('[data-action="filter-platform"][data-platform="telegram"]');
+          realTap(pt);
+          var f2 = TaskPay.filters();
+          if (f2.platform !== 'telegram') throw new Error('фильтр платформы не применился: ' + f2.platform);
+          log.push('OK  платформа «Telegram» → фильтр telegram');
+        } catch (e) {
+          log.push('FAIL: ' + e.message);
+        }
+        log.push('Ошибок JS: ' + errors.length);
+        document.getElementById('result').textContent = log.join('\n');
+      });
+    })();
+  </script>
+</body>
+</html>

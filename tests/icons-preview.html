@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Превью иконок платформ</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0A0F1E; color: #fff; padding: 20px; max-width: 640px; margin: 0 auto; }
+    h3 { color: #7DD3FC; margin: 24px 0 10px; }
+    .row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 12px 16px; margin-bottom: 8px; }
+    .row img { width: 32px; height: 32px; object-fit: contain; }
+    .row .name { font-weight: 600; }
+    .row .file { color: rgba(255,255,255,0.45); font-size: 12px; margin-left: auto; font-family: monospace; }
+  </style>
+</head>
+<body>
+  <h2>Проверка соответствия иконок платформам</h2>
+  <div id="list"></div>
+  <script>
+    var list = [
+      ['icon_01', 'TikTok', 'tiktok'],
+      ['icon_02', 'VK', 'vk'],
+      ['icon_03', '2GIS', '2gis'],
+      ['icon_04', 'Google Карты', 'google_maps'],
+      ['icon_05', 'YouTube', 'youtube'],
+      ['icon_06', 'Авито', 'avito'],
+      ['icon_07', 'Яндекс Карты', 'yandex_maps'],
+      ['icon_08', 'Сайт / другое', 'website'],
+      ['icon_09', '(запасная)'],
+      ['icon_10', '(запасная)'],
+      ['icon_11', '(запасная)'],
+      ['icon_12', 'Telegram', 'telegram'],
+      ['icon_13', '(запасная)'],
+      ['icon_14', 'Instagram', 'instagram'],
+      ['icon_15', '(запасная)'],
+      ['icon_16', '(запасная)']
+    ];
+    document.getElementById('list').innerHTML = list.map(function (x) {
+      return '<div class="row"><img src="icons_svg/' + x[0] + '.svg" alt=""><span class="name">' + (x[1]) + '</span>' + (x[2] ? '<span class="file">id: ' + x[2] + '</span>' : '<span class="file"></span>') + '</div>';
+    }).join('') + '<p style="color:rgba(255,255,255,0.5)">Скажите, какие иконки стоят не на своих местах — я поправлю сопоставление.</p>';
+  </script>
+</body>
+</html>
