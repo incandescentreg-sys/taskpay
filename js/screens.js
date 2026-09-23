@@ -533,10 +533,14 @@
       ${myAssignments.length === 0 ? '<div class="empty"><div class="e-ico">' + TaskPay.icon('inbox') + '</div><div class="e-title">У вас нет взятых заданий</div></div>' :
         myAssignments.map(a => {
           const t = Store.getTask(a.taskId);
-          return '<div class="my-task" data-action="open-my-task" data-aid="' + a.id + '">' +
-            '<div class="mt-body"><div class="mt-title">' + esc(t ? t.title : 'Задание') + '</div>' +
-            '<div class="mt-sub">' + statusHTML(a.status) + '</div></div>' +
-            '<div style="font-weight:800;color:var(--text-2)">→</div></div>';
+          return '<div class="my-task">' +
+            '<div class="my-task-inner" data-action="open-my-task" data-aid="' + a.id + '" style="flex:1;display:flex;align-items:center;gap:10px;min-width:0">' +
+              '<div class="mt-body"><div class="mt-title">' + esc(t ? t.title : 'Задание') + '</div>' +
+              '<div class="mt-sub">' + statusHTML(a.status) + '</div></div>' +
+              '<div style="font-weight:800;color:var(--text-2)">→</div>' +
+            '</div>' +
+            (useApi && t && t.employerId ? '<button class="btn btn--ghost btn--sm" data-action="open-employer-chat" data-otherid="' + t.employerId + '" data-tasktitle="' + esc(t.title) + '" style="padding:6px 8px;font-size:12px;flex:none">' + TaskPay.icon('message') + '</button>' : '') +
+          '</div>';
         }).join('')}
 
       ${useApi ? `
@@ -610,15 +614,38 @@
           const ms = c.messages && c.messages.length ? c.messages[c.messages.length - 1] : null;
           const otherId = String(c.user_a) === String(u.id) ? c.user_b : c.user_a;
           const last = ms ? ms.text : 'Откройте чат';
-          return '<div class="chat-item" data-action="open-chat" data-chat="' + c.id + '">' +
-            '<div class="chat-av">' + esc(String(otherId).slice(-2)) + '</div>' +
+          /* placeholder — заменяем после загрузки имени */
+          const ph = String(otherId).slice(-3);
+          return '<div class="chat-item" data-action="open-chat" data-chat="' + c.id + '" data-other="' + otherId + '">' +
+            '<div class="chat-av" data-chatav="' + c.id + '">' + ph + '</div>' +
             '<div class="chat-body">' +
-              '<div class="chat-top"><span class="chat-name">Диалог #' + c.id + '</span>' +
+              '<div class="chat-top"><span class="chat-name" data-chatname="' + c.id + '">Загрузка...</span>' +
               '<span class="chat-time">' + (ms ? timeAgo(new Date(ms.created_at).getTime()) : '') + '</span></div>' +
-              '<div class="chat-task">Задание #' + (c.task_id || '—') + '</div>' +
+              '<div class="chat-task">' + (c.task_id ? 'Задание #' + c.task_id : 'Чат') + '</div>' +
               '<div class="chat-last">' + esc(last) + '</div>' +
             '</div></div>';
         }).join('') || '<div class="empty"><div class="e-title">Нет диалогов</div></div>';
+        /* подгружаем имена и аватарки участников */
+        chats.forEach(function (c) {
+          const otherId = String(c.user_a) === String(u.id) ? c.user_b : c.user_a;
+          Api.getUserInfo(Number(otherId)).then(function (info) {
+            if (!info || !view) return;
+            const av = view.querySelector('[data-chatav="' + c.id + '"]');
+            const nm = view.querySelector('[data-chatname="' + c.id + '"]');
+            if (nm) nm.textContent = info.name || ('ID ' + otherId);
+            if (av && info.photo_url) {
+              av.innerHTML = '<img src="' + esc(info.photo_url) + '" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover">';
+            } else if (av && info.name) {
+              av.textContent = info.name[0];
+              av.style.background = 'var(--blue-soft)';
+              av.style.display = 'grid';
+              av.style.placeItems = 'center';
+              av.style.fontSize = '16px';
+              av.style.fontWeight = '700';
+              av.style.color = 'var(--blue)';
+            }
+          });
+        });
       });
     }
 
@@ -654,6 +681,32 @@
     const chatId = Number(s.id);
     const me = Store.getUser();
 
+    /* определяем собеседника и подгружаем его имя/аватарку */
+    let otherAvatarHTML = '';
+    if (useApi) {
+      Api.getChat(chatId).then(function (chat) {
+        if (!chat) return;
+        const otherId = String(chat.user_a) === String(me.id) ? chat.user_b : chat.user_a;
+        const av = document.querySelector('.chat-head-av');
+        const nm = document.querySelector('.chat-head-name');
+        if (av && Number(otherId) === Number(Store.getUser().id)) {
+          /* чат с самим собой — редко, но ок */
+          av.innerHTML = '<div class="letter">Я</div>';
+        }
+        Api.getUserInfo(Number(otherId)).then(function (info) {
+          if (av) {
+            if (info && info.photo_url) {
+              av.innerHTML = '<img src="' + esc(info.photo_url) + '" alt="">';
+            } else {
+              const l = (info && info.name && info.name[0]) || String(otherId).slice(-1);
+              av.innerHTML = '<div class="letter">' + esc(l) + '</div>';
+            }
+          }
+          if (nm) nm.textContent = (info && info.name) || ('ID ' + otherId);
+        });
+      });
+    }
+
     /* реальная переписка */
     if (useApi) {
       Api.getMessages(chatId).then(function (rows) {
@@ -661,10 +714,11 @@
         if (!box) return;
         box.innerHTML = (rows && rows.length ? rows : []).map(function (m) {
           const mine = String(m.from_user) === String(me.id);
-          return '<div class="msg ' + (mine ? 'msg--me' : 'msg--them') + '">' +
-            '<div class="msg-text">' + esc(m.text) + '</div>' +
-            '<div class="msg-time">' + (mine ? '✓✓ ' : '') + timeAgo(new Date(m.created_at).getTime()) + '</div>' +
-          '</div>';
+          const body = '<div class="msg-text">' + esc(m.text) + '</div>' +
+            '<div class="msg-time">' + (mine ? '✓✓ ' : '') + timeAgo(new Date(m.created_at).getTime()) + '</div>';
+          return mine
+            ? '<div class="msg msg--me">' + body + '</div>'
+            : '<div class="msg msg--them">' + body + '</div>';
         }).join('') || '<div class="msg-system">Сообщений пока нет</div>';
         box.scrollTop = box.scrollHeight;
       });
@@ -690,7 +744,16 @@
     ];
 
     return `
-    ${topbar('Чат #' + chatId, { icon: 'message' })}
+    <header class="topbar">
+      <button class="tb-back" data-action="back">‹</button>
+      <div class="chat-head" style="display:flex;align-items:center;gap:10px;min-width:0">
+        <span class="chat-head-av" style="width:34px;height:34px;border-radius:50%;overflow:hidden;flex:none;background:var(--card);border:1px solid var(--border);display:grid;place-items:center;color:var(--text-3)">
+          <div class="letter" style="font-size:15px;font-weight:700;color:var(--accent-2)">…</div>
+        </span>
+        <span class="chat-head-name" style="font-size:15px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">Загрузка...</span>
+      </div>
+      <span class="tb-right">${TaskPay.fabAvatarHTML()}</span>
+    </header>
     <div class="chat-wrap">
       <div class="chat-messages" id="chat-msgs">
         ${useApi
@@ -940,6 +1003,16 @@
       case 'open-chat': {
         navigate('chat-detail', { id: el.dataset.chat });
         vibrate();
+        break;
+      }
+      case 'open-employer-chat': {
+        const me = Store.getUser();
+        const otherId = Number(el.dataset.otherid);
+        if (!me.id || !otherId) { toast('Нет данных', true); return; }
+        Api.findOrCreateChat(Number(me.id), otherId).then(function (chat) {
+          if (!chat) { toast('Ошибка создания чата', true); return; }
+          navigate('chat-detail', { id: chat.id });
+        });
         break;
       }
       case 'send-chat': {

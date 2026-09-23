@@ -274,6 +274,16 @@
       return error ? null : (data ? data.uid : null);
     },
 
+    /* Имя и аватарка пользователя для чатов */
+    async getUserInfo(userId) {
+      if (!ensureClient()) return null;
+      const { data, error } = await SB.from('users')
+        .select('id, name, photo_url')
+        .eq('id', Number(userId))
+        .maybeSingle();
+      return error ? null : data;
+    },
+
     /* Создать/найти чат с пользователем (без задания) */
     async findOrCreateChat(userA, userB) {
       if (!ensureClient()) return null;
@@ -428,6 +438,14 @@
         .select('*, messages: messages(id, text, created_at, from_user)')
         .or('user_a.eq.' + userId + ',user_b.eq.' + userId)
         .order('created_at', { ascending: false });
+      return error ? null : data;
+    },
+
+    /* Один чат по id (для определения собеседника) */
+    async getChat(chatId) {
+      if (!ensureClient()) return null;
+      const { data, error } = await SB.from('chats')
+        .select('*').eq('id', chatId).maybeSingle();
       return error ? null : data;
     },
 
