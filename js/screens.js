@@ -1048,7 +1048,7 @@
         _lastSendKey = text + '@' + chatId;
         _lastSendTime = Date.now();
         window._chatSending = true;
-        Api.sendMessage(chatId, Number(Store.getUser().id), text).then(function (msg) {
+        Api.sendMessage(chatId, Number(Store.getUser().id), text, Store.getUser().name).then(function (msg) {
           window._chatSending = false;
           if (msg && input) {
             input.value = '';

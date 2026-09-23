@@ -470,12 +470,27 @@
       return error ? null : data;
     },
 
-    async sendMessage(chatId, fromUser, text) {
+    async sendMessage(chatId, fromUser, text, fromName) {
       if (!ensureClient()) return null;
       const { data, error } = await SB.from('messages')
         .insert({ chat_id: chatId, from_user: fromUser, text: text })
         .select().single();
+      if (!error && data) {
+        this._notifyMessageRecipient(chatId, fromUser, fromName, text);
+      }
       return error ? null : data;
+    },
+
+    /* Уведомить собеседника о новом сообщении через Telegram */
+    async _notifyMessageRecipient(chatId, fromUser, fromName, text) {
+      try {
+        const { data: chat } = await SB.from('chats').select('*').eq('id', chatId).maybeSingle();
+        if (!chat) return;
+        const otherId = String(chat.user_a) === String(fromUser) ? chat.user_b : chat.user_a;
+        const name = fromName || 'Пользователь';
+        const preview = String(text || '').slice(0, 120);
+        this._notify(otherId, '✉️ Новое сообщение от <b>' + this._esc(name) + '</b>\n' + this._esc(preview));
+      } catch (e) {}
     },
 
     async startChat(taskId, userA, userB) {
@@ -488,7 +503,7 @@
     },
 
     /* Отправка сообщения в диалог по заданию: находит чат и шлёт текст */
-    async sendMessageToTask(taskId, userId, text) {
+    async sendMessageToTask(taskId, userId, text, fromName) {
       if (!ensureClient()) return null;
       const { data: chat, error: e1 } = await SB.from('chats')
         .select('id').eq('task_id', taskId).limit(5);
@@ -497,7 +512,7 @@
       const mine = chat.filter(c =>
         String(c.user_a) === String(userId) || String(c.user_b) === String(userId));
       if (!mine.length) return null;
-      return await this.sendMessage(mine[0].id, userId, text);
+      return await this.sendMessage(mine[0].id, userId, text, fromName);
     },
 
     /* ---------- Realtime ---------- */
