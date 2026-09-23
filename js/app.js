@@ -97,14 +97,18 @@
     routes[name] = { render: renderer, bind: binder || function () {} };
   }
   function navigate(name, state) {
+    const changed = name !== currentRoute;
     currentRoute = name;
     routeState = state || {};
     render();
-    /* плавная анимация появления страницы — только при навигации */
+    /* плавная анимация появления страницы — только при реальной смене экрана,
+       иначе повторный клик на текущий экран дёргает страницу */
     try {
-      app.classList.remove('anim-page');
-      void app.offsetWidth; /* перезапуск анимации */
-      app.classList.add('anim-page');
+      if (changed) {
+        app.classList.remove('anim-page');
+        void app.offsetWidth; /* перезапуск анимации */
+        app.classList.add('anim-page');
+      }
     } catch (e) {}
     window.scrollTo(0, 0);
   }
