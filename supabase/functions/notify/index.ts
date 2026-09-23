@@ -3,7 +3,8 @@
 // Серверно шлёт сообщения от имени бота (BOT_TOKEN — секрет).
 // Токен НЕ должен попадать в клиент.
 //
-// POST { messages: [{ chat_id, text, parse_mode? }] }
+// POST { chat_id, text }  или  { messages: [{ chat_id, text }] }
+// Работает без JWT (--no-verify-jwt), т.к. вызывается из клиента.
 // ============================================================
 
 const BOT_TOKEN = Deno.env.get('BOT_TOKEN') || '';
@@ -23,13 +24,13 @@ async function sendMessage(msg) {
       })
     });
     const data = await res.json();
-    return { ok: !!data.ok, error: data.description || null };
+    return { ok: !!data.ok, error: data.description || null, res: data };
   } catch (e) {
     return { ok: false, error: e.message };
   }
 }
 
-export default async function handler(req) {
+Deno.serve(async (req) => {
   if (req.method !== 'POST') {
     return new Response('Method not allowed', { status: 405 });
   }
@@ -44,4 +45,4 @@ export default async function handler(req) {
   } catch (e) {
     return Response.json({ error: e.message }, { status: 500 });
   }
-}
+});
