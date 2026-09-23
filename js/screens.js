@@ -1060,7 +1060,12 @@
             proof_type: a.proofType,
             comment: comment || text || ''
           }).then(function (upd) {
-            if (!upd) { toast('Не удалось отправить в базу', true); }
+            if (!upd) { toast('Не удалось отправить в базу', true); return; }
+            /* уведомить работодателя: исполнитель отправил на проверку */
+            const t = Store.getTask(a.taskId);
+            if (t && t.employerId && window.Api._notify) {
+              Api._notify(t.employerId, '📨 <b>' + Api._esc((Store.getUser() || {}).name || 'Исполнитель') + '</b> отправил выполнение задания <b>' + Api._esc(t.title) + '</b> на проверку');
+            }
           }).catch(function () { toast('Ошибка отправки', true); });
         }
 

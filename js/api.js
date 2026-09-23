@@ -86,6 +86,12 @@
       return data;
     },
 
+    async getAllUsers() {
+      if (!ensureClient()) return null;
+      const { data, error } = await SB.from('users').select('id').limit(500);
+      return error ? null : data;
+    },
+
     /* ---------- Задания ---------- */
     async getTasks() {
       if (!ensureClient()) return null;
@@ -100,6 +106,10 @@
     async publishTask(task) {
       if (!ensureClient()) return null;
       const { data, error } = await SB.from('tasks').insert(task).select().single();
+      if (!error && data) {
+        /* уведомляем всех пользователей о новом задании */
+        this._notifyNewTask(data);
+      }
       return error ? null : data;
     },
 
@@ -129,6 +139,8 @@
       await SB.from('tasks')
         .update({ spots_left: Math.max(0, (task.spots_left || 1) - 1) })
         .eq('id', taskId);
+      /* уведомление работодателю */
+      this._notify(task.employer_id, '👤 <b>' + this._esc(user.name || 'Кто-то') + '</b> откликнулся на ваше задание <b>' + this._esc(task.title) + '</b>');
       return data;
     },
 
@@ -215,6 +227,9 @@
           .update({ status: 'done' }).eq('id', Number(assignmentId));
         if (upd.error) return { ok: false, error: upd.error.message };
 
+        /* уведомление исполнителю: награда начислена */
+        this._notify(assign.user_id, '✅ Ваше выполнение задания <b>' + this._esc(task.title) + '</b> подтверждено! На баланс начислено <b>' + Number(reward) + ' ₽</b>');
+
         return { ok: true, reward, worker_id: assign.user_id };
       } catch (e) {
         return { ok: false, error: e.message || 'Ошибка подтверждения' };
@@ -227,6 +242,10 @@
         .update({ status: 'rejected', rejection_reason: 'Отклонено работодателем' })
         .eq('id', assignmentId)
         .select().single();
+      if (!error && data) {
+        /* уведомление исполнителю */
+        this._notify(data.user_id, '❌ Ваше выполнение задания #' + data.task_id + ' отклонено работодателем');
+      }
       return error ? null : data;
     },
 
@@ -373,6 +392,33 @@
       if (!ensureClient()) return null;
       const { data, error } = await SB.rpc(fn, params);
       return error ? { error: error.message } : data;
+    },
+
+    /* Отправка push-уведомления в Telegram (edge-функция notify).
+       Fire-and-forget: не ждём результат, чтобы не тормозить основной поток. */
+    _notify(chatId, text) {
+      try {
+        this._callEdge('notify', { chat_id: Number(chatId), text: String(text) }).catch(() => {});
+      } catch (e) {}
+      return true;
+    },
+    /* уведомление о новом задании всем пользователям */
+    async _notifyNewTask(task) {
+      try {
+        const all = await this.getAllUsers();
+        if (!all || !all.length) return;
+        const msg = '📢 Новое задание: <b>' + this._esc(task.title) + '</b> — ' + Number(task.reward) + ' ₽';
+        const messages = all.map(u => ({ chat_id: Number(u.id), text: msg }));
+        /* шлём батчем по 50 */
+        for (let i = 0; i < messages.length; i += 50) {
+          this._callEdge('notify', { messages: messages.slice(i, i + 50) }).catch(() => {});
+        }
+      } catch (e) {}
+    },
+    _esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+        return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+      });
     },
 
     /* ---------- Чат: список диалогов ---------- */
