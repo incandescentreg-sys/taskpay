@@ -64,10 +64,24 @@
     return u.role === 'admin' || u.is_admin || ADMINS.includes(u.id);
   }
   function tgConfirm(title, msg, okText, cancelText) {
-    if (tg && tg.showConfirm) {
-      try { return tg.showConfirm(msg, okText, cancelText); } catch (e) {}
-    }
-    return Promise.resolve(true);
+    /* Универсальный вызов: часть SDK возвращает Promise, часть ждёт callback.
+       Передаём оба: проставляем callback, а если вернулся Promise — вешаем .then.
+       Это чинит «нажимаю Да — ничего не происходит» (showConfirm падал,
+       т.к. второй аргумент уходил на позицию callback, а не okText). */
+    return new Promise(function (resolve) {
+      if (tg && tg.showConfirm) {
+        try {
+          const res = tg.showConfirm(msg, function (ok) { resolve(!!ok); }, okText, cancelText);
+          if (res && typeof res.then === 'function') {
+            res.then(function (ok) { resolve(!!ok); }).catch(function () { resolve(false); });
+          }
+        } catch (e) {
+          resolve(true);
+        }
+      } else {
+        resolve(true);
+      }
+    });
   }
   function tgPopup(title, msg) {
     if (tg && tg.showAlert) {

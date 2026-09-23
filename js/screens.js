@@ -1326,6 +1326,11 @@
     if (el === _lastClickEl && now - _lastClickTime < 400) return;
     _lastClickEl = el;
     _lastClickTime = now;
-    runAction(el);
+    try {
+      runAction(el);
+    } catch (err) {
+      console.error('runAction error', err);
+      toast('Ошибка: ' + (err && err.message ? err.message : err) + ' — проверьте консоль', true);
+    }
   });
 })();
