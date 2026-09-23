@@ -295,19 +295,23 @@
       return error ? null : data;
     },
 
-    /* Создать/найти чат с пользователем (без задания) */
-    async findOrCreateChat(userA, userB) {
+    /* Создать/найти чат с пользователем (опционально по заданию) */
+    async findOrCreateChat(userA, userB, taskId) {
       if (!ensureClient()) return null;
       const a = Number(userA), b = Number(userB);
       if (a === b) return null;
-      /* ищем существующий чат в обе стороны */
-      const { data: existing } = await SB.from('chats')
+      const withTask = taskId
+        ? '.eq(task_id.' + Number(taskId) + ')'
+        : '';
+      /* ищем существующий чат в обе стороны, при задании — по нему */
+      let query = SB.from('chats')
         .select('*')
-        .or('and(user_a.eq.' + a + ',user_b.eq.' + b + '),and(user_a.eq.' + b + ',user_b.eq.' + a + ')')
-        .maybeSingle();
+        .or('and(user_a.eq.' + a + ',user_b.eq.' + b + '),and(user_a.eq.' + b + ',user_b.eq.' + a + ')');
+      if (withTask) query = query.eq('task_id', Number(taskId));
+      const { data: existing } = await query.maybeSingle();
       if (existing) return existing;
       const { data, error } = await SB.from('chats')
-        .insert({ user_a: a, user_b: b })
+        .insert({ user_a: a, user_b: b, task_id: taskId ? Number(taskId) : null })
         .select().single();
       return error ? null : data;
     },

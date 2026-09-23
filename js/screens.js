@@ -146,6 +146,14 @@
           <span class="chip chip--green">${TaskPay.icon('cash')} ${fmtMoney(t.reward)} за исполнителя</span>
           <span class="chip chip--amber">${TaskPay.icon('users')} Осталось: ${t.spotsLeft} мест</span>
           <span class="chip chip--blue">${TaskPay.icon('clock')} ~${t.durationMin} мин</span>
+          ${function () {
+            const myAsn = Store.getAssignments().filter(a => a.taskId === t.id && String(a.userId) === String(Store.getUser().id));
+            if (!myAsn.length) return '';
+            const s = myAsn[0].status;
+            const map = { in_progress: ['В обработке', '#2d8cf0'], pending: ['На модерации', '#f0ad4e'], done: ['Выполнено, оплачено', '#5cb85c'], rejected: ['Отклонено', '#d9534f'] };
+            const m = map[s] || [s, '#888'];
+            return '<span class="chip" style="background:' + m[1] + '20;color:' + m[1] + ';border:1px solid ' + m[1] + '40;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:600">' + TaskPay.icon('star') + ' ' + m[0] + '</span>';
+          }()}
         </div>
         <p style="font-size:14px;line-height:1.55;color:var(--text-2);margin:10px 0 16px">${esc(t.description)}</p>
         <div style="font-size:13px;color:var(--text-3);margin-bottom:6px">Работодатель: ${esc(t.employerName || '—')} ${starsHTML(rating)} <b style="color:var(--accent-2)">${rating.score}</b> · ${rating.count} оценок</div>
@@ -561,7 +569,7 @@
               '<div class="mt-sub">' + statusHTML(a.status) + '</div></div>' +
               '<div style="font-weight:800;color:var(--text-2)">→</div>' +
             '</div>' +
-            (useApi && t && t.employerId ? '<button class="btn btn--ghost btn--sm" data-action="open-employer-chat" data-otherid="' + t.employerId + '" data-tasktitle="' + esc(t.title) + '" style="padding:6px 8px;font-size:12px;flex:none">' + TaskPay.icon('message') + '</button>' : '') +
+            (useApi && t && t.employerId ? '<button class="btn btn--ghost btn--sm" data-action="open-employer-chat" data-otherid="' + t.employerId + '" data-taskid="' + a.taskId + '" data-tasktitle="' + esc(t.title) + '" style="padding:6px 8px;font-size:12px;flex:none">' + TaskPay.icon('message') + '</button>' : '') +
           '</div>';
         }).join('')}
 
@@ -726,6 +734,11 @@
           }
           if (nm) nm.textContent = (info && info.name) || ('ID ' + otherId);
         });
+        /* кнопка перехода к заданию */
+        const btnBox = document.getElementById('chat-head-taskbtn');
+        if (btnBox && chat.task_id) {
+          btnBox.innerHTML = '<button class="btn btn--sm btn--ghost" data-action="open-task-from-chat" data-taskid="' + chat.task_id + '" style="padding:6px 10px;font-size:12px;white-space:nowrap">' + TaskPay.icon('clipboard') + ' К заданию</button>';
+        }
       });
     }
 
@@ -768,11 +781,12 @@
     return `
     <header class="topbar">
       <button class="tb-back" data-action="back">‹</button>
-      <div class="chat-head" style="display:flex;align-items:center;gap:10px;min-width:0">
+      <div class="chat-head" style="display:flex;align-items:center;gap:10px;min-width:0;flex:1">
         <span class="chat-head-av" style="width:34px;height:34px;border-radius:50%;overflow:hidden;flex:none;background:var(--card);border:1px solid var(--border);display:grid;place-items:center;color:var(--text-3)">
           <div class="letter" style="font-size:15px;font-weight:700;color:var(--accent-2)">…</div>
         </span>
-        <span class="chat-head-name" style="font-size:15px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">Загрузка...</span>
+        <span class="chat-head-name" style="font-size:15px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:0 1 auto">Загрузка...</span>
+        <span id="chat-head-taskbtn" style="margin-left:auto;flex:none"></span>
       </div>
     </header>
     <div class="chat-wrap">
@@ -1028,11 +1042,17 @@
         vibrate();
         break;
       }
+      case 'open-task-from-chat': {
+        navigate('task-detail', { id: el.dataset.taskid });
+        vibrate();
+        break;
+      }
       case 'open-employer-chat': {
         const me = Store.getUser();
         const otherId = Number(el.dataset.otherid);
+        const taskId = el.dataset.taskid ? Number(el.dataset.taskid) : null;
         if (!me.id || !otherId) { toast('Нет данных', true); return; }
-        Api.findOrCreateChat(Number(me.id), otherId).then(function (chat) {
+        Api.findOrCreateChat(Number(me.id), otherId, taskId).then(function (chat) {
           if (!chat) { toast('Ошибка создания чата', true); return; }
           navigate('chat-detail', { id: chat.id });
         });
