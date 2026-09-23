@@ -654,8 +654,8 @@ button .icon, .tab .icon, .tab-bourse .icon, .nav-chat .icon, .tc-do .icon,
 }
 
 /* ---------- Чат: переписка ---------- */
-.chat-wrap { display: flex; flex-direction: column; position: relative; }
-.chat-messages { flex: 1; overflow-y: auto; padding: 16px 16px 8px; display: flex; flex-direction: column; gap: 10px; }
+.chat-wrap { display: flex; flex-direction: column; height: calc(100dvh - var(--safe-top) - 56px); }
+.chat-messages { flex: 1; min-height: 0; overflow-y: auto; padding: 16px 16px 8px; display: flex; flex-direction: column; gap: 10px; }
 .msg { max-width: 82%; display: flex; flex-direction: column; gap: 3px; }
 .msg--them { align-self: flex-start; }
 .msg--me { align-self: flex-end; align-items: flex-end; }

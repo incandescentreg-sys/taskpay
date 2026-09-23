@@ -776,6 +776,8 @@
      ADMIN — админ-панель
   ================================================================ */
   let _adminUid = null;   /* последний найденный UID в админке */
+  let _lastSendKey = '';   /* защита от двойной отправки сообщения */
+  let _lastSendTime = 0;
 
   function adminUserCard(u) {
     if (!u) return '<div class="empty small" style="padding:16px">Пользователь не найден</div>';
@@ -1020,9 +1022,21 @@
         const input = $('chat-input');
         const text = input ? input.value.trim() : '';
         if (!text || !Store.useApi() || !window.Api) { toast('Введите сообщение'); return; }
+        /* защита от двойного tap: если отправка того же текста уже идёт — игнорируем */
+        if (_lastSendKey === text + '@' + chatId && Date.now() - _lastSendTime < 1500) return;
+        _lastSendKey = text + '@' + chatId;
+        _lastSendTime = Date.now();
+        window._chatSending = true;
         Api.sendMessage(chatId, Number(Store.getUser().id), text).then(function (msg) {
-          if (msg && input) input.value = '';
-        }).catch(function () { toast('Не удалось отправить', true); });
+          window._chatSending = false;
+          if (msg && input) {
+            input.value = '';
+            _lastSendKey = '';
+          }
+        }).catch(function () {
+          window._chatSending = false;
+          toast('Не удалось отправить', true);
+        });
         vibrate();
         break;
       }
