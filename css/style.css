@@ -76,28 +76,30 @@ body {
 
 #app { max-width: 480px; margin: 0 auto; min-height: 100vh; position: relative; }
 
-/* ---------- Волны внутри плашек-карточек (бесшовный тайл, концов нет) ---------- */
+/* ---------- Волны внутри плашек-карточек ----------
+   Анимируем через transform (GPU), а не background-position (CPU,
+   вызывает тормоза ~30fps). Путь периодичный — стык не виден. */
 .wave-row {
-  position: absolute; left: 0; right: 0; bottom: -6px; height: 46%;
-  background-image: url("data:image/svg+xml;utf8,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%201440%20320'%20preserveAspectRatio='none'%3E%3Cpath%20fill='rgba(138,148,166,0.55)'%20d='M0,120%20C360,16%20520,16%20720,120%20C920,224%201080,224%201440,120%20L1440,320%20L0,320%20Z'/%3E%3C/svg%3E");
-  background-size: 50% 100%;
-  background-repeat: repeat-x;
-  background-position: 0 0;
-  animation: waveBg linear infinite;
+  position: absolute; left: -50%; bottom: -6px; width: 200%;
+  display: flex; height: 46%;
+  animation: waveScroll linear infinite;
+  pointer-events: none;
+  transform: translate3d(0, 0, 0);
+}
+.wave-row svg {
+  width: 50%; height: 100%; flex: none;
   pointer-events: none;
 }
-.wave-row svg { display: none; } /* старые DOM-волны выключаем */
-.wave-1 { animation-duration: 18s; }
-.wave-2 { animation-duration: 26s; animation-direction: reverse; bottom: -14px; height: 40%; opacity: .75; }
-.wave-3 { animation-duration: 34s; bottom: -22px; height: 34%; opacity: .6; }
+.wave-row svg path { fill: rgba(138, 148, 166, 0.55); }
+.wave-1 { animation-duration: 22s; }
+.wave-2 { animation-duration: 32s; animation-direction: reverse; bottom: -14px; height: 40%; opacity: .75; }
+.wave-3 { animation-duration: 42s; bottom: -22px; height: 34%; opacity: .6; }
 @media (prefers-color-scheme: light) {
-  .wave-row {
-    background-image: url("data:image/svg+xml;utf8,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%201440%20320'%20preserveAspectRatio='none'%3E%3Cpath%20fill='rgba(90,107,135,0.5)'%20d='M0,120%20C360,16%20520,16%20720,120%20C920,224%201080,224%201440,120%20L1440,320%20L0,320%20Z'/%3E%3C/svg%3E");
-  }
+  .wave-row svg path { fill: rgba(90, 107, 135, 0.5); }
 }
-@keyframes waveBg {
-  from { background-position: 0 0; }
-  to   { background-position: 100% 0; }
+@keyframes waveScroll {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-50%, 0, 0); }
 }
 
 /* ---------- Топбар ---------- */
@@ -759,17 +761,18 @@ button .icon, .tab .icon, .tab-bourse .icon, .nav-chat .icon, .tc-do .icon,
 /* ---------- Нижняя навигация: плавающий остров-док ---------- */
 .nav-island {
   position: fixed; bottom: calc(14px + var(--safe-bottom)); left: 50%;
-  transform: translateX(-50%);
+  transform: translate3d(-50%, 0, 0);
   display: flex; align-items: center; gap: 10px;
   z-index: 100;
+  will-change: transform;
 }
 .tabbar {
   display: flex; align-items: flex-end; justify-content: center;
   gap: 10px;
   padding: 10px 14px;
-  background: color-mix(in srgb, var(--bg) 72%, transparent);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: color-mix(in srgb, var(--bg) 78%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border: 1px solid var(--border);
   border-radius: 999px;
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
