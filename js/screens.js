@@ -564,10 +564,9 @@
         myAssignments.map(a => {
           const t = Store.getTask(a.taskId);
           return '<div class="my-task">' +
-            '<div class="my-task-inner" data-action="open-my-task" data-aid="' + a.id + '" style="flex:1;display:flex;align-items:center;gap:10px;min-width:0">' +
-              '<div class="mt-body"><div class="mt-title">' + esc(t ? t.title : 'Задание') + '</div>' +
-              '<div class="mt-sub">' + statusHTML(a.status) + '</div></div>' +
-              '<div style="font-weight:800;color:var(--text-2)">→</div>' +
+            '<div class="mt-body" data-action="open-my-task" data-aid="' + a.id + '" style="cursor:pointer">' +
+              '<div class="mt-title">' + esc(t ? t.title : 'Задание') + '</div>' +
+              '<div class="mt-sub">' + statusHTML(a.status) + '</div>' +
             '</div>' +
             (useApi && t && t.employerId ? '<button class="btn btn--ghost btn--sm" data-action="open-employer-chat" data-otherid="' + t.employerId + '" data-taskid="' + a.taskId + '" data-tasktitle="' + esc(t.title) + '" style="padding:6px 8px;font-size:12px;flex:none">' + TaskPay.icon('message') + '</button>' : '') +
           '</div>';
