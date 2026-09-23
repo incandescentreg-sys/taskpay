@@ -165,15 +165,8 @@
       return error ? null : data;
     },
 
-    /* ---------- Подтверждение выполнения (с fallback без edge-функции) ---------- */
+    /* ---------- Подтверждение выполнения (только БД — edge отключён, т.к. висел без таймаута) ---------- */
     async confirmAssignment(assignmentId, employerId) {
-      /* 1. пробуем edge-функцию */
-      const edgeRes = await this._callEdge('complete-assignment', {
-        assignment_id: Number(assignmentId), user_id: Number(employerId)
-      }).catch(() => null);
-      if (edgeRes && edgeRes.ok) return edgeRes;
-
-      /* 2. fallback: выполняем подтверждение напрямую через БД (RPC change_balance) */
       if (!ensureClient()) return { ok: false, error: 'Нет соединения' };
       try {
         const a0 = await SB.from('assignments').select('*').eq('id', Number(assignmentId)).single();
@@ -358,16 +351,21 @@
     /* ---------- Внутренние хелперы ---------- */
     async _callEdge(fn, body) {
       if (!ensureClient()) return null;
+      const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+      const timer = ctrl ? setTimeout(() => ctrl.abort(), 5000) : null;
       try {
         const res = await fetch(SUPABASE_URL.replace(/\/$/, '') + '/functions/v1/' + fn, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body || {})
+          body: JSON.stringify(body || {}),
+          signal: ctrl ? ctrl.signal : undefined
         });
         return await res.json();
       } catch (e) {
         console.error(fn + ' error', e);
         return null;
+      } finally {
+        if (timer) clearTimeout(timer);
       }
     },
 
