@@ -865,5 +865,4 @@ background: linear-gradient(135deg, #00CFFF, #0064FF);
 
 /* Анимации появления страниц */
 @keyframes pageIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
-.page { will-change: opacity, transform; }
 #app.anim-page .page { animation: pageIn .3s cubic-bezier(.22,.9,.36,1); }
