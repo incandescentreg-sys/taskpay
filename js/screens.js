@@ -74,8 +74,6 @@
       <div class="stats">
         ${statCard(stats.activeTasks, 'Активных заданий', 'green')}
         ${statCard(stats.doneTasks, 'Выполнено заданий', 'blue')}
-        ${statCard(fmtMoney(stats.earned), 'Заработано пользователями', 'amber')}
-        ${statCard(stats.employers + '', 'Работодателей', 'accent')}
       </div>
 
       ${!hasSub ? `
