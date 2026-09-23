@@ -76,27 +76,28 @@ body {
 
 #app { max-width: 480px; margin: 0 auto; min-height: 100vh; position: relative; }
 
-/* ---------- Волны внутри плашек-карточек (как у Monster) ---------- */
+/* ---------- Волны внутри плашек-карточек (бесшовный тайл, концов нет) ---------- */
 .wave-row {
-  position: absolute; left: -50%; bottom: -6px; width: 200%;
-  display: flex; height: 46%;
-  animation: waveScroll linear infinite;
+  position: absolute; left: 0; right: 0; bottom: -6px; height: 46%;
+  background-image: url("data:image/svg+xml;utf8,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%201440%20320'%20preserveAspectRatio='none'%3E%3Cpath%20fill='rgba(138,148,166,0.55)'%20d='M0,120%20C360,16%20520,16%20720,120%20C920,224%201080,224%201440,120%20L1440,320%20L0,320%20Z'/%3E%3C/svg%3E");
+  background-size: 50% 100%;
+  background-repeat: repeat-x;
+  background-position: 0 0;
+  animation: waveBg linear infinite;
   pointer-events: none;
 }
-.wave-row svg {
-  width: 50%; height: 100%; flex: none;
-  pointer-events: none;
-}
-.wave-row svg path { fill: rgba(138, 148, 166, 0.55); }
+.wave-row svg { display: none; } /* старые DOM-волны выключаем */
 .wave-1 { animation-duration: 18s; }
 .wave-2 { animation-duration: 26s; animation-direction: reverse; bottom: -14px; height: 40%; opacity: .75; }
 .wave-3 { animation-duration: 34s; bottom: -22px; height: 34%; opacity: .6; }
 @media (prefers-color-scheme: light) {
-  .wave-row svg path { fill: rgba(90, 107, 135, 0.5); }
+  .wave-row {
+    background-image: url("data:image/svg+xml;utf8,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%201440%20320'%20preserveAspectRatio='none'%3E%3Cpath%20fill='rgba(90,107,135,0.5)'%20d='M0,120%20C360,16%20520,16%20720,120%20C920,224%201080,224%201440,120%20L1440,320%20L0,320%20Z'/%3E%3C/svg%3E");
+  }
 }
-@keyframes waveScroll {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-50%); }
+@keyframes waveBg {
+  from { background-position: 0 0; }
+  to   { background-position: 100% 0; }
 }
 
 /* ---------- Топбар ---------- */
