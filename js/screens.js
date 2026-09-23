@@ -568,7 +568,7 @@
               '<div class="mt-title">' + esc(t ? t.title : 'Задание') + '</div>' +
               '<div class="mt-sub">' + statusHTML(a.status) + '</div>' +
             '</div>' +
-            (useApi && t && t.employerId ? '<button class="btn btn--ghost btn--sm" data-action="open-employer-chat" data-otherid="' + t.employerId + '" data-taskid="' + a.taskId + '" data-tasktitle="' + esc(t.title) + '" style="padding:6px 8px;font-size:12px;flex:none">' + TaskPay.icon('message') + '</button>' : '') +
+            (useApi && t && t.employerId ? '<button data-action="open-employer-chat" data-otherid="' + t.employerId + '" data-taskid="' + a.taskId + '" title="Написать работодателю" style="flex:none;width:32px;height:32px;padding:0;border:none;background:var(--blue-soft);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:var(--blue);cursor:pointer">' + TaskPay.icon('message') + '</button>' : '') +
           '</div>';
         }).join('')}
 
