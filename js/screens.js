@@ -83,6 +83,14 @@
         <button class="btn btn--block" data-action="navigate" data-page="subs">Стать работодателем</button>
       </div>` : ''}
 
+      <div class="footer-links">
+        <a href="https://t.me/jack_Yumitask" target="_blank" rel="noopener">${TaskPay.icon('message')} Служба поддержки — @jack_Yumitask</a>
+      </div>
+      <div class="footer-links footer-links--cols">
+        <a href="https://telegra.ph/POLITIKA-KONFIDENCIALNOSTI-08-12-99" target="_blank" rel="noopener">Политика конфиденциальности</a>
+        <a href="https://telegra.ph/PUBLICHNAYA-OFERTA-08-12-15" target="_blank" rel="noopener">Пользовательское соглашение</a>
+      </div>
+
       ${bottomNav('home')}
     </div>`;
   }, () => { /* bind в глобальном обработчике */ });

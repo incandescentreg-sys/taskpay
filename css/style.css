@@ -758,6 +758,23 @@ button .icon, .tab .icon, .tab-bourse .icon, .nav-chat .icon, .tc-do .icon,
 .toast.out { opacity: 0; transform: translateY(8px); transition: all .25s ease; }
 @keyframes toastIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 
+/* ---------- Служебные ссылки (поддержка, документы) ---------- */
+.footer-links {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  margin: 26px 16px 8px;
+}
+.footer-links a {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12.5px; color: var(--text-3);
+  text-decoration: none; padding: 6px 12px;
+  border: 1px solid var(--border); border-radius: 999px;
+  background: var(--card); text-align: center;
+  transition: color .15s ease, border-color .15s ease;
+}
+.footer-links a:active { color: var(--accent); border-color: var(--accent); }
+.footer-links .icon { width: 15px; height: 15px; }
+.footer-links--cols { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+
 /* ---------- Нижняя навигация: плавающий остров-док ---------- */
 .nav-island {
   position: fixed; bottom: calc(14px + var(--safe-bottom)); left: 50%;
