@@ -4,10 +4,17 @@
 // Токен НЕ должен попадать в клиент.
 //
 // POST { chat_id, text }  или  { messages: [{ chat_id, text }] }
-// Работает без JWT (--no-verify-jwt), т.к. вызывается из клиента.
+// Работает без JWT (--no-verify-jwt) и с CORS-заголовками,
+// т.к. вызывается из браузера (Preflight OPTIONS).
 // ============================================================
 
 const BOT_TOKEN = Deno.env.get('BOT_TOKEN') || '';
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Access-Control-Max-Age': '86400'
+};
 
 async function sendMessage(msg) {
   if (!BOT_TOKEN) return { ok: false, error: 'BOT_TOKEN not set' };
@@ -31,8 +38,11 @@ async function sendMessage(msg) {
 }
 
 Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers: CORS });
+  }
   if (req.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405 });
+    return new Response('Method not allowed', { status: 405, headers: CORS });
   }
   try {
     const body = await req.json();
@@ -41,8 +51,8 @@ Deno.serve(async (req) => {
     for (const m of list) {
       results.push(await sendMessage(m));
     }
-    return Response.json({ ok: true, results }, { status: 200 });
+    return Response.json({ ok: true, results }, { status: 200, headers: CORS });
   } catch (e) {
-    return Response.json({ error: e.message }, { status: 500 });
+    return Response.json({ error: e.message }, { status: 500, headers: CORS });
   }
 });
