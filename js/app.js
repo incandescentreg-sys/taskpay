@@ -100,6 +100,12 @@
     currentRoute = name;
     routeState = state || {};
     render();
+    /* плавная анимация появления страницы — только при навигации */
+    try {
+      app.classList.remove('anim-page');
+      void app.offsetWidth; /* перезапуск анимации */
+      app.classList.add('anim-page');
+    } catch (e) {}
     window.scrollTo(0, 0);
   }
   function render() {
