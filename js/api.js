@@ -344,6 +344,17 @@
       return error ? { error: error.message } : { ok: true };
     },
 
+    /* Все отклики «на проверке» по всем заданиям (для админ-панели) */
+    async adminGetPendingAssignments() {
+      if (!ensureClient()) return null;
+      const { data, error } = await SB.from('assignments')
+        .select('*, tasks(id, title, reward, employer_id, employer_name)')
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false })
+        .limit(50);
+      return error ? null : data;
+    },
+
     /* ---------- Внутренние хелперы ---------- */
     async _callEdge(fn, body) {
       if (!ensureClient()) return null;

@@ -783,6 +783,9 @@
         <div id="admin-user-result"></div>
       </div>
 
+      <div class="section-title" style="margin-top:18px">Отклики на проверке</div>
+      <div id="admin-pending-list"><div class="empty small" style="padding:20px">Загрузка...</div></div>
+
       <div style="height:14px"></div>
       <div class="section-title">Тарифы (быстрая правка)</div>
       ${SUBSCRIPTIONS.map(p => `
@@ -796,7 +799,35 @@
       <button class="btn btn--block btn--ghost btn--sm" data-action="navigate" data-page="subs">${TaskPay.icon('megaphone')} Просмотр тарифов</button>
       <button class="btn btn--block btn--red btn--sm" data-action="reset-data" style="margin-top:12px">${TaskPay.icon('refresh')} Сбросить демо-данные</button>
     </div>`;
-  }, () => {});
+  }, () => {
+    /* подгружаем отклики «на проверке» для админ-панели */
+    if (!(Store.useApi() && window.Api)) return;
+    const box = q('#admin-pending-list');
+    if (!box) return;
+    Api.adminGetPendingAssignments().then(function (rows) {
+      if (!box) return;
+      if (!rows || !rows.length) {
+        box.innerHTML = '<div class="empty small" style="padding:20px">Нет откликов на проверке</div>';
+        return;
+      }
+      box.innerHTML = rows.map(function (a) {
+        const t = a.tasks || {};
+        return '<div class="card" style="padding:14px;margin-bottom:10px">' +
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">' +
+            '<div style="flex:1;min-width:0">' +
+              '<div style="font-size:14px;font-weight:700">' + esc(t.title || ('Задание #' + a.task_id)) + '</div>' +
+              '<div style="font-size:12px;color:var(--text-2);margin-top:3px">Исполнитель: <b>' + esc(a.user_name || ('#' + a.user_id)) + '</b></div>' +
+              (a.comment ? '<div style="font-size:12px;color:var(--text-3)">' + esc(a.comment) + '</div>' : '') +
+              '<div style="font-size:12px;color:var(--amber);margin-top:3px">🟡 На проверке · награда ' + fmtMoney(a.reward) + '</div>' +
+            '</div>' +
+            '<button class="btn btn--green btn--sm" data-action="admin-confirm-assign" data-aid="' + a.id + '" data-employer="' + (t.employer_id != null ? t.employer_id : '') + '" style="width:auto;padding:8px 12px;font-size:12px">Ок</button>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }).catch(function () {
+      if (box) box.innerHTML = '<div class="empty small" style="padding:20px">Ошибка загрузки</div>';
+    });
+  });
 
   /* ================================================================
      ГЛОБАЛЬНАЯ ПРИВЯЗКА СОБЫТИЙ (нативный click)
@@ -1280,6 +1311,24 @@
           } else {
             run();
           }
+        });
+        break;
+      }
+      case 'admin-confirm-assign': {
+        const aid = Number(el.dataset.aid);
+        const employerId = Number(el.dataset.employer);
+        if (!aid || !employerId) { toast('Нет данных отклика', true); return; }
+        tgConfirm('Подтвердить', 'Подтвердить выполнение и выплатить награду исполнителю?').then(function (ok) {
+          if (!ok) return;
+          Api.confirmAssignment(aid, employerId).then(function (res) {
+            if (res && res.ok) {
+              toast('Выполнение подтверждено, награда начислена!');
+              vibrate();
+              Store.syncFromApi().then(function () { navigate('admin'); });
+            } else {
+              toast((res && res.error) || 'Ошибка подтверждения', true);
+            }
+          });
         });
         break;
       }
