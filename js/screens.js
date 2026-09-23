@@ -857,7 +857,7 @@
     }
     switch (action) {
       case 'back': {
-        navigate('home');
+        navigate(TaskPay.backTo ? TaskPay.backTo(TaskPay.currentRoute()) : 'home');
         vibrate();
         break;
       }

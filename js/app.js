@@ -112,6 +112,20 @@
     } catch (e) {}
     window.scrollTo(0, 0);
   }
+  /* На какой экран ведёт «назад» с каждого экрана */
+  const BACK_TO = {
+    'task-detail': 'tasks',
+    'my-task-detail': 'profile',
+    'chat-detail': 'chats',
+    'profile': 'home',
+    'wallet': 'home',
+    'subs': 'home',
+    'create': 'home',
+    'tasks': 'home',
+    'home': null,
+    'admin': null
+  };
+
   function render() {
     const route = routes[currentRoute] || routes.home;
     app.innerHTML = route.render(routeState);
@@ -119,11 +133,12 @@
     bindActions();
     if (tg && tg.BackButton) {
       try {
-        if (currentRoute === 'home' || currentRoute === 'admin') {
+        const backTo = BACK_TO[currentRoute];
+        if (!backTo) {
           tg.BackButton.hide();
         } else {
           tg.BackButton.show();
-          tg.BackButton.onClick(() => navigate('home'));
+          tg.BackButton.onClick(() => navigate(backTo));
         }
       } catch (e) {}
     }
@@ -296,7 +311,8 @@
     currentRoute: () => currentRoute,
     routeState: () => routeState,
     filters: () => filters,
-    setFilters: f => { filters = f; }
+    setFilters: f => { filters = f; },
+    backTo: name => BACK_TO[name] || 'home'
   };
 
   /* ---------- Старт ---------- */
