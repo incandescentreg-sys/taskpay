@@ -752,7 +752,6 @@
         </span>
         <span class="chat-head-name" style="font-size:15px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">Загрузка...</span>
       </div>
-      <span class="tb-right">${TaskPay.fabAvatarHTML()}</span>
     </header>
     <div class="chat-wrap">
       <div class="chat-messages" id="chat-msgs">
