@@ -522,7 +522,6 @@
       </div>
 
       <div style="padding:0 16px">
-        <button class="btn btn--block btn--ghost btn--sm" data-action="edit-name" style="margin-bottom:12px">${TaskPay.icon('edit')} Редактировать имя</button>
         <button class="btn btn--block btn--sm" data-action="navigate" data-page="wallet" style="margin-bottom:14px">${TaskPay.icon('wallet')} Мой баланс: ${fmtMoney(Store.getBalance())}</button>
       </div>
 
@@ -548,7 +547,6 @@
       ` : ''}
 
       ${isAdmin() ? '<button class="btn btn--block btn--ghost btn--sm" data-action="admin-panel" style="margin-top:16px">' + TaskPay.icon('settings') + ' Админ-панель</button>' : ''}
-      <button class="btn btn--block btn--red btn--sm" data-action="reset-data" style="margin-top:12px">${TaskPay.icon('refresh')} Сбросить демо-данные</button>
     </div>
     ${bottomNav('profile')}`;
   }, () => {
@@ -797,7 +795,6 @@
       <button class="btn btn--block btn--sm" data-action="save-prices" style="margin-bottom:18px">${TaskPay.icon('save')} Сохранить цены</button>
 
       <button class="btn btn--block btn--ghost btn--sm" data-action="navigate" data-page="subs">${TaskPay.icon('megaphone')} Просмотр тарифов</button>
-      <button class="btn btn--block btn--red btn--sm" data-action="reset-data" style="margin-top:12px">${TaskPay.icon('refresh')} Сбросить демо-данные</button>
     </div>`;
   }, () => {
     /* подгружаем отклики «на проверке» для админ-панели */
@@ -855,7 +852,7 @@
 
     /* заблокированный пользователь может только смотреть: домой, назад, профиль, баланс */
     const me = Store.getUser();
-    const allowWhenBlocked = ['back', 'tab', 'navigate', 'open-profile', 'copy-uid', 'refresh-wallet', 'reset-data'];
+    const allowWhenBlocked = ['back', 'tab', 'navigate', 'open-profile', 'copy-uid', 'refresh-wallet'];
     if (me.is_blocked && !allowWhenBlocked.includes(action)) {
       toast('Аккаунт заблокирован администратором', true);
       return;
@@ -1231,11 +1228,6 @@
         });
         break;
       }
-      case 'edit-name': {
-        const u = Store.getUser();
-        tgPopup('Имя', 'Ваше имя: ' + u.name + '\n\nВ полной версии здесь будет форма редактирования.');
-        break;
-      }
       case 'admin-panel': {
         navigate('admin');
         break;
@@ -1339,15 +1331,6 @@
         });
         toast('Цены сохранены!');
         vibrate();
-        break;
-      }
-      case 'reset-data': {
-        tgConfirm('Сброс', 'Все демо-данные будут перезаписаны. Продолжить?').then(ok => {
-          if (!ok) return;
-          Store.reset();
-          navigate('home');
-          toast('Данные сброшены');
-        });
         break;
       }
       case 'refresh-data': {
