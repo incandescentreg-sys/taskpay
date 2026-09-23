@@ -447,7 +447,8 @@
   ================================================================ */
   register('wallet', () => {
     const bal = Store.getBalance();
-    const txns = Store.data.transactions;
+    const useApi = Store.useApi() && window.Api;
+    const demo = Store.data.transactions;
     return `
     ${topbar('Мой баланс', { balance: false, icon: 'wallet' })}
     <div class="page">
@@ -461,8 +462,8 @@
       </div>
 
       <div class="section-title">История операций <span class="link" data-action="refresh-wallet">${TaskPay.icon('refresh')}</span></div>
-      ${txns.length === 0 ? '<div class="empty"><div class="e-ico">' + TaskPay.icon('inbox') + '</div><div class="e-title">Нет операций</div></div>' :
-        txns.map(t => `
+      <div id="txn-list">${useApi ? '<div class="empty small" style="padding:20px">Загрузка...</div>' :
+        demo.length ? demo.map(t => `
         <div class="op">
           <div class="op-ico">${t.type === 'income' ? TaskPay.icon('download') : TaskPay.icon('send')}</div>
           <div class="op-body">
@@ -470,10 +471,31 @@
             <div class="op-date">${timeAgo(t.date)}</div>
           </div>
           <div class="op-amount ${t.type === 'income' ? 'plus' : 'minus'}">${t.type === 'income' ? '+' : '-'}${fmtMoney(t.amount)}</div>
-        </div>`).join('')}
+        </div>`).join('') : '<div class="empty small" style="padding:20px">Нет операций</div>'}
     </div>
     ${bottomNav('wallet')}`;
-  }, () => {});
+  }, () => {
+    if (Store.useApi() && window.Api) {
+      Api.getTransactions(Number(Store.getUser().id)).then(function (rows) {
+        const box = q('#txn-list');
+        if (!box) return;
+        if (!rows || !rows.length) {
+          box.innerHTML = '<div class="empty small" style="padding:20px">Нет операций</div>';
+          return;
+        }
+        box.innerHTML = rows.map(function (t) {
+          return '<div class="op">' +
+            '<div class="op-ico">' + (t.type === 'income' ? TaskPay.icon('download') : TaskPay.icon('send')) + '</div>' +
+            '<div class="op-body">' +
+              '<div class="op-title">' + esc(t.title || 'Перевод') + '</div>' +
+              '<div class="op-date">' + timeAgo(new Date(t.created_at).getTime()) + '</div>' +
+            '</div>' +
+            '<div class="op-amount ' + (t.type === 'income' ? 'plus' : 'minus') + '">' + (t.type === 'income' ? '+' : '-') + fmtMoney(t.amount) + '</div>' +
+          '</div>';
+        }).join('');
+      });
+    }
+  });
 
   /* ================================================================
      PROFILE — профиль пользователя

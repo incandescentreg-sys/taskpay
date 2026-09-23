@@ -274,6 +274,17 @@
       return error ? null : (data ? data.uid : null);
     },
 
+    /* История транзакций (реальные списания/начисления) */
+    async getTransactions(userId) {
+      if (!ensureClient()) return null;
+      const { data, error } = await SB.from('transactions')
+        .select('*')
+        .eq('user_id', Number(userId))
+        .order('created_at', { ascending: false })
+        .limit(100);
+      return error ? null : data;
+    },
+
     /* Имя и аватарка пользователя для чатов */
     async getUserInfo(userId) {
       if (!ensureClient()) return null;
