@@ -317,7 +317,12 @@ const Store = {
   /* ---------- Рейтинги ---------- */
   getUserRating(kind) {
     const r = this.data.user.rating || {};
-    return r[kind] || { score: 0, count: 0 };
+    const v = r[kind] || {};
+    /* нормализуем — старый localStorage мог хранить score: null */
+    return {
+      score: Number(v.score) || 0,
+      count: Number(v.count) || 0
+    };
   },
 
   addRating(kind, stars) {
