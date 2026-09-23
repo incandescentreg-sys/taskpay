@@ -324,6 +324,7 @@ button .icon, .tab .icon, .tab-bourse .icon, .nav-chat .icon, .tc-do .icon,
 }
 .menu-card .mc-ico .icon { width: 24px; height: 24px; color: var(--blue); }
 .menu-card--green .mc-ico { background: var(--green-soft); }
+.menu-card--green .mc-ico .icon { color: var(--green); }
 .menu-card--violet .mc-ico { background: var(--blue-soft); }
 .menu-card--amber .mc-ico { background: var(--amber-soft); }
 .menu-card--red .mc-ico { background: var(--red-soft); }

@@ -62,6 +62,7 @@
         <button type="button" class="menu-card menu-card--green" data-action="open-support">
           <div class="mc-ico" style="background:var(--green-soft)">${TaskPay.icon('message')}</div>
           <div class="mc-label">Служба поддержки</div>
+          <div class="mc-sub">Связаться с нами</div>
           <div class="wave-row wave-1"><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C360,16 520,16 720,120 C920,224 1080,224 1440,120 L1440,320 L0,320 Z"/></svg><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C360,16 520,16 720,120 C920,224 1080,224 1440,120 L1440,320 L0,320 Z"/></svg></div>
           <div class="wave-row wave-2"><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C360,16 520,16 720,120 C920,224 1080,224 1440,120 L1440,320 L0,320 Z"/></svg><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C360,16 520,16 720,120 C920,224 1080,224 1440,120 L1440,320 L0,320 Z"/></svg></div>
           <div class="wave-row wave-3"><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C360,16 520,16 720,120 C920,224 1080,224 1440,120 L1440,320 L0,320 Z"/></svg><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C360,16 520,16 720,120 C920,224 1080,224 1440,120 L1440,320 L0,320 Z"/></svg></div>
