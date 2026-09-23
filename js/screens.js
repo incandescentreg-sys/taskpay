@@ -26,6 +26,7 @@
     <div class="page page--hero">
       <div class="ver-tag">build 8</div>
       <div class="home-top-right">
+        <button class="home-balance" data-action="refresh-data" aria-label="Обновить" style="min-width:42px">${TaskPay.icon('refresh')}</button>
         <button class="home-balance" data-action="navigate" data-page="wallet" aria-label="Баланс">${TaskPay.icon('wallet')} ${fmtMoney(Store.getBalance())}</button>
         ${TaskPay.fabAvatarHTML()}
       </div>
@@ -115,7 +116,7 @@
       <div class="tag-row">${platHTML('all', 'Все')}${PLATFORMS.map(p => platHTML(p.id, Platform.imgTag(p.id, 'tag-ico') + ' ' + p.name)).join('')}</div>
       <div class="section-title">Категории</div>
       <div class="tag-row">${catHTML('all', 'Все')}${CATEGORIES.map(c => catHTML(c.id, c.icon + ' ' + c.name)).join('')}</div>
-      <div class="section-title">Сортировка</div>
+      <div class="section-title">Сортировка <span class="link" data-action="refresh-data">${TaskPay.icon('refresh')} Обновить</span></div>
       <div class="tag-row">${['new','pay','popular'].map(s => {
         const names = { new: 'Новые', pay: 'По оплате', popular: 'Популярные' };
         const icSort = { new: 'star', pay: 'cash', popular: 'bolt' };
@@ -1297,6 +1298,16 @@
           Store.reset();
           navigate('home');
           toast('Данные сброшены');
+        });
+        break;
+      }
+      case 'refresh-data': {
+        vibrate();
+        if (!Store.useApi()) { toast('Нет данных для обновления'); return; }
+        toast('Обновляю...');
+        Store.syncFromApi().then((ok) => {
+          navigate(TaskPay.currentRoute() || 'home');
+          toast(ok ? 'Данные обновлены' : 'Не удалось обновить', !ok);
         });
         break;
       }

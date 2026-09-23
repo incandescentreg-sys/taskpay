@@ -311,5 +311,16 @@
     }).catch(() => {
       /* сеть упала — остаёмся на демо-данных, интерфейс уже показан */
     });
+
+    /* Автообновление: каждые 20 сек тянем свежие данные из БД и
+       перерисовываем текущий экран (кроме форм — их стирать нельзя) */
+    setInterval(() => {
+      if (!Store.useApi()) return;
+      const r = currentRoute;
+      if (r === 'create' || r === 'chat-detail' || r === 'admin') return;
+      Store.syncFromApi().then(ok => {
+        if (ok) render();
+      }).catch(() => {});
+    }, 20000);
   });
 })();
