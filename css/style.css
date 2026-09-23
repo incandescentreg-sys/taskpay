@@ -77,10 +77,10 @@ body {
 #app { max-width: 480px; margin: 0 auto; min-height: 100vh; position: relative; }
 
 /* ---------- Волны внутри плашек-карточек ----------
-   Анимируем через transform (GPU), а не background-position (CPU,
-   вызывает тормоза ~30fps). Путь периодичный — стык не виден. */
+   Строка 200% (2 копии тайла) с left:0 всегда покрывает карточку
+   целиком, сдвиг -50% = ровно один тайл (бесшовный цикл, GPU). */
 .wave-row {
-  position: absolute; left: -50%; bottom: -6px; width: 200%;
+  position: absolute; left: 0; bottom: -6px; width: 200%;
   display: flex; height: 46%;
   animation: waveScroll linear infinite;
   pointer-events: none;
