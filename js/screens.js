@@ -59,6 +59,14 @@
           <div class="wave-row wave-2"><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C360,16 520,16 720,120 C920,224 1080,224 1440,120 L1440,320 L0,320 Z"/></svg><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C360,16 520,16 720,120 C920,224 1080,224 1440,120 L1440,320 L0,320 Z"/></svg></div>
           <div class="wave-row wave-3"><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C360,16 520,16 720,120 C920,224 1080,224 1440,120 L1440,320 L0,320 Z"/></svg><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C360,16 520,16 720,120 C920,224 1080,224 1440,120 L1440,320 L0,320 Z"/></svg></div>
         </button>
+        <button type="button" class="menu-card menu-card--green" data-action="open-support">
+          <div class="mc-ico" style="background:var(--green-soft)">${TaskPay.icon('message')}</div>
+          <div class="mc-label">Служба поддержки</div>
+          <div class="mc-sub">@jack_Yumitask</div>
+          <div class="wave-row wave-1"><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C360,16 520,16 720,120 C920,224 1080,224 1440,120 L1440,320 L0,320 Z"/></svg><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C360,16 520,16 720,120 C920,224 1080,224 1440,120 L1440,320 L0,320 Z"/></svg></div>
+          <div class="wave-row wave-2"><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C360,16 520,16 720,120 C920,224 1080,224 1440,120 L1440,320 L0,320 Z"/></svg><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C360,16 520,16 720,120 C920,224 1080,224 1440,120 L1440,320 L0,320 Z"/></svg></div>
+          <div class="wave-row wave-3"><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C360,16 520,16 720,120 C920,224 1080,224 1440,120 L1440,320 L0,320 Z"/></svg><svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C360,16 520,16 720,120 C920,224 1080,224 1440,120 L1440,320 L0,320 Z"/></svg></div>
+        </button>
         ${isAdmin() ? `
         <button type="button" class="menu-card menu-card--amber" data-action="navigate" data-page="admin">
           <div class="mc-ico" style="background:var(--red-soft)">${TaskPay.icon('shield')}</div>
@@ -83,9 +91,6 @@
         <button class="btn btn--block" data-action="navigate" data-page="subs">Стать работодателем</button>
       </div>` : ''}
 
-      <div class="footer-links">
-        <a href="https://t.me/jack_Yumitask" target="_blank" rel="noopener">${TaskPay.icon('message')} Служба поддержки — @jack_Yumitask</a>
-      </div>
       <div class="footer-links footer-links--cols">
         <a href="https://telegra.ph/POLITIKA-KONFIDENCIALNOSTI-08-12-99" target="_blank" rel="noopener">Политика конфиденциальности</a>
         <a href="https://telegra.ph/PUBLICHNAYA-OFERTA-08-12-15" target="_blank" rel="noopener">Пользовательское соглашение</a>
@@ -966,6 +971,18 @@
       case 'back': {
         navigate(TaskPay.backTo ? TaskPay.backTo(TaskPay.currentRoute()) : 'home');
         vibrate();
+        break;
+      }
+      case 'open-support': {
+        try {
+          if (window.Telegram && window.Telegram.WebApp && Telegram.WebApp.openTelegramLink) {
+            Telegram.WebApp.openTelegramLink('https://t.me/jack_Yumitask');
+          } else {
+            window.open('https://t.me/jack_Yumitask', '_blank');
+          }
+        } catch (e) {
+          window.open('https://t.me/jack_Yumitask', '_blank');
+        }
         break;
       }
       case 'tab': {
