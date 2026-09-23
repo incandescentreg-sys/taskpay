@@ -715,6 +715,47 @@
   /* ================================================================
      ADMIN — админ-панель
   ================================================================ */
+  let _adminUid = null;   /* последний найденный UID в админке */
+
+  function adminUserCard(u) {
+    if (!u) return '<div class="empty small" style="padding:16px">Пользователь не найден</div>';
+    const blocked = !!u.is_blocked;
+    const isAdm = !!u.is_admin;
+    return `
+    <div class="card" style="margin-top:12px">
+      <div style="display:flex;justify-content:space-between;align-items:start;gap:10px">
+        <div style="min-width:0">
+          <div style="font-weight:700;font-size:16px">${esc(u.name || 'Гость')}</div>
+          <div style="font-size:13px;color:var(--text-2);margin-top:4px">
+            UID: <b>${esc(u.uid || '—')}</b> · ID: ${u.id}
+          </div>
+        </div>
+        <div style="text-align:right;flex:none">
+          <div style="font-weight:800;font-size:18px">${fmtMoney(u.balance != null ? u.balance : 0)}</div>
+          <div style="font-size:11px;color:${blocked ? 'var(--red)' : 'var(--green)'};font-weight:700;margin-top:2px">
+            ${blocked ? '🔒 Заблокирован' : '✅ Активен'}${isAdm ? ' · ⚙ Админ' : ''}
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <input id="admin-amount" type="number" placeholder="Сумма" value="100" style="width:90px;flex:none;padding:9px;background:var(--card-solid);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;text-align:center">
+          <button class="btn btn--green btn--sm" data-action="admin-give" style="flex:1">${TaskPay.icon('plus')} Начислить</button>
+          <button class="btn btn--red btn--sm" data-action="admin-take" style="flex:1">${TaskPay.icon('minus')} Списать</button>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <input id="admin-balance-set" type="number" placeholder="Точно" value="" style="width:90px;flex:none;padding:9px;background:var(--card-solid);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;text-align:center">
+          <button class="btn btn--sm" data-action="admin-set-balance" style="flex:1">${TaskPay.icon('save')} Задать баланс</button>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn--sm ${blocked ? 'btn--green' : 'btn--red'}" data-action="admin-set-block" data-blocked="${blocked ? '' : '1'}" style="flex:1">${blocked ? '🔓 Разблокировать' : '🔒 Заблокировать'}</button>
+          <button class="btn btn--sm ${isAdm ? 'btn--ghost' : 'btn--amber'}" data-action="admin-set-admin" data-admin="${isAdm ? '' : '1'}" style="flex:1">${isAdm ? '👤 Снять админа' : '⚙ Дать админа'}</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
   register('admin', () => {
     const stats = Store.computeStats();
     return `
@@ -731,6 +772,17 @@
         </div>
       </div>
 
+      <div class="section-title">Пользователи</div>
+      <div class="card">
+        <div style="font-weight:600;margin-bottom:8px">${TaskPay.icon('search')} Найти по уникальному ID</div>
+        <div class="uid-search">
+          <input id="admin-uid-input" placeholder="Введите UID (например ABC123)" maxlength="8" style="flex:1">
+          <button class="btn btn--sm btn--block" data-action="admin-find-uid" style="flex:none;width:auto;padding:10px 16px">Найти</button>
+        </div>
+        <div id="admin-user-result"></div>
+      </div>
+
+      <div style="height:14px"></div>
       <div class="section-title">Тарифы (быстрая правка)</div>
       ${SUBSCRIPTIONS.map(p => `
       <div class="card" style="display:flex;align-items:center;justify-content:space-between;gap:10px">
@@ -768,6 +820,14 @@
     if (!el || !el.dataset) return;
     const action = el.dataset.action;
     if (!action) return;
+
+    /* заблокированный пользователь может только смотреть: домой, назад, профиль, баланс */
+    const me = Store.getUser();
+    const allowWhenBlocked = ['back', 'tab', 'navigate', 'open-profile', 'copy-uid', 'refresh-wallet', 'reset-data'];
+    if (me.is_blocked && !allowWhenBlocked.includes(action)) {
+      toast('Аккаунт заблокирован администратором', true);
+      return;
+    }
     switch (action) {
       case 'back': {
         navigate('home');
@@ -1146,6 +1206,80 @@
       }
       case 'admin-panel': {
         navigate('admin');
+        break;
+      }
+      case 'admin-find-uid': {
+        const input = $('admin-uid-input');
+        const uid = input ? input.value.trim().toUpperCase() : '';
+        const box = $('admin-user-result');
+        if (!uid) { toast('Введите UID'); return; }
+        if (!box) return;
+        _adminUid = uid;
+        box.innerHTML = '<div style="font-size:13px;color:var(--text-3);padding:8px">Поиск...</div>';
+        Api.adminFindUser(uid).then(function (found) {
+          if (uid !== _adminUid) return;
+          box.innerHTML = adminUserCard(found);
+        }).catch(function () {
+          if (uid !== _adminUid) return;
+          box.innerHTML = adminUserCard(null);
+        });
+        vibrate();
+        break;
+      }
+      case 'admin-give':
+      case 'admin-take':
+      case 'admin-set-balance':
+      case 'admin-set-block':
+      case 'admin-set-admin': {
+        const box = $('admin-user-result');
+        if (!_adminUid) { toast('Сначала найдите пользователя по UID', true); return; }
+        Api.adminFindUser(_adminUid).then(function (u) {
+          if (!u) { toast('Пользователь не найден', true); return; }
+          const op = action;
+          const run = function () {
+            const amt = parseInt(($('admin-amount') || {}).value, 10) || 0;
+            const balVal = parseInt(($('admin-balance-set') || {}).value, 10) || 0;
+            let p = null;
+            if (op === 'admin-give') {
+              p = Api.adminGiveMoney(u.id, amt);
+            } else if (op === 'admin-take') {
+              p = Api.adminTakeMoney(u.id, amt);
+            } else if (op === 'admin-set-balance') {
+              if (!balVal) { toast('Укажите сумму', true); return; }
+              p = Api.adminSetBalance(u.id, balVal);
+            } else if (op === 'admin-set-block') {
+              p = Api.adminSetBlocked(u.id, el.dataset.blocked === '1');
+            } else if (op === 'admin-set-admin') {
+              p = Api.adminSetAdmin(u.id, el.dataset.admin === '1');
+            }
+            if (!p) { toast('Ошибка операции', true); return; }
+            p.then(function (res) {
+              if (res && res.ok) {
+                const msgs = {
+                  'admin-give': 'Начислено ' + fmtMoney(amt) + ' ✓',
+                  'admin-take': 'Списано ' + fmtMoney(amt) + ' ✓',
+                  'admin-set-balance': 'Баланс установлен ✓',
+                  'admin-set-block': el.dataset.blocked === '1' ? 'Пользователь заблокирован 🔒' : 'Пользователь разблокирован 🔓',
+                  'admin-set-admin': el.dataset.admin === '1' ? 'Права админа выданы ⚙' : 'Права админа сняты'
+                }[op];
+                toast(msgs || 'Готово');
+                vibrate();
+                Api.adminFindUser(_adminUid).then(function (u2) {
+                  if (u2) box.innerHTML = adminUserCard(u2);
+                });
+              } else {
+                toast((res && res.error) || 'Ошибка', true);
+              }
+            });
+          };
+          if (op === 'admin-give' || op === 'admin-take' || op === 'admin-set-balance') {
+            tgConfirm('Подтвердите', 'Выполнить операцию для ' + esc(u.name || 'пользователя') + '?').then(function (ok) {
+              if (ok) run();
+            });
+          } else {
+            run();
+          }
+        });
         break;
       }
       case 'save-prices': {

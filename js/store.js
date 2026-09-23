@@ -62,6 +62,8 @@ function seedData() {
       name: 'Гость',
       role: 'both',               // 'employer' | 'worker' | 'both'
       balance: 1250,
+      is_admin: false,            // администратор платформы
+      is_blocked: false,          // заблокирован
       subscription: null,         // { planId, until }
       rating: { worker: { score: 0, count: 0 }, employer: { score: 0, count: 0 } },
       completedTasks: 0,
@@ -368,6 +370,8 @@ const Store = {
         this.data.user.balance = user.balance != null ? user.balance : this.data.user.balance;
         this.data.user.role = user.role || this.data.user.role;
         if (user.uid) this.data.user.uid = user.uid;
+        if (user.is_admin != null) this.data.user.is_admin = !!user.is_admin;
+        if (user.is_blocked != null) this.data.user.is_blocked = !!user.is_blocked;
       }
       /* свежий баланс из БД */
       const bal = await Api.getBalance(this.data.user.id);

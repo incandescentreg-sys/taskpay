@@ -285,6 +285,65 @@
       });
     },
 
+    /* ---------- Админ-панель ---------- */
+    async adminFindUser(uid) {
+      if (!ensureClient()) return null;
+      const { data, error } = await SB.from('users')
+        .select('*')
+        .eq('uid', String(uid).trim().toUpperCase())
+        .maybeSingle();
+      return error ? null : data;
+    },
+
+    /* Начислить деньги (плюс на баланс + запись транзакции) */
+    async adminGiveMoney(userId, amount, note) {
+      if (!ensureClient()) return { error: 'Нет соединения' };
+      const amt = Math.max(0, Number(amount) || 0);
+      if (amt <= 0) return { error: 'Сумма должна быть больше 0' };
+      const { data, error } = await SB.rpc('change_balance', {
+        p_user_id: Number(userId), p_delta: amt,
+        p_type: 'income', p_title: note || 'Начислено администратором'
+      });
+      return error ? { error: error.message } : { ok: true, balance: data };
+    },
+
+    /* Списать деньги (минус с баланса) */
+    async adminTakeMoney(userId, amount, note) {
+      if (!ensureClient()) return { error: 'Нет соединения' };
+      const amt = Math.max(0, Number(amount) || 0);
+      if (amt <= 0) return { error: 'Сумма должна быть больше 0' };
+      const { data, error } = await SB.rpc('change_balance', {
+        p_user_id: Number(userId), p_delta: -amt,
+        p_type: 'expense', p_title: note || 'Списано администратором'
+      });
+      return error ? { error: error.message } : { ok: true, balance: data };
+    },
+
+    /* Установить баланс напрямую (точное значение) */
+    async adminSetBalance(userId, newBalance) {
+      if (!ensureClient()) return { error: 'Нет соединения' };
+      const val = Math.max(0, Number(newBalance) || 0);
+      const { error } = await SB.from('users')
+        .update({ balance: val }).eq('id', Number(userId));
+      return error ? { error: error.message } : { ok: true, balance: val };
+    },
+
+    /* Заблокировать / разблокировать */
+    async adminSetBlocked(userId, blocked) {
+      if (!ensureClient()) return { error: 'Нет соединения' };
+      const { error } = await SB.from('users')
+        .update({ is_blocked: !!blocked }).eq('id', Number(userId));
+      return error ? { error: error.message } : { ok: true };
+    },
+
+    /* Сделать администратором / снять */
+    async adminSetAdmin(userId, isAdmin) {
+      if (!ensureClient()) return { error: 'Нет соединения' };
+      const { error } = await SB.from('users')
+        .update({ is_admin: !!isAdmin }).eq('id', Number(userId));
+      return error ? { error: error.message } : { ok: true };
+    },
+
     /* ---------- Внутренние хелперы ---------- */
     async _callEdge(fn, body) {
       if (!ensureClient()) return null;
