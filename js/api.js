@@ -425,10 +425,25 @@
     async getUserInfo(userId) {
       if (!ensureClient()) return null;
       const { data, error } = await SB.from('users')
-        .select('id, name, photo_url, uid')
+        .select('id, name, photo_url, uid, is_admin')
         .eq('id', Number(userId))
         .maybeSingle();
       return error ? null : data;
+    },
+
+    /* Рассылка сообщения всем пользователям (для админа) */
+    async adminBroadcast(text) {
+      try {
+        const all = await this.getAllUsers();
+        if (!all || !all.length) return { ok: false, error: 'Нет пользователей' };
+        const messages = all.map(u => ({ chat_id: Number(u.id), text: '📢 ' + text }));
+        for (let i = 0; i < messages.length; i += 50) {
+          this._callEdge('notify', { messages: messages.slice(i, i + 50) }).catch(() => {});
+        }
+        return { ok: true };
+      } catch (e) {
+        return { ok: false, error: e.message };
+      }
     },
 
     /* Создать/найти чат с пользователем (опционально по заданию) */

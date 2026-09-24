@@ -713,7 +713,7 @@
             if (!info || !view) return;
             const av = view.querySelector('[data-chatav="' + c.id + '"]');
             const nm = view.querySelector('[data-chatname="' + c.id + '"]');
-            if (nm) nm.textContent = info.name || ('ID ' + otherId);
+            if (nm) nm.textContent = (info.is_admin ? '🛡 ' : '') + (info.name || ('ID ' + otherId));
             if (av && info.photo_url) {
               av.innerHTML = '<img src="' + esc(info.photo_url) + '" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover">';
             } else if (av && info.name) {
@@ -837,7 +837,7 @@
               av.innerHTML = '<div class="letter">' + esc(l) + '</div>';
             }
           }
-          if (nm) nm.textContent = (info && info.name) || ('ID ' + otherId);
+          if (nm) nm.textContent = (info && info.is_admin ? '🛡 ' : '') + ((info && info.name) || ('ID ' + otherId));
         });
         /* кнопка перехода к заданию + удаление чата */
         const btnBox = document.getElementById('chat-head-taskbtn');
@@ -1044,6 +1044,12 @@
 
       <div class="section-title" style="margin-top:18px">${TaskPay.icon('bolt')} Задания на бирже</div>
       <div id="admin-market-list"><div class="empty small" style="padding:20px">Загрузка...</div></div>
+
+      <div class="section-title" style="margin-top:18px">${TaskPay.icon('megaphone')} Рассылка всем пользователям</div>
+      <div class="card">
+        <textarea id="admin-broadcast-text" placeholder="Текст уведомления..." style="width:100%;min-height:70px;padding:10px;background:var(--card-solid);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;resize:vertical;box-sizing:border-box;font-family:inherit"></textarea>
+        <button class="btn btn--block btn--sm" data-action="admin-broadcast" style="margin-top:8px">${TaskPay.icon('send')} Отправить всем</button>
+      </div>
 
       <div style="height:14px"></div>
       <div class="section-title">Тарифы (быстрая правка)</div>
@@ -1849,6 +1855,24 @@
               Store.syncFromApi().catch(function () {});
             } else {
               toast('Ошибка удаления', true);
+            }
+          });
+        });
+        break;
+      }
+      case 'admin-broadcast': {
+        const ta = $('admin-broadcast-text');
+        const msg = ta ? ta.value.trim() : '';
+        if (!msg) { toast('Введите текст уведомления', true); return; }
+        tgConfirm('Рассылка', 'Отправить это сообщение всем пользователям бота?').then(function (ok) {
+          if (!ok) return;
+          Api.adminBroadcast(msg).then(function (res) {
+            if (res && res.ok) {
+              toast('Сообщение отправлено всем');
+              if (ta) ta.value = '';
+              vibrate();
+            } else {
+              toast((res && res.error) || 'Ошибка рассылки', true);
             }
           });
         });
