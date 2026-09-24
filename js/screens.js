@@ -562,7 +562,7 @@
       <div class="card" style="margin-bottom:14px">
         <div style="font-weight:700;margin-bottom:8px">${TaskPay.icon('search')} Найти пользователя</div>
         <div class="uid-search">
-          <input id="uid-input" placeholder="Введите ID (например ABC123)" maxlength="8" style="flex:1">
+          <input id="uid-input" placeholder="Введите ID" maxlength="8" style="flex:1;min-width:0;font-size:13px;padding:10px 12px;background:var(--card-solid);border:1px solid var(--border);border-radius:10px;color:var(--text);outline:none">
           <button class="btn btn--sm btn--block" data-action="find-uid" style="flex:none;width:auto;padding:10px 16px">Найти</button>
         </div>
         <div id="uid-result"></div>
@@ -1015,7 +1015,7 @@
       <div class="card">
         <div style="font-weight:600;margin-bottom:8px">${TaskPay.icon('search')} Найти по уникальному ID</div>
         <div class="uid-search">
-          <input id="admin-uid-input" placeholder="Введите UID (например ABC123)" maxlength="8" style="flex:1">
+          <input id="admin-uid-input" placeholder="Введите UID" maxlength="8" style="flex:1;min-width:0;font-size:13px;padding:10px 12px;background:var(--card-solid);border:1px solid var(--border);border-radius:10px;color:var(--text);outline:none">
           <button class="btn btn--sm btn--block" data-action="admin-find-uid" style="flex:none;width:auto;padding:10px 16px">Найти</button>
         </div>
         <div id="admin-user-result"></div>
