@@ -289,7 +289,7 @@
     async getUserInfo(userId) {
       if (!ensureClient()) return null;
       const { data, error } = await SB.from('users')
-        .select('id, name, photo_url')
+        .select('id, name, photo_url, uid')
         .eq('id', Number(userId))
         .maybeSingle();
       return error ? null : data;

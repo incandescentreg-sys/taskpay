@@ -736,12 +736,32 @@
      CHAT DETAIL — переписка (реальная через Supabase / демо)
   ================================================================ */
   /* отрисовка одного сообщения: системные (⚙️ и др.) — плашкой по центру,
-     остальные — обычными пузырями слева/справа */
+   вложения (IMG:/FILE:) — картинкой/файлом, остальные — обычными пузырями */
   function chatMsgHTML(m, meId) {
     const text = String(m.text || '');
     const t = new Date(m.created_at || Date.now()).getTime();
-    if (text.charAt(0) === '⚙' || text.charAt(0) === '📦' || text.charAt(0) === '🔔') {
-      return '<div class="msg-system">' + esc(text.replace(/^⚙️\s*/, '')) + '</div>';
+    const fch = text.charAt(0);
+    if (fch === '⚙' || fch === '📦' || fch === '🔔') {
+      /* системная плашка: свой HTML разрешён (генерируем сами), newline сохраняем */
+      return '<div class="msg-system">' + (text.replace(/^⚙️\s*/, '')) + '</div>';
+    }
+    if (text.indexOf('IMG:') === 0 || text.indexOf('FILE:') === 0) {
+      try {
+        const sep = text.indexOf('|');
+        const kind = text.indexOf('IMG:') === 0 ? 'img' : 'file';
+        const name = sep > 0 ? text.slice(4, sep) : 'Вложение';
+        const data = sep > 0 ? text.slice(sep + 1) : text.slice(4);
+        const mine = String(m.from_user) === String(meId);
+        const body = kind === 'img'
+          ? '<img class="msg-img" src="' + data + '" alt="' + esc(name) + '" onclick="window.open(this.src)" style="max-width:240px;border-radius:14px;display:block;cursor:pointer">'
+          : '<a class="msg-file" href="' + data + '" download="' + esc(name) + '" style="display:flex;align-items:center;gap:8px;text-decoration:none;color:inherit">' +
+              '<span style="font-size:22px">📎</span><span style="font-weight:600">' + esc(name) + '</span></a>';
+        return '<div class="msg ' + (mine ? 'msg--me' : 'msg--them') + '">' +
+          '<div class="msg-text" style="padding:' + (kind === 'img' ? '6px' : '11px 15px') + '">' + body + '</div>' +
+          '<div class="msg-time">' + (mine ? '✓✓ ' : '') + timeAgo(t) + '</div></div>';
+      } catch (e) {
+        return '<div class="msg msg--them"><div class="msg-text">Вложение</div></div>';
+      }
     }
     const mine = String(m.from_user) === String(meId);
     const body = '<div class="msg-text">' + esc(text) + '</div>' +
@@ -844,11 +864,44 @@
         ${useApi ? '' : '<div class="msg-system">Демо-чат</div>'}
       </div>
       <div class="chat-input">
+        <button type="button" class="chat-send chat-attach" data-action="chat-attach" ${useApi ? '' : 'disabled'} aria-label="Прикрепить файл">📎</button>
+        <input type="file" id="chat-file-input" style="display:none" ${useApi ? '' : 'disabled'}>
         <input type="text" id="chat-input" placeholder="Напишите сообщение..." ${useApi ? '' : 'disabled'}>
         <button class="chat-send" data-action="send-chat" data-chat="${chatId}" ${useApi ? '' : 'disabled'}>${TaskPay.icon('send')}</button>
       </div>
     </div>`;
-  }, () => {});
+  }, () => {
+    /* прикрепление файла/картинки в чат */
+    const fi = $('chat-file-input');
+    if (fi && !fi.dataset.bound) {
+      fi.dataset.bound = '1';
+      fi.addEventListener('change', function () {
+        const file = fi.files && fi.files[0];
+        fi.value = '';
+        if (!file) return;
+        const chatId = Number(TaskPay.routeState().id);
+        try {
+          const maxBytes = 4 * 1024 * 1024;
+          if (file.size > maxBytes) { toast('Максимум 4 МБ', true); return; }
+          const reader = new FileReader();
+          reader.onload = function () {
+            const dataUrl = reader.result;
+            const kind = (file.type || '').indexOf('image/') === 0 ? 'IMG:' : 'FILE:';
+            const payload = kind + file.name + '|' + dataUrl;
+            toast('Отправка...');
+            Api.sendMessage(chatId, Number(Store.getUser().id), payload, Store.getUser().name).then(function () {
+              toast('Отправлено');
+              vibrate();
+            }).catch(function () { toast('Не удалось отправить файл', true); });
+          };
+          reader.onerror = function () { toast('Не удалось прочитать файл', true); };
+          reader.readAsDataURL(file);
+        } catch (e) {
+          toast('Ошибка: ' + e.message, true);
+        }
+      });
+    }
+  });
 
   /* ================================================================
      ADMIN — админ-панель
@@ -1133,6 +1186,11 @@
         });
         break;
       }
+      case 'chat-attach': {
+        const fi = $('chat-file-input');
+        if (fi) fi.click();
+        break;
+      }
       case 'send-chat': {
         const chatId = Number(el.dataset.chat);
         const input = $('chat-input');
@@ -1215,11 +1273,28 @@
                «Исполнитель взялся за задание» (как на FunPay) */
             Api.startChat(taskId, Number(t.employerId), Number(u.id)).then(function (chat) {
               if (chat) {
-                /* пишем системное сообщение в чат — оно видно обеим сторонам */
-                Api.sendMessage(chat.id, Number(u.id), '⚙️ Исполнитель взялся за задание', u.name).catch(function(){});
-                Api.getMessages(chat.id).catch(function(){});
-                Store.syncFromApi().then(() => {
-                  navigate('chat-detail', { id: chat.id, system: 'Исполнитель взялся за задание' });
+                /* системное сообщение с деталями заказа */
+                Promise.all([
+                  Api.getUserInfo(Number(t.employerId)),      /* работодатель */
+                  Api.getMyUid(Number(u.id))                   /* исполнитель */
+                ]).then(function (info) {
+                  const emp = info && info[0] ? info[0] : null;
+                  const myUid = info && info[1] ? info[1] : null;
+                  const text =
+                    '⚙️ <b>Исполнитель взялся за задание</b>\n\n' +
+                    '📋 Заказ № ' + taskId + '\n' +
+                    '💼 <b>' + Api._esc(t.title) + '</b>\n' +
+                    '💰 Награда: ' + fmtMoney(t.reward) + '\n' +
+                    '──────────\n' +
+                    '🧑‍💼 Работодатель: <b>' + Api._esc(t.employerName || '—') + '</b>' + (emp && emp.uid ? ' (UID ' + esc(emp.uid) + ')' : '') + '\n' +
+                    '🔨 Исполнитель: <b>' + Api._esc(u.name || '—') + '</b>' + (myUid ? ' (UID ' + esc(myUid) + ')' : '') + '\n' +
+                    '──────────\n' +
+                    'Когда выполните задание — отправьте подтверждение в этом чате.';
+                  Api.sendMessage(chat.id, Number(u.id), text, u.name).catch(function(){});
+                  navigate('chat-detail', { id: chat.id, system: text });
+                }).catch(function () {
+                  Api.sendMessage(chat.id, Number(u.id), '⚙️ <b>Исполнитель взялся за задание</b>', u.name).catch(function(){});
+                  navigate('chat-detail', { id: chat.id, system: '⚙️ Исполнитель взялся за задание' });
                 });
               } else {
                 Store.syncFromApi().then(() => navigate('my-task-detail', { aid: resp.id }));
