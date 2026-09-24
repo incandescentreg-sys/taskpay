@@ -99,13 +99,31 @@ async function sendBanner(chatId, tgUser) {
   const nick = u ? (u.name || 'Гость')
                  : ([me.first_name, me.last_name].filter(Boolean).join(' ') || 'Гость');
   const bal = u ? '\n💰 Баланс: <b>' + fmt(u.balance) + '</b>' : '';
-  const banner = '👋 Добро пожаловать в <b>Yumitask</b>!\n\n' +
+  const caption = '👋 Добро пожаловать в <b>Yumitask</b>!\n\n' +
                  '🆔 ID: <b>' + id + '</b>\n' +
                  '👤 Ник: <b>' + nick + '</b>' + bal + '\n\n' +
                  'Выполняй задания, получай деньги, размещай задания — проверяй исполнителей. Всё в одном приложении!';
+
+  const bannerUrl = (MINI_APP_URL.replace(/\/$/, '')) + '/banner.jpg';
+
+  /* отправляем фото с подписью + кнопками */
+  try {
+    const sent = await apiCall('sendPhoto', {
+      chat_id: chatId,
+      photo: bannerUrl,
+      caption: caption,
+      parse_mode: 'HTML',
+      reply_markup: mainMenuKeyboard()
+    });
+    if (sent && sent.ok) return;
+  } catch (e) {
+    console.error('sendPhoto error', e.message);
+  }
+
+  /* если фото не ушло — запасной вариант текстом */
   await apiCall('sendMessage', {
     chat_id: chatId,
-    text: banner,
+    text: caption,
     parse_mode: 'HTML',
     reply_markup: mainMenuKeyboard()
   });
