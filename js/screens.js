@@ -208,11 +208,14 @@
           const a = myAsn[0];
           const master = { in_progress: ['В работе', '#2d8cf0'], pending: ['На модерации', '#f0ad4e'], done: ['Выполнено, оплачено', '#5cb85c'], rejected: ['Отклонено', '#d9534f'] };
           const m = master[a.status] || [a.status, '#888'];
+          const secondary = a.status === 'in_progress'
+            ? '<button class="btn btn--block btn--green" data-action="open-my-task" data-aid="' + a.id + '" style="margin-top:0">' + TaskPay.icon('send') + ' Отправить на проверку</button>'
+            : '<button class="btn btn--block" data-action="open-my-task" data-aid="' + a.id + '" style="margin-top:0">' + TaskPay.icon('clipboard') + ' Перейти к заданию</button>';
           return '<div style="margin-top:20px;display:flex;flex-direction:column;gap:10px">' +
             '<div style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border:1px solid ' + m[1] + '40;border-radius:14px;background:' + m[1] + '18;font-weight:700;color:' + m[1] + '">' +
               TaskPay.icon('star') + ' Задание взято · ' + m[0] +
             '</div>' +
-            '<button class="btn btn--block" data-action="open-my-task" data-aid="' + a.id + '" style="margin-top:0">' + TaskPay.icon('clipboard') + ' Перейти к заданию</button>' +
+            secondary +
           '</div>';
         }
         return '<button class="btn btn--block" style="margin-top:20px" data-action="take-task" data-id="' + t.id + '">' + TaskPay.icon('download') + ' Взять задание</button>';
@@ -1407,6 +1410,19 @@
             if (!resp) { toast('Не удалось взять задание', true); return; }
             toast('Задание взято!');
             vibrate();
+            /* сразу кладём отклик в Store, чтобы кнопка «Взять задание» исчезла мгновенно */
+            Store.addAssignment({
+              id: Number(resp.id),
+              taskId: taskId,
+              userId: u.id,
+              userName: u.name,
+              status: resp.status || 'in_progress',
+              reward: resp.reward || t.reward || 0,
+              takenAt: Date.now(),
+              proofType: null,
+              proofData: null,
+              rejectionReason: null
+            });
             /* открываем чат с работодателем и показываем системную плашку
                «Исполнитель взялся за задание» (как на FunPay) */
             Api.startChat(taskId, Number(t.employerId), Number(u.id)).then(function (chat) {
