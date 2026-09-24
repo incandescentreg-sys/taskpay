@@ -757,11 +757,27 @@
     /* ---------- Чат: список диалогов ---------- */
     async getChats(userId) {
       if (!ensureClient()) return null;
+      /* БЕЗ вложенных messages — иначе огромные base64-вложения вешают список чатов */
       const { data, error } = await SB.from('chats')
-        .select('*, messages: messages(id, text, created_at, from_user)')
+        .select('id, user_a, user_b, task_id, created_at')
         .or('user_a.eq.' + userId + ',user_b.eq.' + userId)
         .order('created_at', { ascending: false });
       return error ? null : data;
+    },
+
+    /* Только последнее сообщение чата (лёгкое превью для списка) */
+    async getLastMessage(chatId) {
+      if (!ensureClient()) return null;
+      try {
+        const { data, error } = await SB.from('messages')
+          .select('id, text, created_at, from_user')
+          .eq('chat_id', chatId)
+          .order('created_at', { ascending: false })
+          .limit(1);
+        return error ? null : (data && data.length ? data[0] : null);
+      } catch (e) {
+        return null;
+      }
     },
 
     /* Один чат по id (для определения собеседника) */

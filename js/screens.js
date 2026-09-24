@@ -751,25 +751,22 @@
           return;
         }
         view.innerHTML = chats.map(function (c) {
-          const ms = c.messages && c.messages.length ? c.messages[c.messages.length - 1] : null;
           const otherId = String(c.user_a) === String(u.id) ? c.user_b : c.user_a;
-          const last = ms ? ms.text : 'Откройте чат';
-          /* placeholder — заменяем после загрузки имени */
           const ph = String(otherId).slice(-3);
           return '<div class="chat-item-wrap">' +
             '<div class="chat-item" data-action="open-chat" data-chat="' + c.id + '" data-other="' + otherId + '">' +
               '<div class="chat-av" data-chatav="' + c.id + '">' + ph + '</div>' +
               '<div class="chat-body">' +
                 '<div class="chat-top"><span class="chat-name" data-chatname="' + c.id + '">Загрузка...</span>' +
-                '<span class="chat-time">' + (ms ? timeAgo(new Date(ms.created_at).getTime()) : '') + '</span></div>' +
+                '<span class="chat-time" data-chattime="' + c.id + '"></span></div>' +
                 '<div class="chat-task">' + (c.task_id ? 'Задание #' + c.task_id : 'Чат') + '</div>' +
-                '<div class="chat-last">' + esc(last) + '</div>' +
+                '<div class="chat-last" data-chatlast="' + c.id + '">Откройте чат</div>' +
               '</div>' +
             '</div>' +
             '<button class="chat-del-btn" data-action="delete-chat" data-chat="' + c.id + '" aria-label="Удалить чат">' + TaskPay.icon('minus') + '</button>' +
           '</div>';
         }).join('') || '<div class="empty"><div class="e-title">Нет диалогов</div></div>';
-        /* подгружаем имена и аватарки участников */
+        /* подгружаем имя, аватарку и последнее сообщение каждого чата */
         chats.forEach(function (c) {
           const otherId = String(c.user_a) === String(u.id) ? c.user_b : c.user_a;
           Api.getUserInfo(Number(otherId)).then(function (info) {
@@ -788,6 +785,13 @@
               av.style.fontWeight = '700';
               av.style.color = 'var(--blue)';
             }
+          });
+          Api.getLastMessage(Number(c.id)).then(function (last) {
+            if (!view || !last) return;
+            const b = view.querySelector('[data-chatlast="' + c.id + '"]');
+            const tm = view.querySelector('[data-chattime="' + c.id + '"]');
+            if (b) b.textContent = String(last.text || 'Откройте чат').slice(0, 80);
+            if (tm && last.created_at) tm.textContent = timeAgo(new Date(last.created_at).getTime());
           });
         });
       });
