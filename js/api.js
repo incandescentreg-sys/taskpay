@@ -801,12 +801,15 @@
 
     async getMessages(chatId) {
       if (!ensureClient()) return null;
+      /* тянем ТОЛЬКО последние 40 — иначе старые огромные base64-вложения вешают запрос */
       const { data, error } = await SB.from('messages')
         .select('*')
         .eq('chat_id', chatId)
-        .order('created_at', { ascending: true })
-        .limit(200);
-      return error ? null : data;
+        .order('created_at', { ascending: false })
+        .limit(40);
+      if (error) return null;
+      const sorted = (data || []).slice().reverse();
+      return sorted;
     },
 
     async sendMessage(chatId, fromUser, text, fromName) {
