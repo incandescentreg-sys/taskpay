@@ -776,7 +776,7 @@
             if (!info || !view) return;
             const av = view.querySelector('[data-chatav="' + c.id + '"]');
             const nm = view.querySelector('[data-chatname="' + c.id + '"]');
-            if (nm) nm.textContent = (info.is_admin ? '🛡 ' : '') + (info.name || ('ID ' + otherId));
+            if (nm) nm.innerHTML = (info.is_admin ? adminVerifiedHTML() : '') + esc(info.name || ('ID ' + otherId));
             if (av && info.photo_url) {
               av.innerHTML = '<img src="' + esc(info.photo_url) + '" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover">';
             } else if (av && info.name) {
@@ -820,10 +820,14 @@
   /* ================================================================
      CHAT DETAIL — переписка (реальная через Supabase / демо)
   ================================================================ */
+  /* фирменный бейдж «админ»/«верифицирован» — SVG-щит на градиентной подложке */
+  function adminVerifiedHTML() {
+    return '<span class="admin-shield" title="Администратор">' + TaskPay.icon('shield') + '</span>';
+  }
   /* отрисовка одного сообщения: системные (⚙️ и др.) — плашкой по центру,
    вложения (IMG:/FILE:) — картинкой/файлом, остальные — обычными пузырями */
   function chatMsgHTML(m, meId) {
-    const text = String(m.text || '');
+    const text = String(m.text || '');ring(m.text || '');
     const t = new Date(m.created_at || Date.now()).getTime();
     const fch = text.charAt(0);
     if (fch === '⚙' || fch === '📦' || fch === '🔔') {
@@ -900,7 +904,7 @@
               av.innerHTML = '<div class="letter">' + esc(l) + '</div>';
             }
           }
-          if (nm) nm.textContent = (info && info.is_admin ? '🛡 ' : '') + ((info && info.name) || ('ID ' + otherId));
+          if (nm) nm.innerHTML = (info && info.is_admin ? adminVerifiedHTML() : '') + esc((info && info.name) || ('ID ' + otherId));
         });
         /* кнопка перехода к заданию + удаление чата */
         const btnBox = document.getElementById('chat-head-taskbtn');
