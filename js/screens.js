@@ -1569,17 +1569,21 @@
             if (res && res.ok) {
               toast('Выполнение подтверждено, награда начислена!');
               vibrate();
-              /* ответная плашка в чат */
+              /* ответная плашка в чат — гарантированно, даже если задание не в кеше */
               const t = Store.getTask(res.task_id != null ? res.task_id : aid);
               const meU = Store.getUser() || {};
-              if (t && t.employerId && Api.findChatByTask) {
-                Api.findChatByTask(Number(t.id), Number(meU.id)).then(function (chats) {
-                  if (chats && chats.length) {
-                    Api.sendMessage(chats[0].id, Number(meU.id),
-                      '⚙️ Заказ № ' + t.id + ' подтверждён. Награда ' + fmtMoney(res.reward) + ' начислена исполнителю ✅',
-                      meU.name).catch(function () {});
-                  }
-                });
+              const title = t ? t.title : ('#' + (res.task_id || aid));
+              const sendToChat = function (chats) {
+                if (chats && chats.length) {
+                  Api.sendMessage(chats[0].id, Number(meU.id),
+                    '✅ Работодатель подтвердил заказ №' + (res.task_id != null ? res.task_id : aid) + '\n' +
+                    '💼 ' + title + '\n' +
+                    '💰 Награда ' + fmtMoney(res.reward) + ' начислена исполнителю',
+                    meU.name).catch(function () {});
+                }
+              };
+              if (res.task_id != null && Api.findChatByTask) {
+                Api.findChatByTask(Number(res.task_id), Number(meU.id)).then(sendToChat);
               }
               Store.syncFromApi().then(() => navigate('home'));
             } else {
