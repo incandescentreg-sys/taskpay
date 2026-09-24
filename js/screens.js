@@ -894,16 +894,44 @@
         try {
           const maxBytes = 4 * 1024 * 1024;
           if (file.size > maxBytes) { toast('Максимум 4 МБ', true); return; }
+          const isImage = (file.type || '').indexOf('image/') === 0;
           const reader = new FileReader();
           reader.onload = function () {
             const dataUrl = reader.result;
-            const kind = (file.type || '').indexOf('image/') === 0 ? 'IMG:' : 'FILE:';
-            const payload = kind + file.name + '|' + dataUrl;
-            toast('Отправка...');
-            Api.sendMessage(chatId, Number(Store.getUser().id), payload, Store.getUser().name).then(function () {
-              toast('Отправлено');
-              vibrate();
-            }).catch(function () { toast('Не удалось отправить файл', true); });
+            if (isImage) {
+              /* сжимаем картинку: уменьшаем до 1100px и конвертируем в JPEG,
+                 чтобы сообщение не раздувалось до мегабайтов и грузилось быстро */
+              const img = new Image();
+              img.onload = function () {
+                const MAX = 1100;
+                let w = img.width, h = img.height;
+                const scale = Math.min(1, MAX / Math.max(w, h));
+                w = Math.round(w * scale);
+                h = Math.round(h * scale);
+                const canvas = document.createElement('canvas');
+                canvas.width = w; canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#fff';
+                ctx.fillRect(0, 0, w, h);
+                ctx.drawImage(img, 0, 0, w, h);
+                const out = canvas.toDataURL('image/jpeg', 0.78);
+                const payload = 'IMG:' + file.name.replace(/\.\w+$/, '.jpg') + '|' + out;
+                toast('Отправка...');
+                Api.sendMessage(chatId, Number(Store.getUser().id), payload, Store.getUser().name).then(function () {
+                  toast('Отправлено');
+                  vibrate();
+                }).catch(function () { toast('Не удалось отправить файл', true); });
+              };
+              img.onerror = function () { toast('Не удалось сжать изображение', true); };
+              img.src = dataUrl;
+            } else {
+              const payload = 'FILE:' + file.name + '|' + dataUrl;
+              toast('Отправка...');
+              Api.sendMessage(chatId, Number(Store.getUser().id), payload, Store.getUser().name).then(function () {
+                toast('Отправлено');
+                vibrate();
+              }).catch(function () { toast('Не удалось отправить файл', true); });
+            }
           };
           reader.onerror = function () { toast('Не удалось прочитать файл', true); };
           reader.readAsDataURL(file);
