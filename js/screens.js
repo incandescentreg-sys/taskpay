@@ -1794,7 +1794,11 @@
             if (res && res.ok) {
               toast('Задание удалено');
               vibrate();
-              Store.syncFromApi().then(function () { navigate('admin'); });
+              /* удаляем карточку на месте — экран не перезагружаем,
+                 чтобы админа не сбрасывало в начало списка */
+              const card = el.closest('.card');
+              if (card) card.remove();
+              Store.syncFromApi().catch(function () {});
             } else {
               toast('Ошибка удаления', true);
             }
