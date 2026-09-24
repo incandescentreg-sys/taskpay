@@ -137,7 +137,16 @@
         tasks.map(t => taskCardHTML(t)).join('')}
     </div>
     ${bottomNav('tasks')}`;
-  }, () => {});
+  }, () => {
+    /* сохраняем горизонтальную прокрутку рядов фильтров между перерисовками,
+       чтобы выбор платформы в конце ряда не сбрасывал к началу */
+    const rows = qq('.tag-row');
+    rows.forEach(function (row, idx) {
+      const key = '_tagrow' + idx;
+      if (window[key] != null && row.scrollLeft === 0) row.scrollLeft = window[key];
+      window[key] = row.scrollLeft;
+    });
+  });
 
   /* ================================================================
      TASK DETAIL — страница одного задания
@@ -906,8 +915,7 @@
 
       <button class="btn btn--block btn--ghost btn--sm" data-action="navigate" data-page="subs">${TaskPay.icon('megaphone')} Просмотр тарифов</button>
     </div>`;
-  }, () => {
-    /* подгружаем отклики «на проверке» для админ-панели */
+  }, () => { /* подгружаем отклики «на проверке» для админ-панели */
     if (!(Store.useApi() && window.Api)) return;
     const box = q('#admin-pending-list');
     if (!box) return;
