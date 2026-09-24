@@ -67,6 +67,7 @@ html, body {
 
 body {
   -webkit-font-smoothing: antialiased;
+  overflow-anchor: none;
   background:
     radial-gradient(1000px 480px at 85% -10%, rgba(0, 191, 255, 0.22), transparent 60%),
     radial-gradient(800px 420px at -10% 110%, rgba(0, 100, 255, 0.18), transparent 55%),

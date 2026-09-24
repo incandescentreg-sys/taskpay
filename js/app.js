@@ -110,7 +110,16 @@
         app.classList.add('anim-page');
       }
     } catch (e) {}
+    /* принудительный скролл наверх: сразу + после кадра (scroll anchoring
+       может перебить одиночный scrollTo при ре-рендере списка) */
     window.scrollTo(0, 0);
+    if (document.documentElement) document.documentElement.scrollTop = 0;
+    if (document.body) document.body.scrollTop = 0;
+    requestAnimationFrame(() => {
+      window.scrollTo(0, 0);
+      if (document.documentElement) document.documentElement.scrollTop = 0;
+      if (document.body) document.body.scrollTop = 0;
+    });
   }
   /* На какой экран ведёт «назад» с каждого экрана */
   const BACK_TO = {
