@@ -230,7 +230,7 @@
         /* уведомление исполнителю: награда начислена */
         this._notify(assign.user_id, '✅ Ваше выполнение задания <b>' + this._esc(task.title) + '</b> подтверждено! На баланс начислено <b>' + Number(reward) + ' ₽</b>');
 
-        return { ok: true, reward, worker_id: assign.user_id };
+        return { ok: true, reward, worker_id: assign.user_id, task_id: assign.task_id };
       } catch (e) {
         return { ok: false, error: e.message || 'Ошибка подтверждения' };
       }

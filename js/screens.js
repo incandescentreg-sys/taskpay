@@ -745,6 +745,17 @@
       /* системная плашка: свой HTML разрешён (генерируем сами), newline сохраняем */
       return '<div class="msg-system">' + (text.replace(/^⚙️\s*/, '')) + '</div>';
     }
+    /* карточка заказа: [ORDER]<aid>|<текст> → плашка с кнопками Подтвердить/Отклонить */
+    if (text.indexOf('[ORDER]') === 0) {
+      const pipe = text.indexOf('|');
+      const aid = (pipe > 0 ? text.slice(7, pipe) : '').trim();
+      const bodyText = pipe > 0 ? text.slice(pipe + 1) : text.slice(7);
+      return '<div class="msg-system order-card">' + esc(bodyText) +
+        '<div class="order-actions">' +
+          '<button class="btn btn--green btn--sm" data-action="confirm-assignment" data-aid="' + esc(aid) + '" style="flex:1;padding:9px 10px;font-size:13px;width:auto">✅ Подтвердить</button>' +
+          '<button class="btn btn--red btn--sm" data-action="reject-assignment" data-aid="' + esc(aid) + '" style="flex:1;padding:9px 10px;font-size:13px;width:auto">❌ Отклонить</button>' +
+        '</div></div>';
+    }
     if (text.indexOf('IMG:') === 0 || text.indexOf('FILE:') === 0) {
       try {
         const sep = text.indexOf('|');
@@ -1365,8 +1376,19 @@
             if (!upd) { toast('Не удалось отправить в базу', true); return; }
             /* уведомить работодателя: исполнитель отправил на проверку */
             const t = Store.getTask(a.taskId);
+            const meU = Store.getUser() || {};
             if (t && t.employerId && window.Api._notify) {
-              Api._notify(t.employerId, '📨 <b>' + Api._esc((Store.getUser() || {}).name || 'Исполнитель') + '</b> отправил выполнение задания <b>' + Api._esc(t.title) + '</b> на проверку');
+              Api._notify(t.employerId, '📨 <b>' + Api._esc(meU.name || 'Исполнитель') + '</b> отправил выполнение задания <b>' + Api._esc(t.title) + '</b> на проверку');
+            }
+            /* карточка заказа в чате: плашка с кнопками Подтвердить/Отклонить */
+            if (t && t.employerId && Api.findChatByTask) {
+              Api.findChatByTask(Number(t.id), Number(meU.id)).then(function (chats) {
+                if (chats && chats.length) {
+                  const msg = '[ORDER]' + aid + '|🔔 Исполнитель <b>' + Api._esc(meU.name || '—') + '</b> отправил задание на проверку\n\n' +
+                    '📋 Заказ № ' + t.id + '\n💼 <b>' + Api._esc(t.title) + '</b>\n💰 Награда: ' + fmtMoney(t.reward);
+                  Api.sendMessage(chats[0].id, Number(meU.id), msg, meU.name).catch(function () {});
+                }
+              });
             }
           }).catch(function () { toast('Ошибка отправки', true); });
         }
@@ -1512,6 +1534,18 @@
             if (res && res.ok) {
               toast('Выполнение подтверждено, награда начислена!');
               vibrate();
+              /* ответная плашка в чат */
+              const t = Store.getTask(res.task_id != null ? res.task_id : aid);
+              const meU = Store.getUser() || {};
+              if (t && t.employerId && Api.findChatByTask) {
+                Api.findChatByTask(Number(t.id), Number(meU.id)).then(function (chats) {
+                  if (chats && chats.length) {
+                    Api.sendMessage(chats[0].id, Number(meU.id),
+                      '⚙️ Заказ № ' + t.id + ' подтверждён. Награда ' + fmtMoney(res.reward) + ' начислена исполнителю ✅',
+                      meU.name).catch(function () {});
+                  }
+                });
+              }
               Store.syncFromApi().then(() => navigate('home'));
             } else {
               toast((res && res.error) || 'Ошибка подтверждения', true);
@@ -1526,6 +1560,18 @@
         Api.rejectAssignment(aid, Number(Store.getUser().id)).then(function (res) {
           if (res) {
             toast('Выполнение отклонено');
+            /* ответная плашка в чат */
+            const t = Store.getTask(res.task_id != null ? res.task_id : aid);
+            const meU = Store.getUser() || {};
+            if (t && t.employerId && Api.findChatByTask) {
+              Api.findChatByTask(Number(t.id), Number(meU.id)).then(function (chats) {
+                if (chats && chats.length) {
+                  Api.sendMessage(chats[0].id, Number(meU.id),
+                    '⚙️ Заказ № ' + t.id + ' отклонён работодателем ❌',
+                    meU.name).catch(function () {});
+                }
+              });
+            }
             Store.syncFromApi().then(() => navigate('home'));
           } else {
             toast('Ошибка отклонения', true);
