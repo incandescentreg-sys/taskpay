@@ -735,6 +735,22 @@
   /* ================================================================
      CHAT DETAIL — переписка (реальная через Supabase / демо)
   ================================================================ */
+  /* отрисовка одного сообщения: системные (⚙️ и др.) — плашкой по центру,
+     остальные — обычными пузырями слева/справа */
+  function chatMsgHTML(m, meId) {
+    const text = String(m.text || '');
+    const t = new Date(m.created_at || Date.now()).getTime();
+    if (text.charAt(0) === '⚙' || text.charAt(0) === '📦' || text.charAt(0) === '🔔') {
+      return '<div class="msg-system">' + esc(text.replace(/^⚙️\s*/, '')) + '</div>';
+    }
+    const mine = String(m.from_user) === String(meId);
+    const body = '<div class="msg-text">' + esc(text) + '</div>' +
+      '<div class="msg-time">' + (mine ? '✓✓ ' : '') + timeAgo(t) + '</div>';
+    return mine
+      ? '<div class="msg msg--me">' + body + '</div>'
+      : '<div class="msg msg--them">' + body + '</div>';
+  }
+
   register('chat-detail', (s) => {
     const useApi = Store.useApi() && window.Api;
     const chatId = Number(s.id);
@@ -777,12 +793,7 @@
         const box = document.getElementById('chat-msgs');
         if (!box) return;
         box.innerHTML = (rows && rows.length ? rows : []).map(function (m) {
-          const mine = String(m.from_user) === String(me.id);
-          const body = '<div class="msg-text">' + esc(m.text) + '</div>' +
-            '<div class="msg-time">' + (mine ? '✓✓ ' : '') + timeAgo(new Date(m.created_at).getTime()) + '</div>';
-          return mine
-            ? '<div class="msg msg--me">' + body + '</div>'
-            : '<div class="msg msg--them">' + body + '</div>';
+          return chatMsgHTML(m, me.id);
         }).join('') || '<div class="msg-system">Сообщений пока нет</div>';
         box.scrollTop = box.scrollHeight;
       });
@@ -791,12 +802,10 @@
       window._chatSub = Api.subscribeChats(function (msg) {
         const box = document.getElementById('chat-msgs');
         if (!box || String(msg.chat_id) !== String(chatId)) return;
-        const mine = String(msg.from_user) === String(me.id);
         const div = document.createElement('div');
-        div.className = 'msg ' + (mine ? 'msg--me' : 'msg--them');
-        div.innerHTML = '<div class="msg-text">' + esc(msg.text) + '</div>' +
-          '<div class="msg-time">' + (mine ? '✓✓ ' : '') + timeAgo(Date.now()) + '</div>';
-        box.appendChild(div);
+        div.insertAdjacentHTML('afterbegin', chatMsgHTML(msg, me.id));
+        const node = div.firstChild;
+        box.appendChild(node);
         box.scrollTop = box.scrollHeight;
       });
     }
@@ -1165,9 +1174,22 @@
             if (!resp) { toast('Не удалось взять задание', true); return; }
             toast('Задание взято!');
             vibrate();
-            Api.startChat(taskId, Number(t.employerId), Number(u.id)).catch(function(){});
-            /* синхронизируем отклики из БД → сразу открываем форму подтверждения */
-            Store.syncFromApi().then(() => navigate('my-task-detail', { aid: resp.id }));
+            /* открываем чат с работодателем и показываем системную плашку
+               «Исполнитель взялся за задание» (как на FunPay) */
+            Api.startChat(taskId, Number(t.employerId), Number(u.id)).then(function (chat) {
+              if (chat) {
+                /* пишем системное сообщение в чат — оно видно обеим сторонам */
+                Api.sendMessage(chat.id, Number(u.id), '⚙️ Исполнитель взялся за задание', u.name).catch(function(){});
+                Api.getMessages(chat.id).catch(function(){});
+                Store.syncFromApi().then(() => {
+                  navigate('chat-detail', { id: chat.id, system: 'Исполнитель взялся за задание' });
+                });
+              } else {
+                Store.syncFromApi().then(() => navigate('my-task-detail', { aid: resp.id }));
+              }
+            }).catch(function () {
+              Store.syncFromApi().then(() => navigate('my-task-detail', { aid: resp.id }));
+            });
           }).catch(function () {
             toast('Ошибка взятия задания', true);
           });
