@@ -1018,19 +1018,12 @@
   }
 
   register('admin', () => {
-    const stats = Store.computeStats();
     return `
     ${topbar('Админ-панель', { icon: 'settings' })}
     <div class="page">
       <div class="section-title">Управление платформой</div>
-      <div class="card" style="text-align:center;margin-bottom:16px">
-        <div style="font-size:13px;color:var(--text-2)">Статистика</div>
-        <div style="display:flex;justify-content:space-around;margin-top:10px">
-          <div><div style="font-weight:800;font-size:18px">${stats.activeTasks}</div><div style="font-size:12px;color:var(--text-3)">Активных</div></div>
-          <div><div style="font-weight:800;font-size:18px">${stats.doneTasks}</div><div style="font-size:12px;color:var(--text-3)">Выполнено</div></div>
-          <div><div style="font-weight:800;font-size:18px">${fmtMoney(stats.earned)}</div><div style="font-size:12px;color:var(--text-3)">Заработано</div></div>
-          <div><div style="font-weight:800;font-size:18px">${stats.employers}</div><div style="font-size:12px;color:var(--text-3)">Работодателей</div></div>
-        </div>
+      <div id="admin-stats" class="card" style="text-align:center;margin-bottom:16px">
+        <div style="font-size:13px;color:var(--text-2)">Статистика загружается...</div>
       </div>
 
       <div class="section-title">Пользователи</div>
@@ -1066,6 +1059,36 @@
     </div>`;
   }, () => { /* подгружаем отклики «на проверке» для админ-панели */
     if (!(Store.useApi() && window.Api)) return;
+    /* реальная статистика из БД */
+    const statsBox = q('#admin-stats');
+    if (statsBox && Api.adminGetStats) {
+      Api.adminGetStats().then(function (st) {
+        if (!statsBox) return;
+        if (!st) {
+          statsBox.innerHTML = '<div style="font-size:13px;color:var(--text-3)">Нет данных</div>';
+          return;
+        }
+        const card = function (v, label) {
+          return '<div style="min-width:0;flex:1"><div style="font-weight:800;font-size:17px">' + v + '</div><div style="font-size:11px;color:var(--text-3);line-height:1.3;margin-top:2px">' + label + '</div></div>';
+        };
+        statsBox.innerHTML =
+          '<div style="font-size:13px;color:var(--text-2)">Статистика платформы</div>' +
+          '<div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;text-align:left">' +
+            card(st.tasksActive, 'Активных заданий') +
+            card(st.tasksModeration, 'На модерации') +
+            card(st.assignmentsDone, 'Выполнено') +
+            card(st.assignmentsPending, 'На проверке') +
+          '</div>' +
+          '<div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;text-align:left;border-top:1px solid var(--border);padding-top:12px">' +
+            card(st.usersTotal, 'Пользователей') +
+            card('<span style="color:var(--green)">' + fmtMoney(st.totalIncome) + '</span>', 'Начислено') +
+            card('<span style="color:var(--amber)">' + fmtMoney(st.totalExpense) + '</span>', 'Списано') +
+            card(fmtMoney(st.balanceTotal), 'Баланс платформы') +
+          '</div>';
+      }).catch(function () {
+        if (statsBox) statsBox.innerHTML = '<div style="font-size:13px;color:var(--text-3)">Ошибка загрузки</div>';
+      });
+    }
     const box = q('#admin-pending-list');
     if (!box) return;
     Api.adminGetPendingAssignments().then(function (rows) {

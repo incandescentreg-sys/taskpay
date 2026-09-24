@@ -155,6 +155,51 @@
       return error ? null : data;
     },
 
+    /* Реальная статистика платформы из БД (для админ-панели) */
+    async adminGetStats() {
+      if (!ensureClient()) return null;
+      try {
+        /* задачи: всего, на модерации, активных */
+        const [allT, activeT, modT] = await Promise.all([
+          SB.from('tasks').select('id'),
+          SB.from('tasks').select('id').eq('status', 'active'),
+          SB.from('tasks').select('id').eq('status', 'moderation')
+        ]);
+        /* отклики */
+        const [asnAll, asnDone, asnPending] = await Promise.all([
+          SB.from('assignments').select('id'),
+          SB.from('assignments').select('id').eq('status', 'done'),
+          SB.from('assignments').select('id').eq('status', 'pending')
+        ]);
+        /* пользователи и их балансы */
+        const [usersAll, usersList] = await Promise.all([
+          SB.from('users').select('id'),
+          SB.from('users').select('balance, is_admin, is_blocked')
+        ]);
+        /* транзакции — оборот по платформе (весь приход исполнителям/работодателям) */
+        const txns = await SB.from('transactions').select('amount, type');
+        const txt = txns.data || [];
+        const totalIncome = txt.filter(x => x.type === 'income').reduce((s, x) => s + (Number(x.amount) || 0), 0);
+        const totalExpense = txt.filter(x => x.type === 'expense').reduce((s, x) => s + (Number(x.amount) || 0), 0);
+        const usersTotal = (usersAll.data || []).length;
+        const balanceTotal = (usersList.data || []).reduce((s, u) => s + (Number(u.balance) || 0), 0);
+        return {
+          tasksTotal: (allT.data || []).length,
+          tasksActive: (activeT.data || []).length,
+          tasksModeration: (modT.data || []).length,
+          assignmentsTotal: (asnAll.data || []).length,
+          assignmentsDone: (asnDone.data || []).length,
+          assignmentsPending: (asnPending.data || []).length,
+          usersTotal,
+          balanceTotal,
+          totalIncome,
+          totalExpense
+        };
+      } catch (e) {
+        return null;
+      }
+    },
+
     /* Удалить задание (только админ) — возвращаем оставшийся замороженный бюджет */
     async adminDeleteTask(taskId) {
       if (!ensureClient()) return null;
