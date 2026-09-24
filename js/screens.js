@@ -201,7 +201,22 @@
         <div style="font-size:13px;color:var(--text-3);margin-top:8px">Вы должны предоставить указанные доказательства.</div>
       </div>
 
-      <button class="btn btn--block" style="margin-top:20px" data-action="take-task" data-id="${t.id}">${TaskPay.icon('download')} Взять задание</button>
+      ${function () {
+        const me = Store.getUser();
+        const myAsn = Store.getAssignments().filter(a => a.taskId === t.id && String(a.userId) === String(me.id));
+        if (myAsn.length) {
+          const a = myAsn[0];
+          const master = { in_progress: ['В работе', '#2d8cf0'], pending: ['На модерации', '#f0ad4e'], done: ['Выполнено, оплачено', '#5cb85c'], rejected: ['Отклонено', '#d9534f'] };
+          const m = master[a.status] || [a.status, '#888'];
+          return '<div style="margin-top:20px;display:flex;flex-direction:column;gap:10px">' +
+            '<div style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border:1px solid ' + m[1] + '40;border-radius:14px;background:' + m[1] + '18;font-weight:700;color:' + m[1] + '">' +
+              TaskPay.icon('star') + ' Задание взято · ' + m[0] +
+            '</div>' +
+            '<button class="btn btn--block" data-action="open-my-task" data-aid="' + a.id + '" style="margin-top:0">' + TaskPay.icon('clipboard') + ' Перейти к заданию</button>' +
+          '</div>';
+        }
+        return '<button class="btn btn--block" style="margin-top:20px" data-action="take-task" data-id="' + t.id + '">' + TaskPay.icon('download') + ' Взять задание</button>';
+      }()}
 
       ${Store.useApi() && Number(t.employerId) === Number(Store.getUser().id) ? `
       <div class="section-title" style="margin-top:26px">${TaskPay.icon('inbox')} Отклики исполнителей</div>
