@@ -387,7 +387,9 @@ const Store = {
       if (myUid) this.data.user.uid = myUid;
 
       const tasks = await Api.getTasks();
-      if (tasks && tasks.length) {
+      if (Array.isArray(tasks)) {
+        /* заменяем локальный список ВСЕГДА, даже если база вернула пустой список —
+           иначе старые демо-задания из localStorage остаются навсегда */
         this.data.tasks = tasks.map(t => ({
           id: Number(t.id),
           title: t.title,
@@ -410,7 +412,7 @@ const Store = {
 
       /* мои отклики из БД — чтобы «Мои задания» и страница подтверждения работали */
       const myAssignments = await Api.getMyAssignments(Number(this.data.user.id));
-      if (myAssignments) {
+      if (Array.isArray(myAssignments)) {
         this.data.assignments = myAssignments.map(a => ({
           id: Number(a.id),
           taskId: Number(a.task_id),
