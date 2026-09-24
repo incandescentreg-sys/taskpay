@@ -230,7 +230,7 @@
         /* уведомление исполнителю: награда начислена */
         this._notify(assign.user_id, '✅ Ваше выполнение задания <b>' + this._esc(task.title) + '</b> подтверждено! На баланс начислено <b>' + Number(reward) + ' ₽</b>');
 
-        return { ok: true, reward, worker_id: assign.user_id, task_id: assign.task_id };
+        return { ok: true, reward, worker_id: assign.user_id, task_id: assign.task_id, employer_id: task.employer_id };
       } catch (e) {
         return { ok: false, error: e.message || 'Ошибка подтверждения' };
       }
@@ -478,6 +478,15 @@
       const { data, error } = await SB.from('chats')
         .select('*').eq('task_id', Number(taskId))
         .or('user_a.eq.' + Number(userId) + ',user_b.eq.' + Number(userId))
+        .limit(5);
+      return error ? null : data;
+    },
+
+    /* Найти чат по заданию (без фильтра участника) */
+    async findChatByTaskAny(taskId) {
+      if (!ensureClient()) return null;
+      const { data, error } = await SB.from('chats')
+        .select('*').eq('task_id', Number(taskId))
         .limit(5);
       return error ? null : data;
     },

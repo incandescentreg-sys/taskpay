@@ -1569,21 +1569,22 @@
             if (res && res.ok) {
               toast('Выполнение подтверждено, награда начислена!');
               vibrate();
-              /* ответная плашка в чат — гарантированно, даже если задание не в кеше */
+              /* ответная плашка в чат — от РЕАЛЬНОГО работодателя задания,
+                 даже если подтвердил админ (иначе плашка уходит от неправильного юзера) */
               const t = Store.getTask(res.task_id != null ? res.task_id : aid);
-              const meU = Store.getUser() || {};
+              const empId = res.employer_id != null ? Number(res.employer_id) : (t ? Number(t.employerId) : 0);
               const title = t ? t.title : ('#' + (res.task_id || aid));
               const sendToChat = function (chats) {
                 if (chats && chats.length) {
-                  Api.sendMessage(chats[0].id, Number(meU.id),
+                  Api.sendMessage(chats[0].id, empId,
                     '✅ Работодатель подтвердил заказ №' + (res.task_id != null ? res.task_id : aid) + '\n' +
                     '💼 ' + title + '\n' +
                     '💰 Награда ' + fmtMoney(res.reward) + ' начислена исполнителю',
-                    meU.name).catch(function () {});
+                    (Store.getTask(res.task_id) ? Store.getTask(res.task_id).employerName : 'Работодатель')).catch(function () {});
                 }
               };
-              if (res.task_id != null && Api.findChatByTask) {
-                Api.findChatByTask(Number(res.task_id), Number(meU.id)).then(sendToChat);
+              if (res.task_id != null && Api.findChatByTaskAny) {
+                Api.findChatByTaskAny(Number(res.task_id)).then(sendToChat);
               }
               Store.syncFromApi().then(() => navigate('home'));
             } else {
@@ -1706,6 +1707,21 @@
             if (res && res.ok) {
               toast('Выполнение подтверждено, награда начислена!');
               vibrate();
+              /* плашка в чат — от реального работодателя */
+              const t = Store.getTask(res.task_id != null ? res.task_id : aid);
+              const title = t ? t.title : ('#' + (res.task_id || aid));
+              const empName = t ? t.employerName : 'Работодатель';
+              if (res.task_id != null && Api.findChatByTaskAny) {
+                Api.findChatByTaskAny(Number(res.task_id)).then(function (chats) {
+                  if (chats && chats.length) {
+                    Api.sendMessage(chats[0].id, employerId,
+                      '✅ Работодатель подтвердил заказ №' + (res.task_id || aid) + '\n' +
+                      '💼 ' + title + '\n' +
+                      '💰 Награда ' + fmtMoney(res.reward) + ' начислена исполнителю',
+                      empName).catch(function () {});
+                  }
+                });
+              }
               Store.syncFromApi().then(function () { navigate('admin'); });
             } else {
               toast((res && res.error) || 'Ошибка подтверждения', true);
