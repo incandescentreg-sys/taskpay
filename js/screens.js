@@ -690,14 +690,18 @@
           const last = ms ? ms.text : 'Откройте чат';
           /* placeholder — заменяем после загрузки имени */
           const ph = String(otherId).slice(-3);
-          return '<div class="chat-item" data-action="open-chat" data-chat="' + c.id + '" data-other="' + otherId + '">' +
-            '<div class="chat-av" data-chatav="' + c.id + '">' + ph + '</div>' +
-            '<div class="chat-body">' +
-              '<div class="chat-top"><span class="chat-name" data-chatname="' + c.id + '">Загрузка...</span>' +
-              '<span class="chat-time">' + (ms ? timeAgo(new Date(ms.created_at).getTime()) : '') + '</span></div>' +
-              '<div class="chat-task">' + (c.task_id ? 'Задание #' + c.task_id : 'Чат') + '</div>' +
-              '<div class="chat-last">' + esc(last) + '</div>' +
-            '</div></div>';
+          return '<div class="chat-item-wrap">' +
+            '<div class="chat-item" data-action="open-chat" data-chat="' + c.id + '" data-other="' + otherId + '">' +
+              '<div class="chat-av" data-chatav="' + c.id + '">' + ph + '</div>' +
+              '<div class="chat-body">' +
+                '<div class="chat-top"><span class="chat-name" data-chatname="' + c.id + '">Загрузка...</span>' +
+                '<span class="chat-time">' + (ms ? timeAgo(new Date(ms.created_at).getTime()) : '') + '</span></div>' +
+                '<div class="chat-task">' + (c.task_id ? 'Задание #' + c.task_id : 'Чат') + '</div>' +
+                '<div class="chat-last">' + esc(last) + '</div>' +
+              '</div>' +
+            '</div>' +
+            '<button class="chat-del-btn" data-action="delete-chat" data-chat="' + c.id + '" aria-label="Удалить чат">' + TaskPay.icon('minus') + '</button>' +
+          '</div>';
         }).join('') || '<div class="empty"><div class="e-title">Нет диалогов</div></div>';
         /* подгружаем имена и аватарки участников */
         chats.forEach(function (c) {
