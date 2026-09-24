@@ -117,12 +117,27 @@
     /* Решение админа: выпустить (active) / отклонить (rejected) */
     async moderateTask(taskId, decision) {
       if (!ensureClient()) return null;
-      const patch = decision === 'approve'
-        ? { status: 'active' }
-        : { status: 'rejected', moderated_at: null };
+      if (decision !== 'approve') {
+        /* при отклонении возвращаем замороженный бюджет работодателю */
+        const t = await SB.from('tasks').select('*').eq('id', Number(taskId)).maybeSingle();
+        if (t && t.data) {
+          const budget = (Number(t.data.spots_total) || 0) * (Number(t.data.reward) || 0);
+          if (budget > 0) {
+            try {
+              await SB.rpc('change_balance', {
+                p_user_id: Number(t.data.employer_id), p_delta: budget,
+                p_type: 'income', p_title: 'Возврат бюджета задания «' + (t.data.title || '') + '» (отклонено модерацией)'
+              });
+            } catch (e) {}
+          }
+        }
+        await SB.from('tasks')
+          .update({ status: 'rejected', moderated_at: null }).eq('id', Number(taskId));
+        return { ok: true };
+      }
       const { data, error } = await SB.from('tasks')
-        .update(patch).eq('id', Number(taskId)).select().single();
-      if (!error && data && decision === 'approve') {
+        .update({ status: 'active' }).eq('id', Number(taskId)).select().single();
+      if (!error && data) {
         /* уведомляем всех пользователей о новом задании только после одобрения */
         this._notifyNewTask(data);
       }
@@ -140,21 +155,65 @@
       return error ? null : data;
     },
 
-    /* Удалить задание (только админ) */
+    /* Удалить задание (только админ) — возвращаем оставшийся замороженный бюджет */
     async adminDeleteTask(taskId) {
       if (!ensureClient()) return null;
+      const t = await SB.from('tasks').select('*').eq('id', Number(taskId)).maybeSingle();
+      if (t && t.data) {
+        const budget = (Number(t.data.spots_total) || 0) * (Number(t.data.reward) || 0);
+        if (budget > 0) {
+          try {
+            await SB.rpc('change_balance', {
+              p_user_id: Number(t.data.employer_id), p_delta: budget,
+              p_type: 'income', p_title: 'Возврат бюджета задания «' + (t.data.title || '') + '» (удалено)'
+            });
+          } catch (e) {}
+        }
+      }
       const { error } = await SB.from('tasks')
         .delete().eq('id', Number(taskId));
       return error ? null : { ok: true };
     },
 
     async publishTask(task) {
-      if (!ensureClient()) return null;
+      if (!ensureClient()) return { error: 'Нет соединения' };
+      /* замораживаем бюджет: со счёта работодателя списываем весь бюджет задания
+         (мест × награда), чтобы исполнители гарантированно получили оплату */
+      const budget = (Number(task.spots_total) || 0) * (Number(task.reward) || 0);
+      const employerId = Number(task.employer_id);
+      if (budget > 0) {
+        const { data: bal } = await SB.from('users').select('balance').eq('id', employerId).maybeSingle();
+        const cur = bal ? Number(bal.balance) : 0;
+        if (cur < budget) {
+          return { error: 'Недостаточно средств на балансе. Нужно ' + this._fmtRur(budget) + ', доступно ' + this._fmtRur(cur) };
+        }
+        const hold = await SB.rpc('change_balance', {
+          p_user_id: employerId, p_delta: -budget,
+          p_type: 'expense', p_title: 'Задание «' + (task.title || '') + '» — бюджет заморожен'
+        });
+        if (hold.error) return { error: 'Ошибка заморозки бюджета: ' + hold.error.message };
+      }
       /* новое задание сначала идёт на модерацию, на биржу — после одобрения админом */
       const { data, error } = await SB.from('tasks').insert(Object.assign({}, task, {
         status: task.status && task.status === 'active' ? 'moderation' : (task.status || 'moderation')
       })).select().single();
-      return error ? null : data;
+      if (error) {
+        /* возврат при неудаче вставки */
+        if (budget > 0) {
+          try {
+            await SB.rpc('change_balance', {
+              p_user_id: employerId, p_delta: budget,
+              p_type: 'income', p_title: 'Возврат бюджета задания (не опубликовано)'
+            });
+          } catch (e) {}
+        }
+        return { error: error.message };
+      }
+      return data;
+    },
+
+    _fmtRur(n) {
+      try { return Number(n || 0).toLocaleString('ru-RU') + ' ₽'; } catch (e) { return (n || 0) + ' ₽'; }
     },
 
     /* ---------- Взятие задания: отклик в БД (идемпотентно) ---------- */
@@ -243,26 +302,14 @@
 
         const reward = assign.reward || task.reward || 0;
 
-        /* списываем у работодателя */
-        const dec = await SB.rpc('change_balance', {
-          p_user_id: Number(task.employer_id), p_delta: -reward,
-          p_type: 'expense', p_title: 'Оплата задания «' + task.title + '»'
-        });
-        if (dec.error) {
-          return { ok: false, error: 'Не хватает средств на балансе: ' + dec.error.message };
-        }
-
+        /* бюджет задания уже заморожен при публикации — здесь платим исполнителю
+           из замороженной суммы, повторное списание у работодателя не нужно */
         /* начисляем исполнителю */
         const inc = await SB.rpc('change_balance', {
           p_user_id: Number(assign.user_id), p_delta: reward,
           p_type: 'income', p_title: 'Выполнение задания «' + task.title + '»'
         });
         if (inc.error) {
-          /* откат */
-          await SB.rpc('change_balance', {
-            p_user_id: Number(task.employer_id), p_delta: reward,
-            p_type: 'income', p_title: 'Возврат по заданию «' + task.title + '»'
-          });
           return { ok: false, error: 'Ошибка начисления: ' + inc.error.message };
         }
 

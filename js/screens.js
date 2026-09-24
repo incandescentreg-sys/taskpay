@@ -1598,8 +1598,13 @@
             employer_name: task.employerName,
             deadline_days: task.deadlineDays,
             status: 'active'
-          }).then(function () {
-            toast('Задание отправлено на модерацию! Бюджет ' + fmtMoney(totalBudget));
+          }).then(function (res) {
+            if (res && res.error) {
+              toast((res.error) || 'Ошибка публикации', true);
+              vibrate('heavy');
+              return;
+            }
+            toast('Задание отправлено на модерацию! Бюджет ' + fmtMoney(totalBudget) + ' заморожен');
             vibrate();
             Store.syncFromApi().then(() => navigate('tasks'));
           }).catch(function () {
