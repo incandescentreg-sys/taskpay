@@ -332,6 +332,51 @@
       return error ? null : data;
     },
 
+    /* ---------- Админ: галочка верификации ---------- */
+    async adminSetVerified(userId, val) {
+      if (!ensureClient()) return null;
+      const { data, error } = await SB.from('users')
+        .update({ is_verified: !!val }).eq('id', Number(userId)).select().single();
+      return error ? null : data;
+    },
+
+    /* ---------- Реферальная система ---------- */
+    async applyReferral(userId, refUid) {
+      if (!ensureClient()) return { error: 'Нет соединения' };
+      const code = String(refUid || '').trim().toUpperCase();
+      if (!code) return { error: 'Введите реферальный код' };
+
+      const ref = await SB.from('users')
+        .select('id, name, balance, uid, referred_by')
+        .eq('uid', code)
+        .maybeSingle();
+      const r = ref && ref.data ? ref.data : null;
+      if (!r) return { error: 'Код не найден' };
+      if (Number(r.id) === Number(userId)) return { error: 'Нельзя пригласить самого себя' };
+
+      const me = await SB.from('users').select('referred_by, referred_bonus, balance').eq('id', Number(userId)).maybeSingle();
+      const m = me && me.data ? me.data : null;
+      if (!m) return { error: 'Пользователь не найден' };
+      if (m.referred_by) return { error: 'Вы уже использовали реферальный код' };
+
+      /* начисляем бонусы: приглашённому и пригласившему по 50 ₽ */
+      const BONUS = 50;
+      const incRef = await SB.rpc('change_balance', {
+        p_user_id: Number(r.id), p_delta: BONUS,
+        p_type: 'income', p_title: 'Реферальный бонус за приглашение'
+      });
+      const incMe = await SB.rpc('change_balance', {
+        p_user_id: Number(userId), p_delta: BONUS,
+        p_type: 'income', p_title: 'Бонус по реферальному коду'
+      });
+      if (incRef.error || incMe.error) {
+        return { error: 'Ошибка начисления бонуса: ' + ((incRef.error && incRef.error.message) || (incMe.error && incMe.error.message)) };
+      }
+
+      await SB.from('users').update({ referred_by: Number(r.id), referred_bonus: true }).eq('id', Number(userId));
+      return { ok: true, bonus: BONUS, refName: r.name };
+    },
+
     async publishTask(task) {
       if (!ensureClient()) return { error: 'Нет соединения' };
       /* замораживаем бюджет: со счёта работодателя списываем весь бюджет задания

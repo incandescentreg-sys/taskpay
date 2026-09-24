@@ -65,6 +65,9 @@ function seedData() {
       is_admin: false,            // администратор платформы
       is_blocked: false,          // заблокирован
       can_post_unlimited: false,  // админ снял ограничение на число заданий
+      is_verified: false,      // галочка верификации
+      referred_by: null,       // кто пригласил (id)
+      referred_bonus: false,   // бонус за реферала уже начислен
       subscribed_categories: [],  // категории для уведомлений
       promo_used: [],             // id использованных промокодов
       subscription: null,         // { planId, until }
@@ -381,6 +384,9 @@ const Store = {
         if (user.is_admin != null) this.data.user.is_admin = !!user.is_admin;
         if (user.is_blocked != null) this.data.user.is_blocked = !!user.is_blocked;
         if (user.can_post_unlimited != null) this.data.user.can_post_unlimited = !!user.can_post_unlimited;
+        if (user.is_verified != null) this.data.user.is_verified = !!user.is_verified;
+        if (user.referred_by != null) this.data.user.referred_by = user.referred_by;
+        if (user.referred_bonus != null) this.data.user.referred_bonus = !!user.referred_bonus;
         if (user.subscribed_categories != null) this.data.user.subscribed_categories = Array.isArray(user.subscribed_categories) ? user.subscribed_categories.slice() : [];
         if (user.promo_used != null) this.data.user.promo_used = Array.isArray(user.promo_used) ? user.promo_used.slice() : [];
       }

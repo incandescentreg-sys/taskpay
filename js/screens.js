@@ -603,7 +603,7 @@
       <div class="profile-head">
         <div class="avatar">${(u.name && u.name[0]) || 'Г'}</div>
         <div>
-          <div style="font-size:18px;font-weight:700">${esc(u.name)}</div>
+          <div style="font-size:18px;font-weight:700">${esc(u.name)}${u.is_verified ? ' <span style="color:var(--accent-2)" title="Проверенный пользователь">✔</span>' : ''}</div>
           <div style="font-size:13px;color:var(--text-2)">${u.role === 'employer' ? 'Работодатель' : u.role === 'both' ? 'Исполнитель / Работодатель' : 'Исполнитель'}${isAdmin() ? ' · ' + TaskPay.icon('shield') + ' Админ' : ''}</div>
           ${useApi && u.uid ? '<div class="uid-chip">ID: <b>' + esc(u.uid) + '</b> <span class="uid-copy" data-action="copy-uid">' + TaskPay.icon('copy') + '</span></div>' : ''}
         </div>
@@ -650,6 +650,17 @@
         <div class="tag-row" style="flex-wrap:wrap">${CATEGORIES.map(c => `
           <button type="button" class="tag cat-sub-tag${(u.subscribed_categories || []).indexOf(c.id) !== -1 ? ' active' : ''}" data-cat="${c.id}" data-action="toggle-cat-sub">${c.icon} ${c.name}</button>
         `).join('')}</div>
+      </div>
+
+      <div class="card" style="margin-bottom:14px">
+        <div style="font-weight:700;margin-bottom:6px">${TaskPay.icon('share')} Реферальная программа</div>
+        <div style="font-size:12px;color:var(--text-3);margin-bottom:8px">Пригласите друга по коду — оба получите по 50 ₽</div>
+        ${u.uid ? '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><div style="font-size:13px;color:var(--text-2)">Ваш код: <b style="color:var(--accent-2);letter-spacing:.5px">' + esc(u.uid) + '</b></div><span class="uid-copy" data-action="copy-uid" style="flex:none">' + TaskPay.icon('copy') + '</span></div>' : ''}
+        <div class="uid-search">
+          <input id="ref-input" placeholder="Введите код друга" maxlength="8" style="flex:1;min-width:0;font-size:13px;padding:10px 12px;background:var(--card-solid);border:1px solid var(--border);border-radius:10px;color:var(--text);outline:none;text-transform:uppercase">
+          <button class="btn btn--sm btn--block" data-action="apply-referral" style="flex:none;width:auto;padding:10px 16px">Активировать</button>
+        </div>
+        <div id="ref-result"></div>
       </div>
       ` : ''}
 
@@ -1035,6 +1046,7 @@
     const blocked = !!u.is_blocked;
     const isAdm = !!u.is_admin;
     const unlim = !!u.can_post_unlimited;
+    const verified = !!u.is_verified;
     return `
     <div class="card" style="margin-top:12px">
       <div style="display:flex;justify-content:space-between;align-items:start;gap:10px">
@@ -1068,6 +1080,9 @@
         </div>
         <div style="display:flex;gap:8px;margin-top:8px">
           <button class="btn btn--sm ${unlim ? 'btn--green' : 'btn--ghost'}" data-action="admin-set-unlimited" data-unlim="${unlim ? '' : '1'}" style="flex:1">${unlim ? '✅ Публикации без лимита' : '🔓 Снять лимит публикаций'}</button>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="btn btn--sm ${verified ? 'btn--green' : 'btn--ghost'}" data-action="admin-set-verified" data-verified="${verified ? '' : '1'}" style="flex:1">${verified ? '✔ Верифицирован' : '✔ Поставить галочку'}</button>
         </div>
       </div>
     </div>`;
@@ -1935,7 +1950,8 @@
       case 'admin-set-balance':
       case 'admin-set-block':
       case 'admin-set-admin':
-      case 'admin-set-unlimited': {
+      case 'admin-set-unlimited':
+      case 'admin-set-verified': {
         const box = $('admin-user-result');
         if (!_adminUid) { toast('Сначала найдите пользователя по UID', true); return; }
         Api.adminFindUser(_adminUid).then(function (u) {
@@ -1958,6 +1974,8 @@
               p = Api.adminSetAdmin(u.id, el.dataset.admin === '1');
             } else if (op === 'admin-set-unlimited') {
               p = Api.adminSetUnlimited(u.id, el.dataset.unlim === '1');
+            } else if (op === 'admin-set-verified') {
+              p = Api.adminSetVerified(u.id, el.dataset.verified === '1');
             }
             if (!p) { toast('Ошибка операции', true); return; }
             p.then(function (res) {
@@ -1968,7 +1986,8 @@
                   'admin-set-balance': 'Баланс установлен ✓',
                   'admin-set-block': el.dataset.blocked === '1' ? 'Пользователь заблокирован 🔒' : 'Пользователь разблокирован 🔓',
                   'admin-set-admin': el.dataset.admin === '1' ? 'Права админа выданы ⚙' : 'Права админа сняты',
-                  'admin-set-unlimited': el.dataset.unlim === '1' ? 'Лимит публикаций снят 🔓' : 'Лимит публикаций возвращён'
+                  'admin-set-unlimited': el.dataset.unlim === '1' ? 'Лимит публикаций снят 🔓' : 'Лимит публикаций возвращён',
+                  'admin-set-verified': el.dataset.verified === '1' ? 'Галочка верификации поставлена ✔' : 'Галочка верификации снята'
                 }[op];
                 toast(msgs || 'Готово');
                 vibrate();
@@ -2152,6 +2171,23 @@
           if (!box) return;
           if (res && res.ok) {
             box.innerHTML = '<div style="font-size:13px;color:var(--green);font-weight:600;margin-top:8px">✓ Промокод активирован: +' + fmtMoney(res.bonus) + ' на баланс</div>';
+            if (inp) inp.value = '';
+            Store.syncFromApi().then(function () { navigate('profile'); });
+          } else {
+            box.innerHTML = '<div style="font-size:13px;color:var(--red);margin-top:8px">' + esc((res && res.error) || 'Ошибка') + '</div>';
+          }
+        });
+        break;
+      }
+      case 'apply-referral': {
+        const inp = $('ref-input');
+        const code = inp ? inp.value.trim().toUpperCase() : '';
+        const box = $('ref-result');
+        if (!code) { toast('Введите реферальный код', true); return; }
+        Api.applyReferral(Number(Store.getUser().id), code).then(function (res) {
+          if (!box) return;
+          if (res && res.ok) {
+            box.innerHTML = '<div style="font-size:13px;color:var(--green);font-weight:600;margin-top:8px">✓ Код активирован: +' + fmtMoney(res.bonus) + ' вам и пригласившему 🤝</div>';
             if (inp) inp.value = '';
             Store.syncFromApi().then(function () { navigate('profile'); });
           } else {
