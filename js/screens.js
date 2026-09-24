@@ -84,6 +84,9 @@
         ${statCard(stats.doneTasks, 'Выполнено заданий', 'blue')}
       </div>
 
+      <div class="section-title">${TaskPay.icon('star')} Топ исполнителей недели</div>
+      <div id="top-week"><div class="empty small" style="padding:16px">Загрузка...</div></div>
+
       ${!hasSub ? `
       <div class="cta-banner">
         <div class="cb-title">🚀 Хотите привлечь клиентов, подписчиков или получить отзывы?</div>
@@ -98,7 +101,31 @@
 
       ${bottomNav('home')}
     </div>`;
-  }, () => { /* bind в глобальном обработчике */ });
+  }, () => {
+    /* топ исполнителей недели */
+    if (Store.useApi() && window.Api && Api.getTopUsers) {
+      Api.getTopUsers().then(function (rows) {
+        const box = q('#top-week');
+        if (!box) return;
+        if (!rows || !rows.length) {
+          box.innerHTML = '<div class="empty small" style="padding:16px">Пока нет выполненных заданий за неделю</div>';
+          return;
+        }
+        box.innerHTML = rows.map(function (u, i) {
+          const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1);
+          return '<div class="card" style="display:flex;align-items:center;gap:10px;padding:10px 12px;margin-bottom:8px">' +
+            '<span style="font-size:18px;font-weight:800;min-width:26px">' + medal + '</span>' +
+            '<span style="flex:1;min-width:0;font-weight:600">' + esc(u.name || 'Исполнитель') + '</span>' +
+            '<span style="font-size:12px;color:var(--text-3)">' + u.count + ' вып.</span>' +
+            '<span style="font-weight:800;color:var(--green)">+' + fmtMoney(u.sum) + '</span>' +
+          '</div>';
+        }).join('');
+      }).catch(function () {
+        const box = q('#top-week');
+        if (box) box.innerHTML = '<div class="empty small" style="padding:16px">Ошибка загрузки</div>';
+      });
+    }
+  });
 
   /* ================================================================
      TASKS — найти задания
@@ -220,6 +247,12 @@
         }
         return '<button class="btn btn--block" style="margin-top:20px" data-action="take-task" data-id="' + t.id + '">' + TaskPay.icon('download') + ' Взять задание</button>';
       }()}
+
+      ${Store.useApi() && Number(t.employerId) !== Number(Store.getUser().id) ? `
+      <div style="display:flex;gap:10px;margin-top:14px">
+        <button class="btn btn--ghost btn--sm" data-action="report-task" data-id="${t.id}" data-emp="${t.employerId}" data-empname="${esc(t.employerName || '')}" style="flex:1">⚠️ Пожаловаться</button>
+      </div>
+      <div id="report-task-box"></div>` : ''}
 
       ${Store.useApi() && Number(t.employerId) === Number(Store.getUser().id) ? `
       <div class="section-title" style="margin-top:26px">${TaskPay.icon('inbox')} Отклики исполнителей</div>
@@ -600,6 +633,25 @@
       <div style="padding:0 16px">
         <button class="btn btn--block btn--sm" data-action="navigate" data-page="wallet" style="margin-bottom:14px">${TaskPay.icon('wallet')} Мой баланс: ${fmtMoney(Store.getBalance())}</button>
       </div>
+
+      ${useApi ? `
+      <div class="card" style="margin-bottom:14px">
+        <div style="font-weight:700;margin-bottom:8px">${TaskPay.icon('tag')} Промокод</div>
+        <div class="uid-search">
+          <input id="promo-input" placeholder="Введите промокод" maxlength="20" style="flex:1;min-width:0;font-size:13px;padding:10px 12px;background:var(--card-solid);border:1px solid var(--border);border-radius:10px;color:var(--text);outline:none;text-transform:uppercase">
+          <button class="btn btn--sm btn--block" data-action="redeem-promo" style="flex:none;width:auto;padding:10px 16px">Активировать</button>
+        </div>
+        <div id="promo-result"></div>
+      </div>
+
+      <div class="card" style="margin-bottom:14px">
+        <div style="font-weight:700;margin-bottom:6px">${TaskPay.icon('bell')} Уведомления по категориям</div>
+        <div style="font-size:12px;color:var(--text-3);margin-bottom:8px">Выберите категории — получайте уведомления о новых заданиях по ним</div>
+        <div class="tag-row" style="flex-wrap:wrap">${CATEGORIES.map(c => `
+          <button type="button" class="tag cat-sub-tag${(u.subscribed_categories || []).indexOf(c.id) !== -1 ? ' active' : ''}" data-cat="${c.id}" data-action="toggle-cat-sub">${c.icon} ${c.name}</button>
+        `).join('')}</div>
+      </div>
+      ` : ''}
 
       <div class="stats" style="margin-bottom:18px">
         ${statCard(myAssignments.length, 'Взято заданий', 'blue')}
@@ -982,6 +1034,7 @@
     if (!u) return '<div class="empty small" style="padding:16px">Пользователь не найден</div>';
     const blocked = !!u.is_blocked;
     const isAdm = !!u.is_admin;
+    const unlim = !!u.can_post_unlimited;
     return `
     <div class="card" style="margin-top:12px">
       <div style="display:flex;justify-content:space-between;align-items:start;gap:10px">
@@ -1012,6 +1065,9 @@
         <div style="display:flex;gap:8px">
           <button class="btn btn--sm ${blocked ? 'btn--green' : 'btn--red'}" data-action="admin-set-block" data-blocked="${blocked ? '' : '1'}" style="flex:1">${blocked ? '🔓 Разблокировать' : '🔒 Заблокировать'}</button>
           <button class="btn btn--sm ${isAdm ? 'btn--ghost' : 'btn--amber'}" data-action="admin-set-admin" data-admin="${isAdm ? '' : '1'}" style="flex:1">${isAdm ? '👤 Снять админа' : '⚙ Дать админа'}</button>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="btn btn--sm ${unlim ? 'btn--green' : 'btn--ghost'}" data-action="admin-set-unlimited" data-unlim="${unlim ? '' : '1'}" style="flex:1">${unlim ? '✅ Публикации без лимита' : '🔓 Снять лимит публикаций'}</button>
         </div>
       </div>
     </div>`;
@@ -1050,6 +1106,23 @@
         <textarea id="admin-broadcast-text" placeholder="Текст уведомления..." style="width:100%;min-height:70px;padding:10px;background:var(--card-solid);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;resize:vertical;box-sizing:border-box;font-family:inherit"></textarea>
         <button class="btn btn--block btn--sm" data-action="admin-broadcast" style="margin-top:8px">${TaskPay.icon('send')} Отправить всем</button>
       </div>
+
+      <div style="height:14px"></div>
+      <div class="section-title">${TaskPay.icon('tag')} Промокоды</div>
+      <div class="card" style="margin-bottom:12px">
+        <div class="uid-search" style="gap:8px">
+          <input id="admin-promo-code" placeholder="Код" maxlength="20" style="flex:1;min-width:0;font-size:13px;padding:10px 12px;background:var(--card-solid);border:1px solid var(--border);border-radius:10px;color:var(--text);outline:none;text-transform:uppercase">
+          <input id="admin-promo-bonus" type="number" placeholder="Бонус ₽" value="100" style="width:86px;flex:none;font-size:13px;padding:10px 8px;background:var(--card-solid);border:1px solid var(--border);border-radius:10px;color:var(--text);outline:none;text-align:center">
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <input id="admin-promo-uses" type="number" placeholder="Кол-во" value="1" min="1" style="width:76px;flex:none;font-size:13px;padding:10px 8px;background:var(--card-solid);border:1px solid var(--border);border-radius:10px;color:var(--text);outline:none;text-align:center">
+          <button class="btn btn--sm" data-action="admin-create-promo" style="flex:1">${TaskPay.icon('plus')} Создать промокод</button>
+        </div>
+        <div id="admin-promo-list"><div class="empty small" style="padding:12px">Загрузка...</div></div>
+      </div>
+
+      <div class="section-title" style="margin-top:18px">${TaskPay.icon('alert')} Жалобы</div>
+      <div id="admin-complaints-list"><div class="empty small" style="padding:20px">Загрузка...</div></div>
 
       <div style="height:14px"></div>
       <div class="section-title">Тарифы (быстрая правка)</div>
@@ -1185,6 +1258,48 @@
         }).join('');
       }).catch(function () {
         if (mktbox) mktbox.innerHTML = '<div class="empty small" style="padding:20px">Ошибка загрузки</div>';
+      });
+    }
+    /* промокоды */
+    const promoBox = q('#admin-promo-list');
+    if (promoBox && Api.adminGetPromocodes) {
+      Api.adminGetPromocodes().then(function (rows) {
+        if (!promoBox) return;
+        if (!rows || !rows.length) {
+          promoBox.innerHTML = '<div class="empty small" style="padding:12px">Нет промокодов</div>';
+          return;
+        }
+        promoBox.innerHTML = rows.map(function (pc) {
+          return '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--border)">' +
+            '<div style="flex:1;min-width:0"><b style="letter-spacing:.5px">' + esc(pc.code) + '</b>' +
+            '<div style="font-size:12px;color:var(--text-3)">Бонус ' + fmtMoney(pc.bonus) + ' · осталось ' + (pc.uses_left != null ? pc.uses_left : '—') + ' шт</div></div>' +
+            '<button class="btn btn--red btn--sm" data-action="admin-delete-promo" data-id="' + pc.id + '" style="width:auto;padding:8px 10px;font-size:12px">🗑</button>' +
+          '</div>';
+        }).join('');
+      }).catch(function () {
+        if (promoBox) promoBox.innerHTML = '<div class="empty small" style="padding:12px">Ошибка загрузки</div>';
+      });
+    }
+    /* жалобы */
+    const compBox = q('#admin-complaints-list');
+    if (compBox && Api.adminGetComplaints) {
+      Api.adminGetComplaints().then(function (rows) {
+        if (!compBox) return;
+        if (!rows || !rows.length) {
+          compBox.innerHTML = '<div class="empty small" style="padding:20px">Нет жалоб</div>';
+          return;
+        }
+        compBox.innerHTML = rows.map(function (c) {
+          return '<div class="card" style="padding:12px;margin-bottom:10px">' +
+            '<div style="font-size:13px">⚠️ ' + esc(c.reason || 'Без причины') + '</div>' +
+            '<div style="font-size:12px;color:var(--text-3);margin-top:4px">От: ' + esc(c.user_name || ('#' + c.user_id)) +
+              (c.target_name ? ' · На: ' + esc(c.target_name) : '') +
+              (c.task_id ? ' · Задание #' + c.task_id : '') + ' · ' + timeAgo(new Date(c.created_at).getTime()) + '</div>' +
+            '<button class="btn btn--sm btn--ghost" data-action="admin-complaint-close" data-id="' + c.id + '" style="margin-top:8px;width:100%">Закрыть</button>' +
+          '</div>';
+        }).join('');
+      }).catch(function () {
+        if (compBox) compBox.innerHTML = '<div class="empty small" style="padding:20px">Ошибка загрузки</div>';
       });
     }
   });
@@ -1340,9 +1455,41 @@
         });
         break;
       }
-      case 'open-task-from-chat': {
-        navigate('task-detail', { id: el.dataset.taskid });
+      case 'report-task': {
+        const taskId = Number(el.dataset.id);
+        const emp = el.dataset.emp ? Number(el.dataset.emp) : null;
+        const empName = el.dataset.empname || '';
+        const box = $('report-task-box');
+        if (!box) return;
+        box.innerHTML = '<div class="card" style="margin-top:8px;padding:12px">' +
+          '<div style="font-weight:700;font-size:13px;margin-bottom:6px">Пожаловаться на задание</div>' +
+          '<textarea id="report-reason" placeholder="Опишите причину жалобы..." style="width:100%;min-height:60px;padding:10px;background:var(--card-solid);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px;box-sizing:border-box;font-family:inherit;resize:vertical"></textarea>' +
+          '<div style="display:flex;gap:8px;margin-top:8px">' +
+            '<button class="btn btn--sm btn--red" data-action="submit-report" data-id="' + taskId + '" data-emp="' + (emp || '') + '" data-empname="' + esc(empName) + '" style="flex:1">Отправить жалобу</button>' +
+            '<button class="btn btn--sm btn--ghost" data-action="report-cancel" style="flex:1">Отмена</button>' +
+          '</div>' +
+        '</div>';
         vibrate();
+        break;
+      }
+      case 'report-cancel': {
+        const box = $('report-task-box');
+        if (box) box.innerHTML = '';
+        break;
+      }
+      case 'submit-report': {
+        const reason = ($('report-reason') || {}).value || '';
+        const taskId = Number(el.dataset.id);
+        const emp = el.dataset.emp ? Number(el.dataset.emp) : null;
+        const empName = el.dataset.empname || '';
+        if (!reason) { toast('Опишите причину жалобы', true); return; }
+        const u = Store.getUser();
+        Api.sendComplaint(Number(u.id), u.name, taskId, emp, empName, reason).then(function (res) {
+          const box = $('report-task-box');
+          if (box) box.innerHTML = '';
+          toast(res ? 'Жалоба отправлена администратору' : 'Ошибка отправки', !res);
+          vibrate();
+        });
         break;
       }
       case 'open-employer-chat': {
@@ -1787,7 +1934,8 @@
       case 'admin-take':
       case 'admin-set-balance':
       case 'admin-set-block':
-      case 'admin-set-admin': {
+      case 'admin-set-admin':
+      case 'admin-set-unlimited': {
         const box = $('admin-user-result');
         if (!_adminUid) { toast('Сначала найдите пользователя по UID', true); return; }
         Api.adminFindUser(_adminUid).then(function (u) {
@@ -1808,6 +1956,8 @@
               p = Api.adminSetBlocked(u.id, el.dataset.blocked === '1');
             } else if (op === 'admin-set-admin') {
               p = Api.adminSetAdmin(u.id, el.dataset.admin === '1');
+            } else if (op === 'admin-set-unlimited') {
+              p = Api.adminSetUnlimited(u.id, el.dataset.unlim === '1');
             }
             if (!p) { toast('Ошибка операции', true); return; }
             p.then(function (res) {
@@ -1817,7 +1967,8 @@
                   'admin-take': 'Списано ' + fmtMoney(amt) + ' ✓',
                   'admin-set-balance': 'Баланс установлен ✓',
                   'admin-set-block': el.dataset.blocked === '1' ? 'Пользователь заблокирован 🔒' : 'Пользователь разблокирован 🔓',
-                  'admin-set-admin': el.dataset.admin === '1' ? 'Права админа выданы ⚙' : 'Права админа сняты'
+                  'admin-set-admin': el.dataset.admin === '1' ? 'Права админа выданы ⚙' : 'Права админа сняты',
+                  'admin-set-unlimited': el.dataset.unlim === '1' ? 'Лимит публикаций снят 🔓' : 'Лимит публикаций возвращён'
                 }[op];
                 toast(msgs || 'Готово');
                 vibrate();
@@ -1875,6 +2026,45 @@
               toast((res && res.error) || 'Ошибка рассылки', true);
             }
           });
+        });
+        break;
+      }
+      case 'admin-create-promo': {
+        const code = ($('admin-promo-code') || {}).value || '';
+        const bonus = parseInt(($('admin-promo-bonus') || {}).value, 10) || 0;
+        const uses = parseInt(($('admin-promo-uses') || {}).value, 10) || 1;
+        if (!code) { toast('Введите код промокода', true); return; }
+        if (bonus <= 0) { toast('Бонус должен быть больше 0', true); return; }
+        Api.adminCreatePromocode(code, bonus, uses).then(function (res) {
+          if (res && res.id) {
+            toast('Промокод создан');
+            vibrate();
+            navigate('admin');
+          } else {
+            toast((res && res.error) || 'Ошибка создания', true);
+          }
+        });
+        break;
+      }
+      case 'admin-delete-promo': {
+        const id = Number(el.dataset.id);
+        tgConfirm('Удалить промокод', 'Удалить промокод?').then(function (ok) {
+          if (!ok) return;
+          Api.adminDeletePromocode(id).then(function (res) {
+            toast(res && res.ok ? 'Промокод удалён' : 'Ошибка удаления', !(res && res.ok));
+            if (res && res.ok) navigate('admin');
+          });
+        });
+        break;
+      }
+      case 'admin-complaint-close': {
+        const id = Number(el.dataset.id);
+        Api.adminDeleteComplaint(id).then(function (res) {
+          toast(res && res.ok ? 'Жалоба закрыта' : 'Ошибка', !(res && res.ok));
+          if (res && res.ok) {
+            const card = el.closest('.card');
+            if (card) card.remove();
+          }
         });
         break;
       }
@@ -1951,6 +2141,38 @@
       }
       case 'refresh-wallet': {
         navigate('wallet');
+        break;
+      }
+      case 'redeem-promo': {
+        const inp = $('promo-input');
+        const code = inp ? inp.value.trim().toUpperCase() : '';
+        const box = $('promo-result');
+        if (!code) { toast('Введите промокод', true); return; }
+        Api.redeemPromocode(code, Number(Store.getUser().id)).then(function (res) {
+          if (!box) return;
+          if (res && res.ok) {
+            box.innerHTML = '<div style="font-size:13px;color:var(--green);font-weight:600;margin-top:8px">✓ Промокод активирован: +' + fmtMoney(res.bonus) + ' на баланс</div>';
+            if (inp) inp.value = '';
+            Store.syncFromApi().then(function () { navigate('profile'); });
+          } else {
+            box.innerHTML = '<div style="font-size:13px;color:var(--red);margin-top:8px">' + esc((res && res.error) || 'Ошибка') + '</div>';
+          }
+        });
+        break;
+      }
+      case 'toggle-cat-sub': {
+        const cat = el.dataset.cat;
+        const u = Store.getUser();
+        const arr = (u.subscribed_categories || []).slice();
+        const idx = arr.indexOf(cat);
+        if (idx !== -1) arr.splice(idx, 1); else arr.push(cat);
+        el.classList.toggle('active', idx !== -1);
+        Api.setCategorySubs(Number(u.id), arr).then(function (res) {
+          if (res) {
+            u.subscribed_categories = arr;
+            Store.save();
+          }
+        });
         break;
       }
     }

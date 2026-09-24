@@ -64,6 +64,9 @@ function seedData() {
       balance: 1250,
       is_admin: false,            // администратор платформы
       is_blocked: false,          // заблокирован
+      can_post_unlimited: false,  // админ снял ограничение на число заданий
+      subscribed_categories: [],  // категории для уведомлений
+      promo_used: [],             // id использованных промокодов
       subscription: null,         // { planId, until }
       rating: { worker: { score: 0, count: 0 }, employer: { score: 0, count: 0 } },
       completedTasks: 0,
@@ -377,6 +380,9 @@ const Store = {
         if (user.uid) this.data.user.uid = user.uid;
         if (user.is_admin != null) this.data.user.is_admin = !!user.is_admin;
         if (user.is_blocked != null) this.data.user.is_blocked = !!user.is_blocked;
+        if (user.can_post_unlimited != null) this.data.user.can_post_unlimited = !!user.can_post_unlimited;
+        if (user.subscribed_categories != null) this.data.user.subscribed_categories = Array.isArray(user.subscribed_categories) ? user.subscribed_categories.slice() : [];
+        if (user.promo_used != null) this.data.user.promo_used = Array.isArray(user.promo_used) ? user.promo_used.slice() : [];
       }
       /* свежий баланс из БД */
       const bal = await Api.getBalance(this.data.user.id);

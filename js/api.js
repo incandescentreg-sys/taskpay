@@ -130,6 +130,9 @@
               });
             } catch (e) {}
           }
+          /* уведомим работодателя о решении */
+          this._notify(Number(t.data.employer_id),
+            '❌ Ваше задание <b>' + this._esc(t.data.title || '') + '</b> отклонено модерацией.<br>Бюджет возвращён на баланс.');
         }
         await SB.from('tasks')
           .update({ status: 'rejected', moderated_at: null }).eq('id', Number(taskId));
@@ -140,6 +143,9 @@
       if (!error && data) {
         /* уведомляем всех пользователей о новом задании только после одобрения */
         this._notifyNewTask(data);
+        /* уведомим работодателя об одобрении */
+        this._notify(Number(data.employer_id),
+          '✅ Ваше задание <b>' + this._esc(data.title || '') + '</b> прошло модерацию и опубликовано на бирже!');
       }
       return error ? null : data;
     },
@@ -218,6 +224,112 @@
       const { error } = await SB.from('tasks')
         .delete().eq('id', Number(taskId));
       return error ? null : { ok: true };
+    },
+
+    /* ---------- Промокоды ---------- */
+    async adminCreatePromocode(code, bonus, uses) {
+      if (!ensureClient()) return { error: 'Нет соединения' };
+      const { data, error } = await SB.from('promocodes').insert({
+        code: String(code).trim().toUpperCase(),
+        bonus: Number(bonus) || 0,
+        uses_left: Number(uses) || 1
+      }).select().single();
+      return error ? { error: error.message } : data;
+    },
+    async adminGetPromocodes() {
+      if (!ensureClient()) return null;
+      const { data, error } = await SB.from('promocodes').select('*').order('created_at', { ascending: false }).limit(50);
+      return error ? null : data;
+    },
+    async adminDeletePromocode(id) {
+      if (!ensureClient()) return null;
+      const { error } = await SB.from('promocodes').delete().eq('id', Number(id));
+      return error ? null : { ok: true };
+    },
+
+    /* Активировать промокод: начислить бонус, если не использован */
+    async redeemPromocode(code, userId) {
+      if (!ensureClient()) return { error: 'Нет соединения' };
+      const c = String(code).trim().toUpperCase();
+      const { data: pc, error: e1 } = await SB.from('promocodes').select('*').eq('code', c).maybeSingle();
+      if (e1 || !pc) return { error: 'Промокод не найден' };
+      if ((pc.uses_left || 0) <= 0) return { error: 'Промокод уже использован' };
+
+      const { data: usr } = await SB.from('users').select('promo_used').eq('id', Number(userId)).maybeSingle();
+      const used = (usr && usr.promo_used) || [];
+      if (used.indexOf(pc.id) !== -1) return { error: 'Вы уже использовали этот промокод' };
+
+      const r = await SB.rpc('change_balance', {
+        p_user_id: Number(userId), p_delta: pc.bonus,
+        p_type: 'income', p_title: 'Промокод ' + c
+      });
+      if (r.error) return { error: r.error.message };
+
+      await SB.from('promocodes').update({ uses_left: Math.max(0, (pc.uses_left || 0) - 1) }).eq('id', pc.id);
+      await SB.from('users').update({ promo_used: used.concat(pc.id) }).eq('id', Number(userId));
+      return { ok: true, bonus: pc.bonus };
+    },
+
+    /* ---------- Жалобы ---------- */
+    async sendComplaint(userId, userName, taskId, targetId, targetName, reason) {
+      if (!ensureClient()) return null;
+      const { data, error } = await SB.from('complaints').insert({
+        user_id: Number(userId), user_name: userName || '—',
+        task_id: taskId ? Number(taskId) : null,
+        target_id: targetId ? Number(targetId) : null,
+        target_name: targetName || '—',
+        reason: reason || ''
+      }).select().single();
+      return error ? null : data;
+    },
+    async adminGetComplaints() {
+      if (!ensureClient()) return null;
+      const { data, error } = await SB.from('complaints').select('*').order('created_at', { ascending: false }).limit(50);
+      return error ? null : data;
+    },
+    async adminDeleteComplaint(id) {
+      if (!ensureClient()) return null;
+      const { error } = await SB.from('complaints').delete().eq('id', Number(id));
+      return error ? null : { ok: true };
+    },
+
+    /* ---------- Подписка на категории (уведомления по интересам) ---------- */
+    async setCategorySubs(userId, cats) {
+      if (!ensureClient()) return null;
+      const arr = Array.isArray(cats) ? cats.map(c => String(c)) : [];
+      const { data, error } = await SB.from('users').update({ subscribed_categories: arr }).eq('id', Number(userId)).select().single();
+      return error ? null : data;
+    },
+
+    /* ---------- Топ исполнителей / работодателей (неделя) ---------- */
+    async getTopUsers() {
+      if (!ensureClient()) return null;
+      try {
+        const since = new Date(Date.now() - 7 * 86400000).toISOString();
+        const done = await SB.from('assignments')
+          .select('user_id, user_name, reward')
+          .eq('status', 'done')
+          .gte('created_at', since)
+          .limit(200);
+        const agg = {};
+        (done.data || []).forEach(a => {
+          const k = String(a.user_id);
+          agg[k] = agg[k] || { id: a.user_id, name: a.user_name || 'Исполнитель', count: 0, sum: 0 };
+          agg[k].count += 1;
+          agg[k].sum += Number(a.reward) || 0;
+        });
+        return Object.values(agg).sort((a, b) => b.sum - a.sum).slice(0, 10);
+      } catch (e) {
+        return null;
+      }
+    },
+
+    /* ---------- Админ: разблокировать публикацию заданий ---------- */
+    async adminSetUnlimited(userId, val) {
+      if (!ensureClient()) return null;
+      const { data, error } = await SB.from('users')
+        .update({ can_post_unlimited: !!val }).eq('id', Number(userId)).select().single();
+      return error ? null : data;
     },
 
     async publishTask(task) {
