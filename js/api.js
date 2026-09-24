@@ -464,6 +464,24 @@
       return error ? null : data;
     },
 
+    /* Удалить чат (и его сообщения) */
+    async deleteChat(chatId) {
+      if (!ensureClient()) return null;
+      const { error } = await SB.from('chats')
+        .delete().eq('id', Number(chatId));
+      return error ? null : { ok: true };
+    },
+
+    /* Найти чат по заданию и участнику */
+    async findChatByTask(taskId, userId) {
+      if (!ensureClient()) return null;
+      const { data, error } = await SB.from('chats')
+        .select('*').eq('task_id', Number(taskId))
+        .or('user_a.eq.' + Number(userId) + ',user_b.eq.' + Number(userId))
+        .limit(5);
+      return error ? null : data;
+    },
+
     async getMessages(chatId) {
       if (!ensureClient()) return null;
       const { data, error } = await SB.from('messages')

@@ -779,10 +779,15 @@
           }
           if (nm) nm.textContent = (info && info.name) || ('ID ' + otherId);
         });
-        /* кнопка перехода к заданию */
+        /* кнопка перехода к заданию + удаление чата */
         const btnBox = document.getElementById('chat-head-taskbtn');
-        if (btnBox && chat.task_id) {
-          btnBox.innerHTML = '<button class="btn btn--sm btn--ghost" data-action="open-task-from-chat" data-taskid="' + chat.task_id + '" style="padding:6px 10px;font-size:12px;white-space:nowrap">' + TaskPay.icon('clipboard') + ' К заданию</button>';
+        if (btnBox) {
+          let h = '';
+          if (chat.task_id) {
+            h += '<button class="btn btn--sm btn--ghost" data-action="open-task-from-chat" data-taskid="' + chat.task_id + '" style="padding:6px 10px;font-size:12px;white-space:nowrap">' + TaskPay.icon('clipboard') + ' К заданию</button>';
+          }
+          h += '<button class="btn btn--sm btn--ghost" data-action="delete-chat" data-chat="' + chat.id + '" style="padding:6px 10px;font-size:12px;white-space:nowrap;color:var(--red)">' + TaskPay.icon('minus') + '</button>';
+          btnBox.innerHTML = h;
         }
       });
     }
@@ -824,7 +829,7 @@
           <div class="letter" style="font-size:15px;font-weight:700;color:var(--accent-2)">…</div>
         </span>
         <span class="chat-head-name" style="font-size:15px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:0 1 auto">Загрузка...</span>
-        <span id="chat-head-taskbtn" style="margin-left:auto;flex:none"></span>
+        <span id="chat-head-taskbtn" style="margin-left:auto;flex:none;display:flex;align-items:center;gap:8px"></span>
       </div>
     </header>
     <div class="chat-wrap">
@@ -1091,6 +1096,27 @@
         vibrate();
         break;
       }
+      case 'delete-chat': {
+        const chatId = Number(el.dataset.chat);
+        const chatIdFromState = TaskPay.routeState().id;
+        const id = chatId || Number(chatIdFromState);
+        if (!id) { toast('Нет данных чата', true); return; }
+        if (!Store.useApi() || !window.Api) { toast('Удаление доступно с подключённой базой', true); return; }
+        const chat = Store.getChat ? Store.getChat(id) : null;
+        tgConfirm('Удалить чат', 'Удалить чат и всю переписку?').then(ok => {
+          if (!ok) return;
+          Api.deleteChat(id).then(function (res) {
+            if (res) {
+              toast('Чат удалён');
+              vibrate();
+              navigate('chats');
+            } else {
+              toast('Не удалось удалить чат', true);
+            }
+          });
+        });
+        break;
+      }
       case 'open-task-from-chat': {
         navigate('task-detail', { id: el.dataset.taskid });
         vibrate();
@@ -1159,6 +1185,17 @@
         Store.save();
         toast('Спасибо! Оценка ' + stars + '/5');
         vibrate();
+        /* после оставления отзыва удаляем чат с работодателем, чтобы не засорять */
+        if (Store.useApi() && window.Api && a.taskId) {
+          const t = Store.getTask(a.taskId);
+          if (t && t.employerId) {
+            Api.findChatByTask(Number(a.taskId), Number(Store.getUser().id)).then(function (chats) {
+              if (chats && chats.length) {
+                Api.deleteChat(chats[0].id).catch(function () {});
+              }
+            });
+          }
+        }
         navigate('my-task-detail', { aid: aid });
         break;
       }
