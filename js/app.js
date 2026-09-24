@@ -135,9 +135,26 @@
     'admin': null
   };
 
-  function render() {
+  function render(silent) {
     const route = routes[currentRoute] || routes.home;
-    app.innerHTML = route.render(routeState);
+    const html = route.render(routeState);
+    /* бесшовный режим: если разметка не изменилась — не трогаем DOM,
+       позиция скролла и картинки не прыгают */
+    const same = silent && html === app.innerHTML;
+    let scTop = 0, scLeft = 0;
+    if (silent && !same) {
+      scTop = window.pageYOffset || document.documentElement.scrollTop || 0;
+      scLeft = window.pageXOffset || document.documentElement.scrollLeft || 0;
+    }
+    if (!same) {
+      app.innerHTML = html;
+    }
+    if (silent && !same) {
+      /* восстанавливаем прокрутку после перерисовки */
+      window.scrollTo(scLeft, scTop);
+      if (document.documentElement) document.documentElement.scrollTop = scTop;
+      if (document.body) document.body.scrollTop = scTop;
+    }
     route.bind(routeState);
     bindActions();
     if (tg && tg.BackButton) {
@@ -347,14 +364,15 @@
       /* сеть упала — остаёмся на демо-данных, интерфейс уже показан */
     });
 
-    /* Автообновление: каждые 20 сек тянем свежие данные из БД и
-       перерисовываем текущий экран (кроме форм — их стирать нельзя) */
+    /* Автообновление: каждые 20 сек тянем свежие данные из БД и перерисовываем
+       текущий экран (бесшовно — только если данные изменились, скролл сохраняется;
+       формы не трогаем, чтобы не терять введённое) */
     setInterval(() => {
       if (!Store.useApi()) return;
       const r = currentRoute;
       if (r === 'create' || r === 'chat-detail' || r === 'admin') return;
       Store.syncFromApi().then(ok => {
-        if (ok) render();
+        if (ok) render(true);
       }).catch(() => {});
     }, 20000);
   });
