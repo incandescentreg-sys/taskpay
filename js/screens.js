@@ -745,16 +745,23 @@
       /* системная плашка: свой HTML разрешён (генерируем сами), newline сохраняем */
       return '<div class="msg-system">' + (text.replace(/^⚙️\s*/, '')) + '</div>';
     }
-    /* карточка заказа: [ORDER]<aid>|<текст> → плашка с кнопками Подтвердить/Отклонить */
+    /* карточка заказа: [ORDER]<aid>|<employerId>|<текст> → плашка с кнопками
+       Подтвердить/Отклонить (видны только работодателю) */
     if (text.indexOf('[ORDER]') === 0) {
-      const pipe = text.indexOf('|');
-      const aid = (pipe > 0 ? text.slice(7, pipe) : '').trim();
-      const bodyText = pipe > 0 ? text.slice(pipe + 1) : text.slice(7);
-      return '<div class="msg-system order-card">' + esc(bodyText) +
-        '<div class="order-actions">' +
-          '<button class="btn btn--green btn--sm" data-action="confirm-assignment" data-aid="' + esc(aid) + '" style="flex:1;padding:9px 10px;font-size:13px;width:auto">✅ Подтвердить</button>' +
-          '<button class="btn btn--red btn--sm" data-action="reject-assignment" data-aid="' + esc(aid) + '" style="flex:1;padding:9px 10px;font-size:13px;width:auto">❌ Отклонить</button>' +
-        '</div></div>';
+      const rest = text.slice(7);
+      const p1 = rest.indexOf('|');
+      const p2 = rest.indexOf('|', p1 + 1);
+      const aid = (p1 > 0 ? rest.slice(0, p1) : '').trim();
+      const empId = (p2 > 0 ? rest.slice(p1 + 1, p2) : '').trim();
+      const bodyText = p2 > 0 ? rest.slice(p2 + 1) : rest.slice(p1 + 1);
+      const isEmployer = empId && String(meId) === String(empId);
+      const actions = isEmployer
+        ? '<div class="order-actions">' +
+            '<button class="btn btn--green btn--sm" data-action="confirm-assignment" data-aid="' + esc(aid) + '" style="flex:1;padding:9px 10px;font-size:13px;width:auto">✅ Подтвердить</button>' +
+            '<button class="btn btn--red btn--sm" data-action="reject-assignment" data-aid="' + esc(aid) + '" style="flex:1;padding:9px 10px;font-size:13px;width:auto">❌ Отклонить</button>' +
+          '</div>'
+        : '';
+      return '<div class="msg-system order-card">' + esc(bodyText) + actions + '</div>';
     }
     if (text.indexOf('IMG:') === 0 || text.indexOf('FILE:') === 0) {
       try {
@@ -1412,7 +1419,7 @@
             if (t && t.employerId && Api.findChatByTask) {
               Api.findChatByTask(Number(t.id), Number(meU.id)).then(function (chats) {
                 if (chats && chats.length) {
-                  const msg = '[ORDER]' + aid + '|🔔 Исполнитель <b>' + Api._esc(meU.name || '—') + '</b> отправил задание на проверку\n\n' +
+                  const msg = '[ORDER]' + aid + '|' + t.employerId + '|🔔 Исполнитель <b>' + Api._esc(meU.name || '—') + '</b> отправил задание на проверку\n\n' +
                     '📋 Заказ № ' + t.id + '\n💼 <b>' + Api._esc(t.title) + '</b>\n💰 Награда: ' + fmtMoney(t.reward);
                   Api.sendMessage(chats[0].id, Number(meU.id), msg, meU.name).catch(function () {});
                 }
