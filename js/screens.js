@@ -1039,6 +1039,9 @@
       <div class="section-title" style="margin-top:18px">Отклики на проверке</div>
       <div id="admin-pending-list"><div class="empty small" style="padding:20px">Загрузка...</div></div>
 
+      <div class="section-title" style="margin-top:18px">${TaskPay.icon('shield')} Модерация заданий</div>
+      <div id="admin-moderation-list"><div class="empty small" style="padding:20px">Загрузка...</div></div>
+
       <div style="height:14px"></div>
       <div class="section-title">Тарифы (быстрая правка)</div>
       ${SUBSCRIPTIONS.map(p => `
@@ -1078,6 +1081,45 @@
     }).catch(function () {
       if (box) box.innerHTML = '<div class="empty small" style="padding:20px">Ошибка загрузки</div>';
     });
+    /* задания на модерацию */
+    const mbox = q('#admin-moderation-list');
+    if (mbox) {
+      Api.getModerationTasks().then(function (rows) {
+        if (!mbox) return;
+        if (!rows || !rows.length) {
+          mbox.innerHTML = '<div class="empty small" style="padding:20px">Нет заданий на модерации</div>';
+          return;
+        }
+        mbox.innerHTML = rows.map(function (tt) {
+          const cat = Category.byId(tt.category);
+          const pl = tt.platform ? Platform.byId(tt.platform) : null;
+          const catName = cat ? cat.name : (tt.category || 'other');
+          const platName = pl ? pl.name : (tt.platform || '—');
+          const proofTxt = (tt.proof || []).map(function (p) {
+            const pr = Proof.byId(p);
+            return pr ? pr.name : p;
+          }).join(', ') || '—';
+          return '<div class="card" style="padding:14px;margin-bottom:10px">' +
+            '<div style="font-size:14px;font-weight:700">' + esc(tt.title) + '</div>' +
+            '<div style="font-size:12px;color:var(--text-2);margin-top:4px">' + esc(tt.description || '') + '</div>' +
+            '<div style="font-size:12px;color:var(--text-3);margin-top:6px;line-height:1.6">' +
+              '👤 Работодатель: <b>' + esc(tt.employer_name || ('#' + tt.employer_id)) + '</b><br>' +
+              '🏷 Категория: ' + esc(catName) + ' · 📱 Платформа: ' + esc(platName) + '<br>' +
+              '💰 Награда: <b>' + fmtMoney(tt.reward) + '</b> · 👥 Мест: ' + (tt.spots_total != null ? tt.spots_total : '—') + '<br>' +
+              '⏱ Срок: ' + (tt.deadline_days != null ? tt.deadline_days + ' дн' : '—') + ' · 📅 Создано: ' + timeAgo(new Date(tt.created_at).getTime()) + '<br>' +
+              '🖼 Подтверждение: ' + esc(proofTxt) +
+            '</div>' +
+            '<div style="font-size:13px;color:var(--text-2);margin-top:6px;background:var(--card-solid);border:1px solid var(--border);border-radius:10px;padding:8px 10px;white-space:pre-wrap">' + esc(tt.instruction || 'Без инструкции') + '</div>' +
+            '<div style="display:flex;gap:8px;margin-top:10px">' +
+              '<button class="btn btn--green btn--sm" data-action="admin-moderate" data-id="' + tt.id + '" data-dec="approve" style="flex:1">✅ Выпустить</button>' +
+              '<button class="btn btn--red btn--sm" data-action="admin-moderate" data-id="' + tt.id + '" data-dec="reject" style="flex:1">❌ Отклонить</button>' +
+            '</div>' +
+          '</div>';
+        }).join('');
+      }).catch(function () {
+        if (mbox) mbox.innerHTML = '<div class="empty small" style="padding:20px">Ошибка загрузки</div>';
+      });
+    }
   });
 
   /* ================================================================
@@ -1522,7 +1564,7 @@
             deadline_days: task.deadlineDays,
             status: 'active'
           }).then(function () {
-            toast('Задание опубликовано! Бюджет ' + fmtMoney(totalBudget));
+            toast('Задание отправлено на модерацию! Бюджет ' + fmtMoney(totalBudget));
             vibrate();
             Store.syncFromApi().then(() => navigate('tasks'));
           }).catch(function () {
@@ -1709,6 +1751,25 @@
           } else {
             run();
           }
+        });
+        break;
+      }
+      case 'admin-moderate': {
+        const id = Number(el.dataset.id);
+        const dec = el.dataset.dec;
+        if (!id || !dec) { toast('Нет данных задания', true); return; }
+        const label = dec === 'approve' ? 'Выпустить задание на биржу?' : 'Отклонить задание?';
+        tgConfirm('Модерация', label).then(function (ok) {
+          if (!ok) return;
+          Api.moderateTask(id, dec).then(function (upd) {
+            if (upd) {
+              toast(dec === 'approve' ? 'Задание выпущено на биржу ✓' : 'Задание отклонено');
+              vibrate();
+              Store.syncFromApi().then(function () { navigate('admin'); });
+            } else {
+              toast('Ошибка модерации', true);
+            }
+          });
         });
         break;
       }

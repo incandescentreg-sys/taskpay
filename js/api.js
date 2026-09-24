@@ -103,13 +103,38 @@
       return error ? null : data;
     },
 
-    async publishTask(task) {
+    /* Задания на модерацию (видны только админу) */
+    async getModerationTasks() {
       if (!ensureClient()) return null;
-      const { data, error } = await SB.from('tasks').insert(task).select().single();
-      if (!error && data) {
-        /* уведомляем всех пользователей о новом задании */
+      const { data, error } = await SB.from('tasks')
+        .select('*')
+        .eq('status', 'moderation')
+        .order('created_at', { ascending: false })
+        .limit(50);
+      return error ? null : data;
+    },
+
+    /* Решение админа: выпустить (active) / отклонить (rejected) */
+    async moderateTask(taskId, decision) {
+      if (!ensureClient()) return null;
+      const patch = decision === 'approve'
+        ? { status: 'active' }
+        : { status: 'rejected', moderated_at: null };
+      const { data, error } = await SB.from('tasks')
+        .update(patch).eq('id', Number(taskId)).select().single();
+      if (!error && data && decision === 'approve') {
+        /* уведомляем всех пользователей о новом задании только после одобрения */
         this._notifyNewTask(data);
       }
+      return error ? null : data;
+    },
+
+    async publishTask(task) {
+      if (!ensureClient()) return null;
+      /* новое задание сначала идёт на модерацию, на биржу — после одобрения админом */
+      const { data, error } = await SB.from('tasks').insert(Object.assign({}, task, {
+        status: task.status && task.status === 'active' ? 'moderation' : (task.status || 'moderation')
+      })).select().single();
       return error ? null : data;
     },
 
