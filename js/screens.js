@@ -138,17 +138,19 @@
     </div>
     ${bottomNav('tasks')}`;
   }, () => {
-    /* после перерисовки докручиваем ряды фильтров к активному элементу,
-       чтобы выбор платформы/категории не сбрасывал позицию в начало */
+    /* после перерисовки держим активный фильтр в зоне видимости ряда
+       ТОЛЬКО по горизонтали — вертикаль страницы не трогаем,
+       иначе автообновление бросало бы к началу списка */
     const rows = qq('.tag-row');
     rows.forEach(function (row) {
       const active = row.querySelector('.tag.active');
       if (active) {
-        try {
-          active.scrollIntoView({ block: 'nearest', inline: 'center' });
-        } catch (e) {
-          const left = active.offsetLeft - (row.clientWidth / 2) + (active.clientWidth / 2);
-          if (left > 0) row.scrollLeft = left;
+        const left = active.offsetLeft - (row.clientWidth / 2) + (active.clientWidth / 2);
+        if (left > row.scrollLeft && left < row.scrollLeft + row.clientWidth) {
+          /* уже видно — не двигаем */
+        } else {
+          const target = Math.max(0, Math.min(left, row.scrollWidth - row.clientWidth));
+          row.scrollLeft = target;
         }
       }
     });

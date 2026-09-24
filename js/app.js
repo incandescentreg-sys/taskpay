@@ -141,19 +141,10 @@
     /* бесшовный режим: если разметка не изменилась — не трогаем DOM,
        позиция скролла и картинки не прыгают */
     const same = silent && html === app.innerHTML;
-    let scTop = 0, scLeft = 0;
-    if (silent && !same) {
-      scTop = window.pageYOffset || document.documentElement.scrollTop || 0;
-      scLeft = window.pageXOffset || document.documentElement.scrollLeft || 0;
-    }
+    const scTop = silent ? (window.pageYOffset || document.documentElement.scrollTop || 0) : 0;
+    const scLeft = silent ? (window.pageXOffset || document.documentElement.scrollLeft || 0) : 0;
     if (!same) {
       app.innerHTML = html;
-    }
-    if (silent && !same) {
-      /* восстанавливаем прокрутку после перерисовки */
-      window.scrollTo(scLeft, scTop);
-      if (document.documentElement) document.documentElement.scrollTop = scTop;
-      if (document.body) document.body.scrollTop = scTop;
     }
     route.bind(routeState);
     bindActions();
@@ -167,6 +158,18 @@
           tg.BackButton.onClick(() => navigate(backTo));
         }
       } catch (e) {}
+    }
+    if (silent && !same) {
+      /* восстанавливаем прокрутку ПОСЛЕ отрисовки и биндов: сразу + через кадр +
+         через таймаут (высота страницы стабилизируется не мгновенно) */
+      const restore = () => {
+        window.scrollTo(scLeft, scTop);
+        if (document.documentElement) document.documentElement.scrollTop = scTop;
+        if (document.body) document.body.scrollTop = scTop;
+      };
+      restore();
+      requestAnimationFrame(restore);
+      setTimeout(restore, 60);
     }
   }
 
