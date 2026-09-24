@@ -1042,6 +1042,9 @@
       <div class="section-title" style="margin-top:18px">${TaskPay.icon('shield')} Модерация заданий</div>
       <div id="admin-moderation-list"><div class="empty small" style="padding:20px">Загрузка...</div></div>
 
+      <div class="section-title" style="margin-top:18px">${TaskPay.icon('bolt')} Задания на бирже</div>
+      <div id="admin-market-list"><div class="empty small" style="padding:20px">Загрузка...</div></div>
+
       <div style="height:14px"></div>
       <div class="section-title">Тарифы (быстрая правка)</div>
       ${SUBSCRIPTIONS.map(p => `
@@ -1118,6 +1121,34 @@
         }).join('');
       }).catch(function () {
         if (mbox) mbox.innerHTML = '<div class="empty small" style="padding:20px">Ошибка загрузки</div>';
+      });
+    }
+    /* задания на бирже (для удаления админом) */
+    const mktbox = q('#admin-market-list');
+    if (mktbox) {
+      Api.adminGetMarketTasks().then(function (rows) {
+        if (!mktbox) return;
+        if (!rows || !rows.length) {
+          mktbox.innerHTML = '<div class="empty small" style="padding:20px">На бирже нет заданий</div>';
+          return;
+        }
+        mktbox.innerHTML = rows.map(function (tt) {
+          const cat = Category.byId(tt.category);
+          const catName = cat ? cat.name : (tt.category || 'other');
+          return '<div class="card" style="padding:14px;margin-bottom:10px">' +
+            '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">' +
+              '<div style="flex:1;min-width:0">' +
+                '<div style="font-size:14px;font-weight:700">' + esc(tt.title) + '</div>' +
+                '<div style="font-size:12px;color:var(--text-3);margin-top:3px">' +
+                  '🏷 ' + esc(catName) + ' · 💰 ' + fmtMoney(tt.reward) + ' · 👥 ' + (tt.spots_left != null ? tt.spots_left : '—') + ' мест · 👤 ' + esc(tt.employer_name || '—') +
+                '</div>' +
+              '</div>' +
+              '<button class="btn btn--red btn--sm" data-action="admin-delete-task" data-id="' + tt.id + '" style="flex:none;width:auto;padding:8px 12px;font-size:12px">🗑 Удалить</button>' +
+            '</div>' +
+          '</div>';
+        }).join('');
+      }).catch(function () {
+        if (mktbox) mktbox.innerHTML = '<div class="empty small" style="padding:20px">Ошибка загрузки</div>';
       });
     }
   });
@@ -1751,6 +1782,23 @@
           } else {
             run();
           }
+        });
+        break;
+      }
+      case 'admin-delete-task': {
+        const id = Number(el.dataset.id);
+        if (!id) { toast('Нет данных задания', true); return; }
+        tgConfirm('Удалить задание', 'Удалить задание с биржи? Это действие нельзя отменить.').then(function (ok) {
+          if (!ok) return;
+          Api.adminDeleteTask(id).then(function (res) {
+            if (res && res.ok) {
+              toast('Задание удалено');
+              vibrate();
+              Store.syncFromApi().then(function () { navigate('admin'); });
+            } else {
+              toast('Ошибка удаления', true);
+            }
+          });
         });
         break;
       }

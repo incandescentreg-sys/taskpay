@@ -129,6 +129,25 @@
       return error ? null : data;
     },
 
+    /* Задания на бирже (для админ-панели) */
+    async adminGetMarketTasks() {
+      if (!ensureClient()) return null;
+      const { data, error } = await SB.from('tasks')
+        .select('*')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(50);
+      return error ? null : data;
+    },
+
+    /* Удалить задание (только админ) */
+    async adminDeleteTask(taskId) {
+      if (!ensureClient()) return null;
+      const { error } = await SB.from('tasks')
+        .delete().eq('id', Number(taskId));
+      return error ? null : { ok: true };
+    },
+
     async publishTask(task) {
       if (!ensureClient()) return null;
       /* новое задание сначала идёт на модерацию, на биржу — после одобрения админом */
