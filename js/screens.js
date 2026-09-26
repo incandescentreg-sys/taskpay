@@ -24,7 +24,7 @@
 
     return `
     <div class="page page--hero">
-      <div class="ver-tag">build 79</div>
+      <div class="ver-tag">build 80</div>
       <div class="home-top-right">
         <button class="home-balance" data-action="refresh-data" aria-label="Обновить" style="min-width:42px">${TaskPay.icon('refresh')}</button>
         <button class="home-balance" data-action="navigate" data-page="wallet" aria-label="Баланс">${TaskPay.icon('wallet')} ${fmtMoney(Store.getBalance())}</button>
@@ -591,78 +591,52 @@
   ================================================================ */
   register('profile', () => {
     const u = Store.getUser();
-    const stats = Store.computeStats();
     const myAssignments = Store.getAssignments().filter(a => a.userId === u.id);
     const workerR = Store.getUserRating('worker');
     const employerR = Store.getUserRating('employer');
     const useApi = Store.useApi();
 
+    /* волны для секций (как на карточках главного меню) */
+    const waves = function () {
+      const svg = '<svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0,120 C360,16 520,16 720,120 C920,224 1080,224 1440,120 L1440,320 L0,320 Z"/></svg>';
+      return '<div class="wave-row wave-1">' + svg + svg + '</div>' +
+        '<div class="wave-row wave-2">' + svg + svg + '</div>' +
+        '<div class="wave-row wave-3">' + svg + svg + '</div>';
+    };
+    /* секция-аккордеон */
+    const section = function (icon, title, bodyId, innerHTML, open) {
+      return '<div class="profile-sec">' +
+        '<button type="button" class="profile-sec-head" data-action="profile-section" data-target="' + bodyId + '">' +
+          '<span class="ps-ico">' + icon + '</span>' +
+          '<span class="ps-title">' + title + '</span>' +
+          '<span class="ps-arrow">▾</span>' +
+        '</button>' +
+        '<div class="profile-sec-body" id="' + bodyId + '"' + (open ? ' style="display:block"' : '') + '>' + innerHTML + '</div>' +
+        waves() +
+      '</div>';
+    };
+
     return `
     ${topbar('Профиль', { icon: 'user' })}
     <div class="page">
-      <div class="profile-head">
-        <div class="avatar">${(u.name && u.name[0]) || 'Г'}</div>
+      <div class="profile-hero">
+        <div class="avatar avatar--lg">${(u.photo ? '<img src="' + esc(u.photo) + '" alt="">' : (u.name && u.name[0]) || 'Г')}</div>
+        <div class="ph-name">${esc(u.name)}${u.is_verified ? ' <span class="verified-badge" title="Проверенный пользователь">✔</span>' : ''}</div>
+        <div class="ph-role">${u.role === 'employer' ? 'Работодатель' : u.role === 'both' ? 'Исполнитель / Работодатель' : 'Исполнитель'}${isAdmin() ? ' · ' + TaskPay.icon('shield') + ' Админ' : ''}</div>
+        ${useApi && u.uid ? '<div class="uid-chip ph-uid">ID: <b>' + esc(u.uid) + '</b> <span class="uid-copy" data-action="copy-uid">' + TaskPay.icon('copy') + '</span></div>' : ''}
+        <div class="ph-ratings">
+          <span class="ph-r">${TaskPay.icon('star')} Исполнитель: <b>${workerR.count ? workerR.score.toFixed(1) : '—'}</b></span>
+          <span class="ph-r">${TaskPay.icon('star')} Работодатель: <b>${employerR.count ? employerR.score.toFixed(1) : '—'}</b></span>
+        </div>
+      </div>
+
+      <div class="card profile-balance">
         <div>
-          <div style="font-size:18px;font-weight:700">${esc(u.name)}${u.is_verified ? ' <span style="color:var(--accent-2)" title="Проверенный пользователь">✔</span>' : ''}</div>
-          <div style="font-size:13px;color:var(--text-2)">${u.role === 'employer' ? 'Работодатель' : u.role === 'both' ? 'Исполнитель / Работодатель' : 'Исполнитель'}${isAdmin() ? ' · ' + TaskPay.icon('shield') + ' Админ' : ''}</div>
-          ${useApi && u.uid ? '<div class="uid-chip">ID: <b>' + esc(u.uid) + '</b> <span class="uid-copy" data-action="copy-uid">' + TaskPay.icon('copy') + '</span></div>' : ''}
+          <div class="pb-label">Баланс</div>
+          <div class="pb-value">${fmtMoney(Store.getBalance())}</div>
         </div>
+        <button class="btn btn--sm" data-action="navigate" data-page="wallet" style="flex:none;width:auto;padding:10px 16px">${TaskPay.icon('wallet')} В кошелёк</button>
       </div>
-
-      ${useApi ? `
-      <div class="card" style="margin-bottom:14px">
-        <div style="font-weight:700;margin-bottom:8px">${TaskPay.icon('search')} Найти пользователя</div>
-        <div class="uid-search">
-          <input id="uid-input" placeholder="Введите ID" maxlength="8" style="flex:1;min-width:0;font-size:13px;padding:10px 12px;background:var(--card-solid);border:1px solid var(--border);border-radius:10px;color:var(--text);outline:none">
-          <button class="btn btn--sm btn--block" data-action="find-uid" style="flex:none;width:auto;padding:10px 16px">Найти</button>
-        </div>
-        <div id="uid-result"></div>
-      </div>` : ''}
-
-      <div class="stats" style="margin-bottom:14px">
-        <div class="stat-card blue">
-          <div class="val" style="font-size:20px">${TaskPay.icon('star')} ${workerR.count ? workerR.score.toFixed(1) : '—'}</div>
-          <div class="label">Рейтинг исполнителя (${workerR.count} оценок)</div>
-        </div>
-        <div class="stat-card green">
-          <div class="val" style="font-size:20px">${TaskPay.icon('star')} ${employerR.count ? employerR.score.toFixed(1) : '—'}</div>
-          <div class="label">Рейтинг работодателя (${employerR.count} оценок)</div>
-        </div>
-      </div>
-
-      <div style="padding:0 16px">
-        <button class="btn btn--block btn--sm" data-action="navigate" data-page="wallet" style="margin-bottom:14px">${TaskPay.icon('wallet')} Мой баланс: ${fmtMoney(Store.getBalance())}</button>
-      </div>
-
-      ${useApi ? `
-      <div class="card" style="margin-bottom:14px">
-        <div style="font-weight:700;margin-bottom:8px">${TaskPay.icon('tag')} Промокод</div>
-        <div class="uid-search">
-          <input id="promo-input" placeholder="Введите промокод" maxlength="20" style="flex:1;min-width:0;font-size:13px;padding:10px 12px;background:var(--card-solid);border:1px solid var(--border);border-radius:10px;color:var(--text);outline:none;text-transform:uppercase">
-          <button class="btn btn--sm btn--block" data-action="redeem-promo" style="flex:none;width:auto;padding:10px 16px">Активировать</button>
-        </div>
-        <div id="promo-result"></div>
-      </div>
-
-      <div class="card" style="margin-bottom:14px">
-        <div style="font-weight:700;margin-bottom:6px">${TaskPay.icon('bell')} Уведомления по категориям</div>
-        <div style="font-size:12px;color:var(--text-3);margin-bottom:8px">Выберите категории — получайте уведомления о новых заданиях по ним</div>
-        <div class="tag-row" style="flex-wrap:wrap">${CATEGORIES.map(c => `
-          <button type="button" class="tag cat-sub-tag${(u.subscribed_categories || []).indexOf(c.id) !== -1 ? ' active' : ''}" data-cat="${c.id}" data-action="toggle-cat-sub">${c.icon} ${c.name}</button>
-        `).join('')}</div>
-      </div>
-
-      <div class="card" style="margin-bottom:14px">
-        <div style="font-weight:700;margin-bottom:6px">${TaskPay.icon('share')} Реферальная программа</div>
-        <div style="font-size:12px;color:var(--text-3);margin-bottom:8px">Пригласите друга по коду — оба получите по 50 ₽</div>
-        ${u.uid ? '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><div style="font-size:13px;color:var(--text-2)">Ваш код: <b style="color:var(--accent-2);letter-spacing:.5px">' + esc(u.uid) + '</b></div><span class="uid-copy" data-action="copy-uid" style="flex:none">' + TaskPay.icon('copy') + '</span></div>' : ''}
-        <div class="uid-search">
-          <input id="ref-input" placeholder="Введите код друга" maxlength="8" style="flex:1;min-width:0;font-size:13px;padding:10px 12px;background:var(--card-solid);border:1px solid var(--border);border-radius:10px;color:var(--text);outline:none;text-transform:uppercase">
-          <button class="btn btn--sm btn--block" data-action="apply-referral" style="flex:none;width:auto;padding:10px 16px">Активировать</button>
-        </div>
-        <div id="ref-result"></div>
-      </div>
-      ` : ''}
 
       <div class="stats" style="margin-bottom:18px">
         ${statCard(myAssignments.length, 'Взято заданий', 'blue')}
@@ -684,11 +658,23 @@
         }).join('')}
 
       ${useApi ? `
-      <div class="section-title">${TaskPay.icon('briefcase')} Мои задания как работодателя</div>
-      <div id="emp-tasks-list"><div class="empty small" style="padding:20px">Загрузка...</div></div>
+      <div class="section-title" style="margin-top:22px">Разделы</div>
+      ${section(TaskPay.icon('search'), 'Найти пользователя', 'sec-uid',
+        '<div class="uid-search"><input id="uid-input" placeholder="Введите ID" maxlength="8" style="flex:1;min-width:0;font-size:13px;padding:10px 12px;background:var(--card-solid);border:1px solid var(--border);border-radius:10px;color:var(--text);outline:none"><button class="btn btn--sm btn--block" data-action="find-uid" style="flex:none;width:auto;padding:10px 16px">Найти</button></div><div id="uid-result"></div>')}
+      ${section(TaskPay.icon('briefcase'), 'Мои задания как работодателя', 'sec-emp',
+        '<div id="emp-tasks-list"><div class="empty small" style="padding:20px">Загрузка...</div></div>')}
+      ${section(TaskPay.icon('tag'), 'Промокод и бонусы', 'sec-promo',
+        '<div class="uid-search"><input id="promo-input" placeholder="Введите промокод" maxlength="20" style="flex:1;min-width:0;font-size:13px;padding:10px 12px;background:var(--card-solid);border:1px solid var(--border);border-radius:10px;color:var(--text);outline:none;text-transform:uppercase"><button class="btn btn--sm btn--block" data-action="redeem-promo" style="flex:none;width:auto;padding:10px 16px">Активировать</button></div><div id="promo-result"></div>')}
+      ${section(TaskPay.icon('share'), 'Реферальная программа', 'sec-ref',
+        (u.uid ? '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><div style="font-size:13px;color:var(--text-2)">Ваш код: <b style="color:var(--accent-2);letter-spacing:.5px">' + esc(u.uid) + '</b></div><span class="uid-copy" data-action="copy-uid" style="flex:none">' + TaskPay.icon('copy') + '</span></div>' : '') +
+        '<div style="font-size:12px;color:var(--text-3);margin-bottom:8px">Пригласите друга — оба получите по 50 ₽</div>' +
+        '<div class="uid-search"><input id="ref-input" placeholder="Введите код друга" maxlength="8" style="flex:1;min-width:0;font-size:13px;padding:10px 12px;background:var(--card-solid);border:1px solid var(--border);border-radius:10px;color:var(--text);outline:none;text-transform:uppercase"><button class="btn btn--sm btn--block" data-action="apply-referral" style="flex:none;width:auto;padding:10px 16px">Активировать</button></div><div id="ref-result"></div>')}
+      ${section(TaskPay.icon('bell'), 'Уведомления по категориям', 'sec-cats',
+        '<div style="font-size:12px;color:var(--text-3);margin-bottom:8px">Получайте уведомления о новых заданиях по выбранным категориям</div>' +
+        '<div class="tag-row" style="flex-wrap:wrap">' + CATEGORIES.map(c => '<button type="button" class="tag cat-sub-tag${(u.subscribed_categories || []).indexOf(c.id) !== -1 ? " active" : ""}" data-cat="${c.id}" data-action="toggle-cat-sub">${c.icon} ${c.name}</button>').join('') + '</div>')}
       ` : ''}
 
-      ${isAdmin() ? '<button class="btn btn--block btn--ghost btn--sm" data-action="admin-panel" style="margin-top:16px">' + TaskPay.icon('settings') + ' Админ-панель</button>' : ''}
+      ${isAdmin() ? '<button class="btn btn--block btn--ghost btn--sm" data-action="admin-panel" style="margin-top:18px">' + TaskPay.icon('settings') + ' Админ-панель</button>' : ''}
     </div>
     ${bottomNav('profile')}`;
   }, () => {
@@ -1476,6 +1462,16 @@
       return;
     }
     switch (action) {
+      case 'profile-section': {
+        const t = document.getElementById(el.dataset.target);
+        if (!t) break;
+        const open = t.style.display === 'block';
+        t.style.display = open ? 'none' : 'block';
+        const sec = el.closest('.profile-sec');
+        if (sec) sec.classList.toggle('open', !open);
+        vibrate();
+        break;
+      }
       case 'back': {
         navigate(TaskPay.backTo ? TaskPay.backTo(TaskPay.currentRoute()) : 'home');
         vibrate();
