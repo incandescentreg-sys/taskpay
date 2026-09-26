@@ -27,6 +27,15 @@
     }
   }
 
+  /* Гонка с таймаутом: если запрос завис (медленная сеть), возвращаем null —
+     иначе экран «Загрузка...» висел бы вечно */
+  function withTimeout(promise, ms) {
+    return Promise.race([
+      promise,
+      new Promise(function (resolve) { setTimeout(function () { resolve(null); }, ms || 8000); })
+    ]);
+  }
+
   window.Api = {
     isConfigured() {
       /* инициализируем клиент прямо здесь — иначе флаг configured
@@ -757,25 +766,31 @@
     /* ---------- Чат: список диалогов ---------- */
     async getChats(userId) {
       if (!ensureClient()) return null;
-      /* БЕЗ вложенных messages — иначе огромные base64-вложения вешают список чатов */
-      const { data, error } = await SB.from('chats')
-        .select('id, user_a, user_b, task_id, created_at')
-        .or('user_a.eq.' + userId + ',user_b.eq.' + userId)
-        .order('created_at', { ascending: false });
-      return error ? null : data;
+      try {
+        /* БЕЗ вложенных messages — иначе огромные base64-вложения вешают список чатов */
+        const { data, error } = await withTimeout(SB.from('chats')
+          .select('id, user_a, user_b, task_id, created_at')
+          .or('user_a.eq.' + userId + ',user_b.eq.' + userId)
+          .order('created_at', { ascending: false }));
+        return error ? null : data;
+      } catch (e) {
+        console.error('getChats error', e);
+        return null;
+      }
     },
 
     /* Только последнее сообщение чата (лёгкое превью для списка) */
     async getLastMessage(chatId) {
       if (!ensureClient()) return null;
       try {
-        const { data, error } = await SB.from('messages')
+        const { data, error } = await withTimeout(SB.from('messages')
           .select('id, text, created_at, from_user')
           .eq('chat_id', chatId)
           .order('created_at', { ascending: false })
-          .limit(1);
+          .limit(1));
         return error ? null : (data && data.length ? data[0] : null);
       } catch (e) {
+        console.error('getLastMessage error', e);
         return null;
       }
     },
@@ -817,15 +832,20 @@
 
     async getMessages(chatId) {
       if (!ensureClient()) return null;
-      /* тянем ТОЛЬКО последние 40 — иначе старые огромные base64-вложения вешают запрос */
-      const { data, error } = await SB.from('messages')
-        .select('*')
-        .eq('chat_id', chatId)
-        .order('created_at', { ascending: false })
-        .limit(40);
-      if (error) return null;
-      const sorted = (data || []).slice().reverse();
-      return sorted;
+      try {
+        /* тянем ТОЛЬКО последние 40 — иначе старые огромные base64-вложения вешают запрос */
+        const { data, error } = await withTimeout(SB.from('messages')
+          .select('*')
+          .eq('chat_id', chatId)
+          .order('created_at', { ascending: false })
+          .limit(40));
+        if (error) return null;
+        const sorted = (data || []).slice().reverse();
+        return sorted;
+      } catch (e) {
+        console.error('getMessages error', e);
+        return null;
+      }
     },
 
     async sendMessage(chatId, fromUser, text, fromName) {

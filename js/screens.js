@@ -743,7 +743,10 @@
 
     /* реальные диалоги через Supabase */
     if (useApi) {
-      Api.getChats(Number(u.id)).then(function (chats) {
+      Api.getChats(Number(u.id)).catch(function () {
+        const view = document.getElementById('chats-list');
+        if (view) view.innerHTML = '<div class="empty"><div class="e-ico">' + TaskPay.icon('alert') + '</div><div class="e-title">Не удалось загрузить чаты</div><div class="e-sub">Проверьте соединение и откройте ещё раз</div></div>';
+      }).then(function (chats) {
         const view = document.getElementById('chats-list');
         if (!view) return;
         if (!chats || !chats.length) {
