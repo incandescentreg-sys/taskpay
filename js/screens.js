@@ -743,10 +743,21 @@
 
     /* реальные диалоги через Supabase */
     if (useApi) {
-      Api.getChats(Number(u.id)).catch(function () {
+      var viewEl = document.getElementById('chats-list');
+      /* страховка: если за 3с данные не пришли — показываем Повторить вместо вечной Загрузки */
+      var chatTimer = setTimeout(function () {
+        var v = document.getElementById('chats-list');
+        if (v && v.innerHTML.indexOf('Загрузка') !== -1) {
+          v.innerHTML = '<div class="empty"><div class="e-ico">' + TaskPay.icon('alert') + '</div><div class="e-title">Не удалось загрузить чаты</div><div class="e-sub">Проверьте соединение</div>' +
+            '<button class="btn btn--block btn--sm" data-action="retry-chats" style="margin-top:12px;width:auto;padding:10px 20px;margin-left:auto;margin-right:auto">' + TaskPay.icon('refresh') + ' Повторить</button></div>';
+        }
+      }, 3000);
+      Api.getChats(Number(u.id)).catch(function (err) {
+        console.error('getChats reject', err);
         const view = document.getElementById('chats-list');
         if (view) view.innerHTML = '<div class="empty"><div class="e-ico">' + TaskPay.icon('alert') + '</div><div class="e-title">Не удалось загрузить чаты</div><div class="e-sub">Проверьте соединение и откройте ещё раз</div></div>';
       }).then(function (chats) {
+        clearTimeout(chatTimer);
         const view = document.getElementById('chats-list');
         if (!view) return;
         if (!chats || !chats.length) {
@@ -2171,6 +2182,10 @@
       }
       case 'refresh-wallet': {
         navigate('wallet');
+        break;
+      }
+      case 'retry-chats': {
+        navigate('chats');
         break;
       }
       case 'redeem-promo': {
