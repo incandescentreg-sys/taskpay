@@ -63,6 +63,14 @@
     const u = Store.getUser();
     return u.role === 'admin' || u.is_admin || ADMINS.includes(u.id);
   }
+  /* Показываем любую скрытую JS-ошибку, чтобы её было видно (не молча ломала экран) */
+  window.addEventListener('error', function (ev) {
+    try {
+      var msg = (ev && ev.message) || 'JS error';
+      var src = (ev && ev.filename || '').split('/').pop();
+      toast('⚠️ Ошибка: ' + msg + (src ? ' [' + src + ']' : ''), true);
+    } catch (e) {}
+  });
   function tgConfirm(title, msg, okText, cancelText) {
     /* Универсальный вызов: часть SDK возвращает Promise, часть ждёт callback.
        Передаём оба: проставляем callback, а если вернулся Promise — вешаем .then.
