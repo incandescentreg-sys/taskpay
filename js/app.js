@@ -399,7 +399,8 @@
     setInterval(() => {
       if (!Store.useApi()) return;
       const r = currentRoute;
-      if (r === 'create' || r === 'chat-detail' || r === 'admin') return;
+      /* исключаем формы и чаты: их перерисовка сбрасывает список на «Загрузка...» */
+      if (r === 'create' || r === 'chat-detail' || r === 'admin' || r === 'chats') return;
       Store.syncFromApi().then(ok => {
         if (ok) render(true);
       }).catch(() => {});
