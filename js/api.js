@@ -649,6 +649,42 @@
       return error ? null : data;
     },
 
+    /* Полная статистика пользователя по ID (для админ-профиля) */
+    async adminGetUserStats(userId) {
+      if (!ensureClient()) return null;
+      try {
+        const uid = Number(userId);
+        const [usr, tasks, asns, txns] = await Promise.all([
+          SB.from('users').select('*').eq('id', uid).maybeSingle(),
+          SB.from('tasks').select('id, status, reward').eq('employer_id', uid),
+          SB.from('assignments').select('id, status, reward').eq('user_id', uid),
+          SB.from('transactions').select('type, amount').eq('user_id', uid)
+        ]);
+        const u = usr.data || null;
+        const t = tasks.data || [];
+        const a = asns.data || [];
+        const x = txns.data || [];
+        const done = a.filter(v => v.status === 'done');
+        const pending = a.filter(v => v.status === 'pending');
+        const income = x.filter(v => v.type === 'income').reduce((s, v) => s + (Number(v.amount) || 0), 0);
+        const expense = x.filter(v => v.type === 'expense').reduce((s, v) => s + (Number(v.amount) || 0), 0);
+        return {
+          user: u,
+          tasksTotal: t.length,
+          tasksActive: t.filter(v => v.status === 'active').length,
+          tasksModeration: t.filter(v => v.status === 'moderation').length,
+          assignTotal: a.length,
+          assignDone: done.length,
+          assignPending: pending.length,
+          assignWork: a.filter(v => v.status === 'in_progress').length,
+          earned: done.reduce((s, v) => s + (Number(v.reward) || 0), 0),
+          income, expense
+        };
+      } catch (e) {
+        return null;
+      }
+    },
+
     /* Начислить деньги (плюс на баланс + запись транзакции) */
     async adminGiveMoney(userId, amount, note) {
       if (!ensureClient()) return { error: 'Нет соединения' };

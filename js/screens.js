@@ -24,7 +24,7 @@
 
     return `
     <div class="page page--hero">
-      <div class="ver-tag">build 78</div>
+      <div class="ver-tag">build 79</div>
       <div class="home-top-right">
         <button class="home-balance" data-action="refresh-data" aria-label="Обновить" style="min-width:42px">${TaskPay.icon('refresh')}</button>
         <button class="home-balance" data-action="navigate" data-page="wallet" aria-label="Баланс">${TaskPay.icon('wallet')} ${fmtMoney(Store.getBalance())}</button>
@@ -1110,6 +1110,56 @@
     </div>`;
   }
 
+  /* Полная карточка-профиль со статистикой пользователя */
+  function adminUserProfileHTML(st) {
+    if (!st || !st.user) return '<div class="empty small" style="padding:16px">Пользователь не найден</div>';
+    const u = st.user;
+    const blocked = !!u.is_blocked;
+    const isAdm = !!u.is_admin;
+    const stat = function (v, label, clr) {
+      return '<div style="min-width:0;flex:1"><div style="font-weight:800;font-size:16px' + (clr ? ';color:' + clr : '') + '">' + v + '</div><div style="font-size:11px;color:var(--text-3);line-height:1.3;margin-top:2px">' + label + '</div></div>';
+    };
+    return `
+    <div class="card" style="margin-top:12px">
+      <div style="display:flex;justify-content:space-between;align-items:start;gap:10px">
+        <div style="min-width:0">
+          <div style="font-weight:700;font-size:17px">${esc(u.name || 'Гость')}${u.is_verified ? ' <span style="color:var(--accent-2)">✔</span>' : ''}</div>
+          <div style="font-size:13px;color:var(--text-2);margin-top:4px">
+            UID: <b>${esc(u.uid || '—')}</b> · ID: ${u.id}
+          </div>
+        </div>
+        <div style="text-align:right;flex:none">
+          <div style="font-weight:800;font-size:20px">${fmtMoney(u.balance != null ? u.balance : 0)}</div>
+          <div style="font-size:11px;color:${blocked ? 'var(--red)' : 'var(--green)'};font-weight:700;margin-top:2px">
+            ${blocked ? '🔒 Заблокирован' : '✅ Активен'}${isAdm ? ' · ⚙ Админ' : ''}
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;border-top:1px solid var(--border);padding-top:12px">
+        ${stat(st.tasksTotal, 'Всего заданий', 'var(--accent-2)')}
+        ${stat(st.tasksActive, 'На бирже', 'var(--green)')}
+        ${stat(st.tasksModeration, 'На модерации', 'var(--amber)')}
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px">
+        ${stat(st.assignTotal, 'Взято заданий')}
+        ${stat(st.assignDone, 'Выполнено', 'var(--green)')}
+        ${stat(st.assignPending, 'На проверке', 'var(--amber)')}
+        ${stat(st.assignWork, 'В работе')}
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px">
+        ${stat('<span style="color:var(--green)">' + fmtMoney(st.earned) + '</span>', 'Заработано')}
+        ${stat(fmtMoney(st.income), 'Начислено всего')}
+        ${stat('<span style="color:var(--red)">' + fmtMoney(st.expense) + '</span>', 'Потрачено')}
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:14px;border-top:1px solid var(--border);padding-top:12px">
+        <button class="btn btn--sm ${blocked ? 'btn--green' : 'btn--red'}" data-action="admin-profile-block" data-id="${u.id}" data-blocked="${blocked ? '' : '1'}" style="flex:1">${blocked ? '🔓 Разблокировать' : '🔒 Заблокировать'}</button>
+        <button class="btn btn--sm ${isAdm ? 'btn--ghost' : 'btn--amber'}" data-action="admin-profile-admin" data-id="${u.id}" data-admin="${isAdm ? '' : '1'}" style="flex:1">${isAdm ? '👤 Снять админа' : '⚙ Дать админа'}</button>
+      </div>
+    </div>`;
+  }
+
   register('admin', (s) => {
     const sec = (s && s.section) || null;
 
@@ -2016,6 +2066,47 @@
         vibrate();
         break;
       }
+      case 'admin-profile': {
+        const id = Number(el.dataset.id);
+        const box = $('admin-user-result');
+        if (!id || !box) { toast('Нет данных пользователя', true); return; }
+        box.innerHTML = '<div style="font-size:13px;color:var(--text-3);padding:8px">Загрузка статистики...</div>';
+        Api.adminGetUserStats(id).then(function (st) {
+          if (box) box.innerHTML = adminUserProfileHTML(st);
+        }).catch(function () {
+          if (box) box.innerHTML = '<div class="empty small" style="padding:16px">Ошибка загрузки статистики</div>';
+        });
+        vibrate();
+        break;
+      }
+      case 'admin-profile-block': {
+        const id = Number(el.dataset.id);
+        const blocked = el.dataset.blocked === '1';
+        const box = $('admin-user-result');
+        Api.adminSetBlocked(id, blocked).then(function (res) {
+          toast(res && res.ok ? (blocked ? 'Пользователь заблокирован 🔒' : 'Пользователь разблокирован 🔓') : 'Ошибка', !(res && res.ok));
+          if (res && res.ok && box) {
+            Api.adminGetUserStats(id).then(function (st) {
+              if (box) box.innerHTML = adminUserProfileHTML(st);
+            });
+          }
+        });
+        break;
+      }
+      case 'admin-profile-admin': {
+        const id = Number(el.dataset.id);
+        const adm = el.dataset.admin === '1';
+        const box = $('admin-user-result');
+        Api.adminSetAdmin(id, adm).then(function (res) {
+          toast(res && res.ok ? (adm ? 'Права админа выданы ⚙' : 'Права админа сняты') : 'Ошибка', !(res && res.ok));
+          if (res && res.ok && box) {
+            Api.adminGetUserStats(id).then(function (st) {
+              if (box) box.innerHTML = adminUserProfileHTML(st);
+            });
+          }
+        });
+        break;
+      }
       case 'admin-find-uid': {
         const input = $('admin-uid-input');
         const uid = input ? input.value.trim().toUpperCase() : '';
@@ -2026,7 +2117,8 @@
         box.innerHTML = '<div style="font-size:13px;color:var(--text-3);padding:8px">Поиск...</div>';
         Api.adminFindUser(uid).then(function (found) {
           if (uid !== _adminUid) return;
-          box.innerHTML = adminUserCard(found);
+          box.innerHTML = adminUserCard(found) +
+            (found && found.id ? '<button class="btn btn--block btn--ghost btn--sm" data-action="admin-profile" data-id="' + found.id + '" style="margin-top:10px">' + TaskPay.icon('user') + ' Войти в профиль / статистика</button>' : '');
         }).catch(function () {
           if (uid !== _adminUid) return;
           box.innerHTML = adminUserCard(null);
