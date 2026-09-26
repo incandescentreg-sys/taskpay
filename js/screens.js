@@ -24,7 +24,7 @@
 
     return `
     <div class="page page--hero">
-      <div class="ver-tag">build 81</div>
+      <div class="ver-tag">build 82</div>
       <div class="home-top-right">
         <button class="home-balance" data-action="refresh-data" aria-label="Обновить" style="min-width:42px">${TaskPay.icon('refresh')}</button>
         <button class="home-balance" data-action="navigate" data-page="wallet" aria-label="Баланс">${TaskPay.icon('wallet')} ${fmtMoney(Store.getBalance())}</button>
@@ -671,7 +671,10 @@
         '<div class="uid-search"><input id="ref-input" placeholder="Введите код друга" maxlength="8" style="flex:1;min-width:0;font-size:13px;padding:10px 12px;background:var(--card-solid);border:1px solid var(--border);border-radius:10px;color:var(--text);outline:none;text-transform:uppercase"><button class="btn btn--sm btn--block" data-action="apply-referral" style="flex:none;width:auto;padding:10px 16px">Активировать</button></div><div id="ref-result"></div>')}
       ${section(TaskPay.icon('bell'), 'Уведомления по категориям', 'sec-cats',
         '<div style="font-size:12px;color:var(--text-3);margin-bottom:8px">Получайте уведомления о новых заданиях по выбранным категориям</div>' +
-        '<div class="tag-row" style="flex-wrap:wrap">' + CATEGORIES.map(c => '<button type="button" class="tag cat-sub-tag${(u.subscribed_categories || []).indexOf(c.id) !== -1 ? " active" : ""}" data-cat="${c.id}" data-action="toggle-cat-sub">${c.icon} ${c.name}</button>').join('') + '</div>')}
+        '<div class="tag-row" style="flex-wrap:wrap">' + CATEGORIES.map(function (c) {
+          const isActive = (u.subscribed_categories || []).indexOf(c.id) !== -1;
+          return '<button type="button" class="tag cat-sub-tag' + (isActive ? ' active' : '') + '" data-cat="' + c.id + '" data-action="toggle-cat-sub">' + c.icon + ' ' + c.name + '</button>';
+        }).join('') + '</div>')}
       ` : ''}
 
       ${isAdmin() ? '<button class="btn btn--block btn--ghost btn--sm" data-action="admin-panel" style="margin-top:18px">' + TaskPay.icon('settings') + ' Админ-панель</button>' : ''}
