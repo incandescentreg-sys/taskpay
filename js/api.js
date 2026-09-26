@@ -221,10 +221,16 @@
       const t = await SB.from('tasks').select('*').eq('id', Number(taskId)).maybeSingle();
       if (t && t.data) {
         const budget = (Number(t.data.spots_total) || 0) * (Number(t.data.reward) || 0);
-        if (budget > 0) {
+        /* часть бюджета могла уже уйти исполнителям — вернуть нужно только остаток */
+        let paid = 0;
+        const done = await SB.from('assignments')
+          .select('reward, status').eq('task_id', Number(taskId)).eq('status', 'done');
+        (done.data || []).forEach(function (a) { paid += Number(a.reward) || 0; });
+        const rest = Math.max(0, budget - paid);
+        if (rest > 0) {
           try {
             await SB.rpc('change_balance', {
-              p_user_id: Number(t.data.employer_id), p_delta: budget,
+              p_user_id: Number(t.data.employer_id), p_delta: rest,
               p_type: 'income', p_title: 'Возврат бюджета задания «' + (t.data.title || '') + '» (удалено)'
             });
           } catch (e) {}
