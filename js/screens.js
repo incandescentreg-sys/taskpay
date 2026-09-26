@@ -24,7 +24,7 @@
 
     return `
     <div class="page page--hero">
-      <div class="ver-tag">build 70</div>
+      <div class="ver-tag">build 72</div>
       <div class="home-top-right">
         <button class="home-balance" data-action="refresh-data" aria-label="Обновить" style="min-width:42px">${TaskPay.icon('refresh')}</button>
         <button class="home-balance" data-action="navigate" data-page="wallet" aria-label="Баланс">${TaskPay.icon('wallet')} ${fmtMoney(Store.getBalance())}</button>
