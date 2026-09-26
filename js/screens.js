@@ -24,7 +24,7 @@
 
     return `
     <div class="page page--hero">
-      <div class="ver-tag">build 76</div>
+      <div class="ver-tag">build 77</div>
       <div class="home-top-right">
         <button class="home-balance" data-action="refresh-data" aria-label="Обновить" style="min-width:42px">${TaskPay.icon('refresh')}</button>
         <button class="home-balance" data-action="navigate" data-page="wallet" aria-label="Баланс">${TaskPay.icon('wallet')} ${fmtMoney(Store.getBalance())}</button>
@@ -845,7 +845,7 @@
   /* отрисовка одного сообщения: системные (⚙️ и др.) — плашкой по центру,
    вложения (IMG:/FILE:) — картинкой/файлом, остальные — обычными пузырями */
   function chatMsgHTML(m, meId) {
-    const text = String(m.text || '');ring(m.text || '');
+    const text = String(m.text || '');
     const t = new Date(m.created_at || Date.now()).getTime();
     const fch = text.charAt(0);
     if (fch === '⚙' || fch === '📦' || fch === '🔔') {
