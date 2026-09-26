@@ -24,6 +24,24 @@
 
   const ADMINS = [555000111, 555000222];
 
+  /* Номер сборки — сверяем с build.txt на сервере: если сервер свежее,
+     принудительно перезагружаем приложение (лечит кеш Telegram WebView) */
+  const BUILD = 75;
+  (function checkBuild() {
+    try {
+      fetch('build.txt?t=' + Date.now())
+        .then(function (r) { return r.text(); })
+        .then(function (txt) {
+          const remote = String(txt || '').trim();
+          if (remote && remote !== String(BUILD) && !sessionStorage.getItem('buildReloaded')) {
+            sessionStorage.setItem('buildReloaded', '1');
+            location.reload(true);
+          }
+        })
+        .catch(function () {});
+    } catch (e) {}
+  })();
+
   /* ---------- helpers ---------- */
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
