@@ -24,7 +24,7 @@
 
     return `
     <div class="page page--hero">
-      <div class="ver-tag">build 77</div>
+      <div class="ver-tag">build 78</div>
       <div class="home-top-right">
         <button class="home-balance" data-action="refresh-data" aria-label="Обновить" style="min-width:42px">${TaskPay.icon('refresh')}</button>
         <button class="home-balance" data-action="navigate" data-page="wallet" aria-label="Баланс">${TaskPay.icon('wallet')} ${fmtMoney(Store.getBalance())}</button>
@@ -1110,68 +1110,120 @@
     </div>`;
   }
 
-  register('admin', () => {
+  register('admin', (s) => {
+    const sec = (s && s.section) || null;
+
+    const TITLES = {
+      stats: 'Статистика',
+      moderation: 'Модерация заданий',
+      market: 'Задания на бирже',
+      users: 'Пользователи',
+      broadcast: 'Рассылка',
+      promo: 'Промокоды',
+      complaints: 'Жалобы',
+      prices: 'Тарифы'
+    };
+    const ADMIN_MENU = [
+      { id: 'stats', icon: 'users', label: 'Статистика', sub: 'Показатели платформы' },
+      { id: 'moderation', icon: 'shield', label: 'Модерация заданий', sub: 'Выпустить или отклонить' },
+      { id: 'market', icon: 'bolt', label: 'Задания на бирже', sub: 'Управление и удаление' },
+      { id: 'users', icon: 'user', label: 'Пользователи', sub: 'Поиск и действия' },
+      { id: 'broadcast', icon: 'megaphone', label: 'Рассылка', sub: 'Сообщение всем' },
+      { id: 'promo', icon: 'tag', label: 'Промокоды', sub: 'Бонусы и акции' },
+      { id: 'complaints', icon: 'alert', label: 'Жалобы', sub: 'Модерация жалоб' },
+      { id: 'prices', icon: 'settings', label: 'Тарифы', sub: 'Цены подписок' }
+    ];
+
+    function adminMenuHTML() {
+      return '<div class="grid-menu" style="margin-top:6px">' +
+        ADMIN_MENU.map(function (m) {
+          return '<button type="button" class="menu-card" data-action="admin-section" data-section="' + m.id + '">' +
+            '<div class="mc-ico" style="background:var(--blue-soft)">' + TaskPay.icon(m.icon) + '</div>' +
+            '<div class="mc-label">' + m.label + '</div>' +
+            '<div class="mc-sub">' + m.sub + '</div>' +
+          '</button>';
+        }).join('') +
+      '</div>';
+    }
+    function adminBackBtn() {
+      return '<button class="btn btn--ghost btn--sm" data-action="admin-menu" style="margin-bottom:12px">← К меню</button>';
+    }
+    function adminSectionHTML(key) {
+      if (key === 'stats') {
+        return adminBackBtn() +
+          '<div class="section-title">Управление платформой</div>' +
+          '<div id="admin-stats" class="card" style="text-align:center"><div style="font-size:13px;color:var(--text-2)">Статистика загружается...</div></div>';
+      }
+      if (key === 'moderation') {
+        return adminBackBtn() +
+          '<div class="section-title">Отклики на проверке</div>' +
+          '<div id="admin-pending-list"><div class="empty small" style="padding:20px">Загрузка...</div></div>' +
+          '<div class="section-title">Новые задания на модерацию</div>' +
+          '<div id="admin-moderation-list"><div class="empty small" style="padding:20px">Загрузка...</div></div>';
+      }
+      if (key === 'market') {
+        return adminBackBtn() +
+          '<div class="section-title">Задания на бирже</div>' +
+          '<div id="admin-market-list"><div class="empty small" style="padding:20px">Загрузка...</div></div>';
+      }
+      if (key === 'users') {
+        return adminBackBtn() +
+          '<div class="card">' +
+            '<div style="font-weight:600;margin-bottom:8px">' + TaskPay.icon('search') + ' Найти по уникальному ID</div>' +
+            '<div class="uid-search">' +
+              '<input id="admin-uid-input" placeholder="Введите UID" maxlength="8" style="flex:1;min-width:0;font-size:13px;padding:10px 12px;background:var(--card-solid);border:1px solid var(--border);border-radius:10px;color:var(--text);outline:none">' +
+              '<button class="btn btn--sm btn--block" data-action="admin-find-uid" style="flex:none;width:auto;padding:10px 16px">Найти</button>' +
+            '</div>' +
+            '<div id="admin-user-result"></div>' +
+          '</div>';
+      }
+      if (key === 'broadcast') {
+        return adminBackBtn() +
+          '<div class="card">' +
+            '<div style="font-weight:600;margin-bottom:8px">Сообщение всем пользователям бота</div>' +
+            '<textarea id="admin-broadcast-text" placeholder="Текст уведомления..." style="width:100%;min-height:80px;padding:10px;background:var(--card-solid);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;resize:vertical;box-sizing:border-box;font-family:inherit"></textarea>' +
+            '<button class="btn btn--block btn--sm" data-action="admin-broadcast" style="margin-top:8px">' + TaskPay.icon('send') + ' Отправить всем</button>' +
+          '</div>';
+      }
+      if (key === 'promo') {
+        return adminBackBtn() +
+          '<div class="card">' +
+            '<div style="font-weight:600;margin-bottom:8px">Создать промокод</div>' +
+            '<div class="uid-search" style="gap:8px">' +
+              '<input id="admin-promo-code" placeholder="Код" maxlength="20" style="flex:1;min-width:0;font-size:13px;padding:10px 12px;background:var(--card-solid);border:1px solid var(--border);border-radius:10px;color:var(--text);outline:none;text-transform:uppercase">' +
+              '<input id="admin-promo-bonus" type="number" placeholder="Бонус ₽" value="100" style="width:86px;flex:none;font-size:13px;padding:10px 8px;background:var(--card-solid);border:1px solid var(--border);border-radius:10px;color:var(--text);outline:none;text-align:center">' +
+            '</div>' +
+            '<div style="display:flex;gap:8px;margin-top:8px">' +
+              '<input id="admin-promo-uses" type="number" placeholder="Кол-во" value="1" min="1" style="width:76px;flex:none;font-size:13px;padding:10px 8px;background:var(--card-solid);border:1px solid var(--border);border-radius:10px;color:var(--text);outline:none;text-align:center">' +
+              '<button class="btn btn--sm" data-action="admin-create-promo" style="flex:1">' + TaskPay.icon('plus') + ' Создать</button>' +
+            '</div>' +
+            '<div id="admin-promo-list"><div class="empty small" style="padding:12px">Загрузка...</div></div>' +
+          '</div>';
+      }
+      if (key === 'complaints') {
+        return adminBackBtn() +
+          '<div class="section-title">Жалобы</div>' +
+          '<div id="admin-complaints-list"><div class="empty small" style="padding:20px">Загрузка...</div></div>';
+      }
+      if (key === 'prices') {
+        return adminBackBtn() +
+          '<div class="section-title">Тарифы (быстрая правка)</div>' +
+          SUBSCRIPTIONS.map(function (p) {
+            return '<div class="card" style="display:flex;align-items:center;justify-content:space-between;gap:10px">' +
+              '<div><div style="font-weight:600">' + p.name + '</div><div style="font-size:13px;color:var(--text-3)">' + p.days + ' дн</div></div>' +
+              '<input type="number" class="admin-price" data-plan="' + p.id + '" value="' + p.price + '" style="width:80px;padding:8px;background:var(--card-solid);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;text-align:center">' +
+              '<small style="color:var(--text-3)">₽</small>' +
+            '</div>';
+          }).join('') +
+          '<button class="btn btn--block btn--sm" data-action="save-prices" style="margin-top:12px">' + TaskPay.icon('save') + ' Сохранить цены</button>';
+      }
+      return '';
+    }
+
     return `
-    ${topbar('Админ-панель', { icon: 'settings' })}
+    ${topbar(TITLES[sec] || 'Админ-панель', { icon: 'settings' })}
     <div class="page">
-      <div class="section-title">Управление платформой</div>
-      <div id="admin-stats" class="card" style="text-align:center;margin-bottom:16px">
-        <div style="font-size:13px;color:var(--text-2)">Статистика загружается...</div>
-      </div>
-
-      <div class="section-title">Пользователи</div>
-      <div class="card">
-        <div style="font-weight:600;margin-bottom:8px">${TaskPay.icon('search')} Найти по уникальному ID</div>
-        <div class="uid-search">
-          <input id="admin-uid-input" placeholder="Введите UID" maxlength="8" style="flex:1;min-width:0;font-size:13px;padding:10px 12px;background:var(--card-solid);border:1px solid var(--border);border-radius:10px;color:var(--text);outline:none">
-          <button class="btn btn--sm btn--block" data-action="admin-find-uid" style="flex:none;width:auto;padding:10px 16px">Найти</button>
-        </div>
-        <div id="admin-user-result"></div>
-      </div>
-
-      <div class="section-title" style="margin-top:18px">Отклики на проверке</div>
-      <div id="admin-pending-list"><div class="empty small" style="padding:20px">Загрузка...</div></div>
-
-      <div class="section-title" style="margin-top:18px">${TaskPay.icon('shield')} Модерация заданий</div>
-      <div id="admin-moderation-list"><div class="empty small" style="padding:20px">Загрузка...</div></div>
-
-      <div class="section-title" style="margin-top:18px">${TaskPay.icon('bolt')} Задания на бирже</div>
-      <div id="admin-market-list"><div class="empty small" style="padding:20px">Загрузка...</div></div>
-
-      <div class="section-title" style="margin-top:18px">${TaskPay.icon('megaphone')} Рассылка всем пользователям</div>
-      <div class="card">
-        <textarea id="admin-broadcast-text" placeholder="Текст уведомления..." style="width:100%;min-height:70px;padding:10px;background:var(--card-solid);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;resize:vertical;box-sizing:border-box;font-family:inherit"></textarea>
-        <button class="btn btn--block btn--sm" data-action="admin-broadcast" style="margin-top:8px">${TaskPay.icon('send')} Отправить всем</button>
-      </div>
-
-      <div style="height:14px"></div>
-      <div class="section-title">${TaskPay.icon('tag')} Промокоды</div>
-      <div class="card" style="margin-bottom:12px">
-        <div class="uid-search" style="gap:8px">
-          <input id="admin-promo-code" placeholder="Код" maxlength="20" style="flex:1;min-width:0;font-size:13px;padding:10px 12px;background:var(--card-solid);border:1px solid var(--border);border-radius:10px;color:var(--text);outline:none;text-transform:uppercase">
-          <input id="admin-promo-bonus" type="number" placeholder="Бонус ₽" value="100" style="width:86px;flex:none;font-size:13px;padding:10px 8px;background:var(--card-solid);border:1px solid var(--border);border-radius:10px;color:var(--text);outline:none;text-align:center">
-        </div>
-        <div style="display:flex;gap:8px;margin-top:8px">
-          <input id="admin-promo-uses" type="number" placeholder="Кол-во" value="1" min="1" style="width:76px;flex:none;font-size:13px;padding:10px 8px;background:var(--card-solid);border:1px solid var(--border);border-radius:10px;color:var(--text);outline:none;text-align:center">
-          <button class="btn btn--sm" data-action="admin-create-promo" style="flex:1">${TaskPay.icon('plus')} Создать промокод</button>
-        </div>
-        <div id="admin-promo-list"><div class="empty small" style="padding:12px">Загрузка...</div></div>
-      </div>
-
-      <div class="section-title" style="margin-top:18px">${TaskPay.icon('alert')} Жалобы</div>
-      <div id="admin-complaints-list"><div class="empty small" style="padding:20px">Загрузка...</div></div>
-
-      <div style="height:14px"></div>
-      <div class="section-title">Тарифы (быстрая правка)</div>
-      ${SUBSCRIPTIONS.map(p => `
-      <div class="card" style="display:flex;align-items:center;justify-content:space-between;gap:10px">
-        <div><div style="font-weight:600">${p.name}</div><div style="font-size:13px;color:var(--text-3)">${p.days} дн</div></div>
-        <input type="number" class="admin-price" data-plan="${p.id}" value="${p.price}" style="width:80px;padding:8px;background:var(--card-solid);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;text-align:center">
-        <small style="color:var(--text-3)">₽</small>
-      </div>`).join('')}
-      <button class="btn btn--block btn--sm" data-action="save-prices" style="margin-bottom:18px">${TaskPay.icon('save')} Сохранить цены</button>
-
-      <button class="btn btn--block btn--ghost btn--sm" data-action="navigate" data-page="subs">${TaskPay.icon('megaphone')} Просмотр тарифов</button>
+      ${sec ? adminSectionHTML(sec) : adminMenuHTML()}
     </div>`;
   }, () => { /* подгружаем отклики «на проверке» для админ-панели */
     if (!(Store.useApi() && window.Api)) return;
@@ -1206,30 +1258,31 @@
       });
     }
     const box = q('#admin-pending-list');
-    if (!box) return;
-    Api.adminGetPendingAssignments().then(function (rows) {
-      if (!box) return;
-      if (!rows || !rows.length) {
-        box.innerHTML = '<div class="empty small" style="padding:20px">Нет откликов на проверке</div>';
-        return;
-      }
-      box.innerHTML = rows.map(function (a) {
-        const t = a.tasks || {};
-        return '<div class="card" style="padding:14px;margin-bottom:10px">' +
-          '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">' +
-            '<div style="flex:1;min-width:0">' +
-              '<div style="font-size:14px;font-weight:700">' + esc(t.title || ('Задание #' + a.task_id)) + '</div>' +
-              '<div style="font-size:12px;color:var(--text-2);margin-top:3px">Исполнитель: <b>' + esc(a.user_name || ('#' + a.user_id)) + '</b></div>' +
-              (a.comment ? '<div style="font-size:12px;color:var(--text-3)">' + esc(a.comment) + '</div>' : '') +
-              '<div style="font-size:12px;color:var(--amber);margin-top:3px">🟡 На проверке · награда ' + fmtMoney(a.reward) + '</div>' +
+    if (box) {
+      Api.adminGetPendingAssignments().then(function (rows) {
+        if (!box) return;
+        if (!rows || !rows.length) {
+          box.innerHTML = '<div class="empty small" style="padding:20px">Нет откликов на проверке</div>';
+          return;
+        }
+        box.innerHTML = rows.map(function (a) {
+          const t = a.tasks || {};
+          return '<div class="card" style="padding:14px;margin-bottom:10px">' +
+            '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">' +
+              '<div style="flex:1;min-width:0">' +
+                '<div style="font-size:14px;font-weight:700">' + esc(t.title || ('Задание #' + a.task_id)) + '</div>' +
+                '<div style="font-size:12px;color:var(--text-2);margin-top:3px">Исполнитель: <b>' + esc(a.user_name || ('#' + a.user_id)) + '</b></div>' +
+                (a.comment ? '<div style="font-size:12px;color:var(--text-3)">' + esc(a.comment) + '</div>' : '') +
+                '<div style="font-size:12px;color:var(--amber);margin-top:3px">🟡 На проверке · награда ' + fmtMoney(a.reward) + '</div>' +
+              '</div>' +
+              '<button class="btn btn--green btn--sm" data-action="admin-confirm-assign" data-aid="' + a.id + '" data-employer="' + (t.employer_id != null ? t.employer_id : '') + '" style="width:auto;padding:8px 12px;font-size:12px">Ок</button>' +
             '</div>' +
-            '<button class="btn btn--green btn--sm" data-action="admin-confirm-assign" data-aid="' + a.id + '" data-employer="' + (t.employer_id != null ? t.employer_id : '') + '" style="width:auto;padding:8px 12px;font-size:12px">Ок</button>' +
-          '</div>' +
-        '</div>';
-      }).join('');
-    }).catch(function () {
-      if (box) box.innerHTML = '<div class="empty small" style="padding:20px">Ошибка загрузки</div>';
-    });
+          '</div>';
+        }).join('');
+      }).catch(function () {
+        if (box) box.innerHTML = '<div class="empty small" style="padding:20px">Ошибка загрузки</div>';
+      });
+    }
     /* задания на модерацию */
     const mbox = q('#admin-moderation-list');
     if (mbox) {
@@ -1949,6 +2002,20 @@
         navigate('admin');
         break;
       }
+      case 'admin-section': {
+        navigate('admin', { section: el.dataset.section || 'stats' });
+        vibrate();
+        break;
+      }
+      function adminRefresh() {
+        const st = TaskPay.routeState();
+        navigate('admin', (st && st.section ? { section: st.section } : {}));
+      }
+      case 'admin-menu': {
+        navigate('admin');
+        vibrate();
+        break;
+      }
       case 'admin-find-uid': {
         const input = $('admin-uid-input');
         const uid = input ? input.value.trim().toUpperCase() : '';
@@ -2080,7 +2147,7 @@
           if (res && res.id) {
             toast('Промокод создан');
             vibrate();
-            navigate('admin');
+            adminRefresh();
           } else {
             toast((res && res.error) || 'Ошибка создания', true);
           }
@@ -2093,7 +2160,7 @@
           if (!ok) return;
           Api.adminDeletePromocode(id).then(function (res) {
             toast(res && res.ok ? 'Промокод удалён' : 'Ошибка удаления', !(res && res.ok));
-            if (res && res.ok) navigate('admin');
+            if (res && res.ok) adminRefresh();
           });
         });
         break;
@@ -2120,7 +2187,7 @@
             if (upd) {
               toast(dec === 'approve' ? 'Задание выпущено на биржу ✓' : 'Задание отклонено');
               vibrate();
-              Store.syncFromApi().then(function () { navigate('admin'); });
+              Store.syncFromApi().then(function () { adminRefresh(); });
             } else {
               toast('Ошибка модерации', true);
             }
@@ -2153,7 +2220,7 @@
                   }
                 });
               }
-              Store.syncFromApi().then(function () { navigate('admin'); });
+              Store.syncFromApi().then(function () { adminRefresh(); });
             } else {
               toast((res && res.error) || 'Ошибка подтверждения', true);
             }
