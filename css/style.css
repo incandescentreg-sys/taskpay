@@ -729,6 +729,8 @@ button .icon, .tab .icon, .tab-bourse .icon, .nav-chat .icon, .tc-do .icon,
 .chat-input input { flex: 1; padding: 12px 15px; border-radius: 999px; border: 1px solid var(--border); background: var(--card-solid); color: var(--text); font-size: 15px; outline: none; }
 .chat-input input:disabled { opacity: .5; }
 .chat-input .chat-send { width: 46px; height: 46px; border-radius: 50%; border: none; background: var(--accent); color: #fff; display: grid; place-items: center; cursor: pointer; transition: transform .12s ease; }
+.chat-input .chat-attach { background: var(--card-solid); border: 1px solid var(--border); color: var(--accent-2); width: 42px; height: 42px; }
+.chat-input .chat-attach .icon { width: 20px; height: 20px; }
 .chat-input .chat-send:active { transform: scale(0.92); }
 .chat-input .chat-send .icon { width: 20px; height: 20px; }
 

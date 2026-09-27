@@ -24,7 +24,7 @@
 
     return `
     <div class="page page--hero">
-      <div class="ver-tag">build 86</div>
+      <div class="ver-tag">build 87</div>
       <div class="home-top-right">
         <button class="home-balance" data-action="refresh-data" aria-label="Обновить" style="min-width:42px">${TaskPay.icon('refresh')}</button>
         <button class="home-balance" data-action="navigate" data-page="wallet" aria-label="Баланс">${TaskPay.icon('wallet')} ${fmtMoney(Store.getBalance())}</button>
@@ -977,7 +977,7 @@
         ${useApi ? '' : '<div class="msg-system">Демо-чат</div>'}
       </div>
       <div class="chat-input">
-        <button type="button" class="chat-send chat-attach" data-action="chat-attach" ${useApi ? '' : 'disabled'} aria-label="Прикрепить файл">📎</button>
+        <button type="button" class="chat-send chat-attach" data-action="chat-attach" ${useApi ? '' : 'disabled'} aria-label="Прикрепить файл">${TaskPay.icon('paperclip')}</button>
         <input type="file" id="chat-file-input" style="display:none" ${useApi ? '' : 'disabled'}>
         <input type="text" id="chat-input" placeholder="Напишите сообщение..." ${useApi ? '' : 'disabled'}>
         <button class="chat-send" data-action="send-chat" data-chat="${chatId}" ${useApi ? '' : 'disabled'}>${TaskPay.icon('send')}</button>
