@@ -330,7 +330,7 @@ button .icon, .tab .icon, .tab-bourse .icon, .nav-chat .icon, .tc-do .icon,
 
 .profile-sec { position: relative; overflow: hidden; margin-bottom: 12px; background: var(--card); border: 1px solid var(--border); border-radius: 18px; }
 .profile-sec-head { position: relative; z-index: 1; width: 100%; display: flex; align-items: center; gap: 12px; padding: 15px 16px; background: none; border: none; color: var(--text); font-family: inherit; cursor: pointer; text-align: left; }
-.profile-sec-head .ps-ico { width: 38px; height: 38px; flex: none; border-radius: 12px; background: var(--blue-soft); border: 1px solid var(--border); display: grid; place-items: center; color: var(--blue); }
+.profile-sec-head .ps-ico { width: 38px; height: 38px; flex: none; border-radius: 12px; background: var(--blue-soft); border: 1px solid var(--border); display: grid; place-items: center; color: var(--blue); font-size: 20px; }
 .profile-sec-head .ps-ico .icon { width: 20px; height: 20px; }
 .profile-sec-head .ps-title { flex: 1; min-width: 0; font-size: 15px; font-weight: 700; }
 .profile-sec-head .ps-arrow { flex: none; color: var(--text-3); transition: transform .2s ease; }
