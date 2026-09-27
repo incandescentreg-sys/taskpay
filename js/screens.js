@@ -24,14 +24,17 @@
 
     return `
     <div class="page page--hero">
-      <div class="ver-tag">build 91</div>
+      <div class="ver-tag">build 92</div>
       <div class="home-top-right">
         <button class="home-balance" data-action="refresh-data" aria-label="Обновить" style="min-width:42px">${TaskPay.icon('refresh')}</button>
         <button class="home-balance" data-action="navigate" data-page="wallet" aria-label="Баланс">${TaskPay.icon('wallet')} ${fmtMoney(Store.getBalance())}</button>
         ${TaskPay.fabAvatarHTML()}
       </div>
       <div class="brand">
-        <video class="banner-logo banner-video" src="gemini_generated_video_c49f6518.mp4" poster="banner.jpg" autoplay muted loop playsinline preload="auto"></video>
+        <div class="banner-media">
+          <img src="banner.jpg" alt="Yumitask" class="banner-poster">
+          <video class="banner-video" src="gemini_generated_video_c49f6518.mp4" autoplay muted loop playsinline preload="auto"></video>
+        </div>
       </div>
 
       <div class="bourse-wrap">
@@ -104,6 +107,17 @@
       ${bottomNav('home')}
     </div>`;
   }, () => {
+    /* видео-баннер: как только первый кадр готов — прячем картинку-подложку */
+    (function () {
+      const v = q('.banner-media .banner-video');
+      if (!v) return;
+      const wrap = v.closest('.banner-media');
+      const showVideo = function () { if (wrap) wrap.classList.add('loaded'); };
+      v.addEventListener('loadeddata', showVideo);
+      v.addEventListener('canplay', showVideo);
+      /* страховка: через 4с всё равно показываем видео */
+      setTimeout(showVideo, 4000);
+    })();
     /* топ исполнителей недели */
     if (Store.useApi() && window.Api && Api.getTopUsers) {
       Api.getTopUsers().then(function (rows) {

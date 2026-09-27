@@ -289,6 +289,10 @@ button .icon, .tab .icon, .tab-bourse .icon, .nav-chat .icon, .tc-do .icon,
   object-fit: cover;
 }
 .banner-video { aspect-ratio: 16/9; background: #000; object-fit: cover; }
+.banner-media { position: relative; width: 100%; aspect-ratio: 16/9; overflow: hidden; border-radius: 20px; box-shadow: 0 14px 40px rgba(0, 191, 255, 0.4); }
+.banner-media .banner-poster { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity .3s ease; }
+.banner-media .banner-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: transparent; }
+.banner-media.loaded .banner-poster { opacity: 0; pointer-events: none; }
 
 /* ---------- Правая часть шапки (баланс + аватарка) ---------- */
 .tb-right { display: flex; align-items: center; gap: 6px; flex: none; }
