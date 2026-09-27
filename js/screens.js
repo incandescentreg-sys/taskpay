@@ -24,14 +24,14 @@
 
     return `
     <div class="page page--hero">
-      <div class="ver-tag">build 82</div>
+      <div class="ver-tag">build 83</div>
       <div class="home-top-right">
         <button class="home-balance" data-action="refresh-data" aria-label="Обновить" style="min-width:42px">${TaskPay.icon('refresh')}</button>
         <button class="home-balance" data-action="navigate" data-page="wallet" aria-label="Баланс">${TaskPay.icon('wallet')} ${fmtMoney(Store.getBalance())}</button>
         ${TaskPay.fabAvatarHTML()}
       </div>
       <div class="brand">
-        <img src="banner.jpg" alt="Yumitask" class="banner-logo">
+        <video class="banner-logo banner-video" src="gemini_generated_video_c49f6518.mp4" autoplay muted loop playsinline preload="auto"></video>
         <div class="tagline">Выполняй задания — получай деньги<br>Размещай задания — получай результат</div>
       </div>
 

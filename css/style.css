@@ -288,6 +288,7 @@ button .icon, .tab .icon, .tab-bourse .icon, .nav-chat .icon, .tc-do .icon,
   box-shadow: 0 14px 40px rgba(0, 191, 255, 0.4);
   object-fit: cover;
 }
+.banner-video { aspect-ratio: 16/9; background: #000; object-fit: cover; }
 
 /* ---------- Правая часть шапки (баланс + аватарка) ---------- */
 .tb-right { display: flex; align-items: center; gap: 6px; flex: none; }
