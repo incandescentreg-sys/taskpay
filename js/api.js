@@ -433,6 +433,38 @@
       try { return Number(n || 0).toLocaleString('ru-RU') + ' ₽'; } catch (e) { return (n || 0) + ' ₽'; }
     },
 
+    /* ---------- Новости проекта ---------- */
+    async getNews() {
+      if (!ensureClient()) return [];
+      try {
+        const { data, error } = await withTimeout(SB.from('news')
+          .select('id, title, body, created_at')
+          .order('created_at', { ascending: false })
+          .limit(20));
+        return error ? [] : (data || []);
+      } catch (e) {
+        return [];
+      }
+    },
+    async adminCreateNews(title, body) {
+      if (!ensureClient()) return null;
+      try {
+        const { data, error } = await SB.from('news').insert({ title: title, body: body }).select().single();
+        return error ? null : data;
+      } catch (e) {
+        return null;
+      }
+    },
+    async adminDeleteNews(id) {
+      if (!ensureClient()) return null;
+      try {
+        const { error } = await SB.from('news').delete().eq('id', Number(id));
+        return error ? null : { ok: true };
+      } catch (e) {
+        return null;
+      }
+    },
+
     /* ---------- Взятие задания: отклик в БД (идемпотентно) ---------- */
     async takeTask(taskId, user) {
       if (!ensureClient()) return null;
@@ -901,15 +933,34 @@
       return error ? null : data;
     },
 
-    /* Уведомить собеседника о новом сообщении через Telegram */
+    /* Уведомить собеседника о новом сообщении через Telegram.
+       Для вложений IMG:/FILE: шлём само изображение (photo) или метку файла. */
     async _notifyMessageRecipient(chatId, fromUser, fromName, text) {
       try {
         const { data: chat } = await SB.from('chats').select('*').eq('id', chatId).maybeSingle();
         if (!chat) return;
         const otherId = String(chat.user_a) === String(fromUser) ? chat.user_b : chat.user_a;
         const name = fromName || 'Пользователь';
-        const preview = String(text || '').slice(0, 120);
-        this._notify(otherId, '✉️ Новое сообщение от <b>' + this._esc(name) + '</b>\n' + this._esc(preview));
+        const header = '✉️ <b>' + this._esc(name) + '</b> написал(а) в чате:\n';
+        const t = String(text || '');
+        if (t.indexOf('IMG:') === 0 || t.indexOf('FILE:') === 0) {
+          const sep = t.indexOf('|');
+          const kind = t.indexOf('IMG:') === 0 ? 'img' : 'file';
+          const fname = sep > 0 ? t.slice(4, sep) : 'вложение';
+          const data = sep > 0 ? t.slice(sep + 1) : '';
+          if (kind === 'img' && data.indexOf('data:') === 0) {
+            /* edge-функция декодирует и отправляет sendPhoto */
+            this._callEdge('notify', {
+              chat_id: Number(otherId), text: header + '📎 Отправил(а) изображение: ' + this._esc(fname),
+              photo: data
+            }).catch(function () {});
+          } else {
+            this._notify(otherId, header + '📎 Прислал(а) файл: <b>' + this._esc(fname) + '</b>');
+          }
+          return;
+        }
+        const preview = t.slice(0, 120);
+        this._notify(otherId, header + (preview ? this._esc(preview) : 'Новое сообщение'));
       } catch (e) {}
     },
 

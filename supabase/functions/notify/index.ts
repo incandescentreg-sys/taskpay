@@ -4,6 +4,7 @@
 // Токен НЕ должен попадать в клиент.
 //
 // POST { chat_id, text }  или  { messages: [{ chat_id, text }] }
+//      опционально photo: data-url (тогда шлём sendPhoto)
 // Работает без JWT (--no-verify-jwt) и с CORS-заголовками,
 // т.к. вызывается из браузера (Preflight OPTIONS).
 // ============================================================
@@ -16,25 +17,61 @@ const CORS = {
   'Access-Control-Max-Age': '86400'
 };
 
-async function sendMessage(msg) {
-  if (!BOT_TOKEN) return { ok: false, error: 'BOT_TOKEN not set' };
-  if (!msg || !msg.chat_id || !msg.text) return { ok: false, error: 'bad payload' };
-  try {
-    const res = await fetch('https://api.telegram.org/bot' + BOT_TOKEN + '/sendMessage', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: Number(msg.chat_id),
-        text: String(msg.text).slice(0, 4000),
-        parse_mode: msg.parse_mode || 'HTML',
-        disable_web_page_preview: true
-      })
-    });
+function sendMessage(msg) {
+  if (!BOT_TOKEN) return Promise.resolve({ ok: false, error: 'BOT_TOKEN not set' });
+  if (!msg || !msg.chat_id || !msg.text) return Promise.resolve({ ok: false, error: 'bad payload' });
+  return fetch('https://api.telegram.org/bot' + BOT_TOKEN + '/sendMessage', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      chat_id: Number(msg.chat_id),
+      text: String(msg.text).slice(0, 4000),
+      parse_mode: msg.parse_mode || 'HTML',
+      disable_web_page_preview: true
+    })
+  }).then(async function (res) {
     const data = await res.json();
     return { ok: !!data.ok, error: data.description || null, res: data };
-  } catch (e) {
+  }).catch(function (e) {
     return { ok: false, error: e.message };
+  });
+}
+
+/* Отправка фотографии: декодируем data-url → бинарник → multipart */
+function sendPhoto(msg) {
+  if (!BOT_TOKEN || !msg || !msg.chat_id || !msg.photo) {
+    return Promise.resolve({ ok: false, error: 'bad photo payload' });
   }
+  try {
+    const m = /^data:([^;]+);base64,(.+)$/.exec(String(msg.photo).trim());
+    if (!m) return Promise.resolve({ ok: false, error: 'not a data url' });
+    const mime = m[1];
+    const bytes = atob(m[2]);
+    const arr = new Uint8Array(bytes.length);
+    for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+    const blob = new Blob([arr], { type: mime });
+    const form = new FormData();
+    form.append('chat_id', String(msg.chat_id));
+    form.append('photo', blob, 'image.jpg');
+    form.append('caption', String(msg.text || '').slice(0, 1000));
+    form.append('parse_mode', msg.parse_mode || 'HTML');
+    return fetch('https://api.telegram.org/bot' + BOT_TOKEN + '/sendPhoto', {
+      method: 'POST',
+      body: form
+    }).then(async function (res) {
+      const data = await res.json();
+      return { ok: !!data.ok, error: data.description || null, res: data };
+    }).catch(function (e) {
+      return { ok: false, error: e.message };
+    });
+  } catch (e) {
+    return Promise.resolve({ ok: false, error: e.message });
+  }
+}
+
+async function routeMsg(m) {
+  if (m && m.photo) return await sendPhoto(m);
+  return await sendMessage(m);
 }
 
 Deno.serve(async (req) => {
@@ -49,7 +86,7 @@ Deno.serve(async (req) => {
     const list = Array.isArray(body) ? body : (body.messages || [body]);
     const results = [];
     for (const m of list) {
-      results.push(await sendMessage(m));
+      results.push(await routeMsg(m));
     }
     return Response.json({ ok: true, results }, { status: 200, headers: CORS });
   } catch (e) {

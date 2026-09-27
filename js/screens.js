@@ -24,7 +24,7 @@
 
     return `
     <div class="page page--hero">
-      <div class="ver-tag">build 88</div>
+      <div class="ver-tag">build 89</div>
       <div class="home-top-right">
         <button class="home-balance" data-action="refresh-data" aria-label="Обновить" style="min-width:42px">${TaskPay.icon('refresh')}</button>
         <button class="home-balance" data-action="navigate" data-page="wallet" aria-label="Баланс">${TaskPay.icon('wallet')} ${fmtMoney(Store.getBalance())}</button>
@@ -86,6 +86,9 @@
       <div class="section-title">${TaskPay.icon('star')} Топ исполнителей недели</div>
       <div id="top-week"><div class="empty small" style="padding:16px">Загрузка...</div></div>
 
+      <div class="section-title">${TaskPay.icon('megaphone')} Новости проекта</div>
+      <div id="home-news"><div class="empty small" style="padding:16px">Загрузка...</div></div>
+
       ${!hasSub ? `
       <div class="cta-banner">
         <div class="cb-title">🚀 Хотите привлечь клиентов, подписчиков или получить отзывы?</div>
@@ -122,6 +125,27 @@
       }).catch(function () {
         const box = q('#top-week');
         if (box) box.innerHTML = '<div class="empty small" style="padding:16px">Ошибка загрузки</div>';
+      });
+    }
+    /* новости проекта */
+    if (Store.useApi() && window.Api && Api.getNews) {
+      Api.getNews().then(function (rows) {
+        const box = q('#home-news');
+        if (!box) return;
+        if (!rows || !rows.length) {
+          box.innerHTML = '<div class="empty small" style="padding:16px">Новостей пока нет</div>';
+          return;
+        }
+        box.innerHTML = rows.map(function (n) {
+          return '<div class="card" style="padding:12px 14px;margin-bottom:10px">' +
+            '<div style="font-weight:700;font-size:14px">' + esc(n.title) + '</div>' +
+            (n.body ? '<div style="font-size:13px;color:var(--text-2);margin-top:5px;line-height:1.5">' + esc(n.body) + '</div>' : '') +
+            '<div style="font-size:11px;color:var(--text-3);margin-top:6px">' + timeAgo(new Date(n.created_at).getTime()) + '</div>' +
+          '</div>';
+        }).join('');
+      }).catch(function () {
+        const box = q('#home-news');
+        if (box) box.innerHTML = '<div class="empty small" style="padding:16px">Ошибка загрузки новостей</div>';
       });
     }
   });
@@ -1167,6 +1191,7 @@
       { id: 'market', icon: 'bolt', label: 'Задания на бирже', sub: 'Управление и удаление' },
       { id: 'users', icon: 'user', label: 'Пользователи', sub: 'Поиск и действия' },
       { id: 'broadcast', icon: 'megaphone', label: 'Рассылка', sub: 'Сообщение всем' },
+      { id: 'news', icon: 'clipboard', label: 'Новости проекта', sub: 'Публикации на главной' },
       { id: 'promo', icon: 'tag', label: 'Промокоды', sub: 'Бонусы и акции' },
       { id: 'complaints', icon: 'alert', label: 'Жалобы', sub: 'Модерация жалоб' },
       { id: 'prices', icon: 'settings', label: 'Тарифы', sub: 'Цены подписок' }
@@ -1214,6 +1239,16 @@
             '</div>' +
             '<div id="admin-user-result"></div>' +
           '</div>';
+      }
+      if (key === 'news') {
+        return adminBackBtn() +
+          '<div class="card">' +
+            '<div style="font-weight:600;margin-bottom:8px">Создать новость</div>' +
+            '<input id="admin-news-title" placeholder="Заголовок" maxlength="120" style="width:100%;box-sizing:border-box;margin-bottom:8px;font-size:14px;padding:10px 12px;background:var(--card-solid);border:1px solid var(--border);border-radius:10px;color:var(--text);outline:none">' +
+            '<textarea id="admin-news-body" placeholder="Текст новости (необязательно)" rows="3" style="width:100%;box-sizing:border-box;font-size:14px;padding:10px 12px;background:var(--card-solid);border:1px solid var(--border);border-radius:10px;color:var(--text);outline:none;resize:vertical;font-family:inherit"></textarea>' +
+            '<button class="btn btn--block btn--sm" data-action="admin-news-create" style="margin-top:8px">' + TaskPay.icon('plus') + ' Опубликовать</button>' +
+          '</div>' +
+          '<div id="admin-news-list"><div class="empty small" style="padding:20px">Загрузка...</div></div>';
       }
       if (key === 'broadcast') {
         return adminBackBtn() +
@@ -1428,6 +1463,27 @@
         }).join('');
       }).catch(function () {
         if (compBox) compBox.innerHTML = '<div class="empty small" style="padding:20px">Ошибка загрузки</div>';
+      });
+    }
+    /* новости проекта */
+    const newsBox = q('#admin-news-list');
+    if (newsBox && Api.adminGetNews) {
+      Api.adminGetNews().then(function (rows) {
+        if (!newsBox) return;
+        if (!rows || !rows.length) {
+          newsBox.innerHTML = '<div class="empty small" style="padding:20px">Новостей нет</div>';
+          return;
+        }
+        newsBox.innerHTML = rows.map(function (n) {
+          return '<div class="card" style="padding:12px;margin-bottom:10px">' +
+            '<div style="font-weight:700;font-size:14px">' + esc(n.title) + '</div>' +
+            (n.body ? '<div style="font-size:12px;color:var(--text-3);margin-top:4px">' + esc(n.body) + '</div>' : '') +
+            '<div style="font-size:11px;color:var(--text-3);margin-top:4px">' + timeAgo(new Date(n.created_at).getTime()) + '</div>' +
+            '<button class="btn btn--red btn--sm" data-action="admin-news-delete" data-id="' + n.id + '" style="margin-top:8px;width:100%">Удалить</button>' +
+          '</div>';
+        }).join('');
+      }).catch(function () {
+        if (newsBox) newsBox.innerHTML = '<div class="empty small" style="padding:20px">Ошибка загрузки</div>';
       });
     }
   });
@@ -2198,6 +2254,32 @@
             } else {
               toast('Ошибка удаления', true);
             }
+          });
+        });
+        break;
+      }
+      case 'admin-news-create': {
+        const title = ($('admin-news-title') || {}).value || '';
+        const body = ($('admin-news-body') || {}).value || '';
+        if (!title) { toast('Введите заголовок', true); return; }
+        Api.adminCreateNews(title.trim(), body.trim()).then(function (res) {
+          if (res && res.id) {
+            toast('Новость опубликована');
+            vibrate();
+            adminRefresh();
+          } else {
+            toast('Ошибка создания', true);
+          }
+        });
+        break;
+      }
+      case 'admin-news-delete': {
+        const id = Number(el.dataset.id);
+        tgConfirm('Удалить', 'Удалить новость?').then(function (ok) {
+          if (!ok) return;
+          Api.adminDeleteNews(id).then(function (res) {
+            toast(res && res.ok ? 'Новость удалена' : 'Ошибка', !(res && res.ok));
+            if (res && res.ok) adminRefresh();
           });
         });
         break;
