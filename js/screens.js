@@ -24,7 +24,7 @@
 
     return `
     <div class="page page--hero">
-      <div class="ver-tag">build 87</div>
+      <div class="ver-tag">build 88</div>
       <div class="home-top-right">
         <button class="home-balance" data-action="refresh-data" aria-label="Обновить" style="min-width:42px">${TaskPay.icon('refresh')}</button>
         <button class="home-balance" data-action="navigate" data-page="wallet" aria-label="Баланс">${TaskPay.icon('wallet')} ${fmtMoney(Store.getBalance())}</button>
@@ -1887,13 +1887,6 @@
         const selectedProofs = [];
         document.querySelectorAll('[data-proof].active').forEach(el2 => selectedProofs.push(el2.dataset.proof));
         if (selectedProofs.length === 0) { toast('Выберите тип подтверждения', true); return; }
-        const hasSub = Store.hasActiveSubscription();
-        const userTasks = Store.getTasks().filter(t => t.employerId === Store.getUser().id && t.status === 'active');
-        if (!hasSub && userTasks.length >= 1) {
-          toast('Бесплатно — только 1 задание. Купите подписку', true);
-          navigate('subs');
-          return;
-        }
         const totalBudget = s * r;
         const task = {
           title: title.value.trim(),
