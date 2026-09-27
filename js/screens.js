@@ -24,7 +24,7 @@
 
     return `
     <div class="page page--hero">
-      <div class="ver-tag">build 89</div>
+      <div class="ver-tag">build 90</div>
       <div class="home-top-right">
         <button class="home-balance" data-action="refresh-data" aria-label="Обновить" style="min-width:42px">${TaskPay.icon('refresh')}</button>
         <button class="home-balance" data-action="navigate" data-page="wallet" aria-label="Баланс">${TaskPay.icon('wallet')} ${fmtMoney(Store.getBalance())}</button>
@@ -40,6 +40,9 @@
           <span><span class="bb-label">Биржа заданий</span><span class="bb-sub">Открыть задания</span></span>
         </button>
       </div>
+
+      <div class="section-title" style="margin-top:18px">${TaskPay.icon('megaphone')} Новости проекта</div>
+      <div id="home-news"><div class="empty small" style="padding:16px">Загрузка...</div></div>
 
       <div class="grid-menu">
         <button type="button" class="menu-card" data-action="navigate" data-page="create">
@@ -85,9 +88,6 @@
 
       <div class="section-title">${TaskPay.icon('star')} Топ исполнителей недели</div>
       <div id="top-week"><div class="empty small" style="padding:16px">Загрузка...</div></div>
-
-      <div class="section-title">${TaskPay.icon('megaphone')} Новости проекта</div>
-      <div id="home-news"><div class="empty small" style="padding:16px">Загрузка...</div></div>
 
       ${!hasSub ? `
       <div class="cta-banner">
