@@ -24,7 +24,7 @@
 
     return `
     <div class="page page--hero">
-      <div class="ver-tag">build 92</div>
+      <div class="ver-tag">build 93</div>
       <div class="home-top-right">
         <button class="home-balance" data-action="refresh-data" aria-label="Обновить" style="min-width:42px">${TaskPay.icon('refresh')}</button>
         <button class="home-balance" data-action="navigate" data-page="wallet" aria-label="Баланс">${TaskPay.icon('wallet')} ${fmtMoney(Store.getBalance())}</button>
@@ -240,6 +240,7 @@
           <span class="chip chip--green">${TaskPay.icon('cash')} ${fmtMoney(t.reward)} за исполнителя</span>
           <span class="chip chip--amber">${TaskPay.icon('users')} Осталось: ${t.spotsLeft} мест</span>
           <span class="chip chip--blue">${TaskPay.icon('clock')} ~${t.durationMin} мин</span>
+          <span class="chip chip--amber">${TaskPay.icon('cash')} Оплата в течение ${t.payoutDays || 7} дн</span>
           ${function () {
             const myAsn = Store.getAssignments().filter(a => a.taskId === t.id && String(a.userId) === String(Store.getUser().id));
             if (!myAsn.length) return '';
@@ -498,6 +499,11 @@
         <div class="field">
           <label>Срок выполнения (дней)</label>
           <input id="f-deadline" type="number" min="1" max="365" value="7">
+        </div>
+        <div class="field">
+          <label>Срок выплаты исполнителю (дней)</label>
+          <input id="f-payout" type="number" min="1" max="90" value="7">
+          <div class="hint">Через сколько дней после подтверждения награда придёт исполнителю (например, 7–10 — на модерацию отзыва)</div>
         </div>
       </div>
 
@@ -1946,6 +1952,7 @@
         const reward = $('f-reward');
         const instruction = $('f-instruction');
         const deadline = $('f-deadline');
+        const payout = $('f-payout');
         if (!title || !title.value.trim() || !desc.value.trim() || !instruction.value.trim()) {
           toast('Заполните все обязательные поля', true);
           vibrate('heavy');
@@ -1971,7 +1978,8 @@
           proof: selectedProofs,
           employerId: Store.getUser().id,
           employerName: Store.getUser().name,
-          deadlineDays: parseInt(deadline.value) || 7
+          deadlineDays: parseInt(deadline.value) || 7,
+          payoutDays: payout ? (parseInt(payout.value) || 7) : 7
         };
 
         /* если бэкенд настроен — публикуем в Supabase (задание увидят все) */
@@ -1990,6 +1998,7 @@
             employer_id: task.employerId,
             employer_name: task.employerName,
             deadline_days: task.deadlineDays,
+            payout_days: task.payoutDays,
             status: 'active'
           }).then(function (res) {
             if (res && res.error) {

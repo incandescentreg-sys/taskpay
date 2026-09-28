@@ -417,6 +417,7 @@ const Store = {
           employerId: Number(t.employer_id),
           employerName: t.employer_name || '',
           deadlineDays: t.deadline_days || 7,
+          payoutDays: t.payout_days || 7,
           createdAt: new Date(t.created_at || Date.now()).getTime(),
           status: TASK_STATUS.ACTIVE
         }));
